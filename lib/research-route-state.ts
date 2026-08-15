@@ -17,6 +17,7 @@ type SearchParams = Record<string, SearchValue>;
 export interface FundResearchRouteState {
   range: PerformanceRange;
   showBenchmark: boolean;
+  against: string | null;
 }
 
 export interface ComparisonRouteState {
@@ -34,9 +35,11 @@ export function isPerformanceRange(value: string | undefined): value is Performa
 
 export function parseFundResearchSearchParams(params: SearchParams): FundResearchRouteState {
   const range = first(params.range);
+  const against = first(params.against);
   return {
     range: isPerformanceRange(range) ? range : DEFAULT_PERFORMANCE_RANGE,
     showBenchmark: first(params.benchmark) === "1",
+    against: against && isSchemeCode(against) ? against : null,
   };
 }
 
@@ -44,6 +47,7 @@ export function toFundResearchHref(schemeCode: string, state: FundResearchRouteS
   const params = new URLSearchParams();
   if (state.range !== DEFAULT_PERFORMANCE_RANGE) params.set("range", state.range);
   if (state.showBenchmark) params.set("benchmark", "1");
+  if (state.against && state.against !== schemeCode) params.set("against", state.against);
   const query = params.toString();
   return `/fund/${schemeCode}${query ? `?${query}` : ""}`;
 }

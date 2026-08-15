@@ -12,10 +12,16 @@ describe("research route state", () => {
     expect(parseFundResearchSearchParams({ range: "invalid", benchmark: "0" })).toEqual({
       range: DEFAULT_PERFORMANCE_RANGE,
       showBenchmark: false,
+      against: null,
     });
-    expect(toFundResearchHref("1234", { range: "3y", showBenchmark: false })).toBe("/fund/1234");
-    expect(toFundResearchHref("1234", { range: "1y", showBenchmark: true })).toBe(
-      "/fund/1234?range=1y&benchmark=1",
+    expect(toFundResearchHref("1234", { range: "3y", showBenchmark: false, against: null })).toBe(
+      "/fund/1234",
+    );
+    expect(toFundResearchHref("1234", { range: "1y", showBenchmark: true, against: "5678" })).toBe(
+      "/fund/1234?range=1y&benchmark=1&against=5678",
+    );
+    expect(toFundResearchHref("1234", { range: "3y", showBenchmark: false, against: "1234" })).toBe(
+      "/fund/1234",
     );
   });
 
