@@ -22,7 +22,13 @@ describe("comparison display mapping", () => {
   it("reuses fact formatting and keeps risk metric tones neutral", () => {
     const fund = {
       scheme: { schemeName: "Fund" },
-      facts: { aum: 1234.56, expenseRatio: 1.23, portfolioTurnover: 12.34, riskLabel: "High" },
+      facts: {
+        aum: 1234.56,
+        expenseRatio: 1.23,
+        portfolioTurnover: 12.34,
+        riskLabel: "High",
+        managers: [],
+      },
       metrics: {
         oneYear: { value: 0.1 },
         threeYear: { value: 0.1 },
