@@ -69,6 +69,7 @@ type MetricRow = readonly [label: string, value: number | null];
 
 interface AllocationBarProps {
   title: string;
+  description: string;
   items: readonly AllocationItem[];
 }
 
@@ -97,7 +98,7 @@ const performanceRanges = [
   { value: "max", label: "Max" },
 ] satisfies readonly PerformanceRangeOption[];
 
-function AllocationBar({ title, items }: AllocationBarProps) {
+function AllocationBar({ title, description, items }: AllocationBarProps) {
   if (!items.length) return null;
   const sortedItems = [...items].sort((left, right) => right.weight - left.weight);
   const visibleItems = sortedItems.filter((item) => item.weight > 0);
@@ -105,7 +106,7 @@ function AllocationBar({ title, items }: AllocationBarProps) {
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>Latest reported composition</CardDescription>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div
@@ -174,7 +175,9 @@ function SectorHoldings({ holdings, sectors }: SectorHoldingsProps) {
     <Card>
       <CardHeader>
         <CardTitle>Sector allocation and holdings</CardTitle>
-        <CardDescription>Expand a sector to see its reported holdings</CardDescription>
+        <CardDescription>
+          Largest reported sector exposures, with the holdings within each sector.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Accordion className="border-t" multiple>
@@ -526,7 +529,9 @@ export function FundResearchView({
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>Fund facts</CardTitle>
-          <CardDescription>Fund details</CardDescription>
+          <CardDescription>
+            Key scheme details, including assets, fees, turnover, and stated risk.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {factCards.map(([label, value]) => (
@@ -572,16 +577,23 @@ export function FundResearchView({
             </div>
             <SectorHoldings holdings={fund.portfolio.holdings} sectors={fund.portfolio.sectors} />
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
-              <AllocationBar title="Asset allocation" items={fund.portfolio.assetAllocation} />
+              <AllocationBar
+                title="Asset allocation"
+                description="How the reported portfolio is divided among equity, debt, cash, and other assets."
+                items={fund.portfolio.assetAllocation}
+              />
               <AllocationBar
                 title="Market-cap allocation"
+                description="How the reported equity allocation is spread across large-, mid-, and small-cap companies."
                 items={fund.portfolio.marketCapAllocation}
               />
               {fund.portfolio.topTenConcentration !== null && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Top-10 concentration</CardTitle>
-                    <CardDescription>Reported portfolio concentration</CardDescription>
+                    <CardDescription>
+                      Share of the reported portfolio held in its ten largest positions.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="font-mono text-2xl font-medium">

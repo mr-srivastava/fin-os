@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueries } from "@tanstack/react-query";
 import { ArrowLeftIcon, CircleAlertIcon, GitCompareArrowsIcon, XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { FundSearch } from "@/components/fund-search";
 import { SchemeAnalysisChart, type SchemeAnalysisSeries } from "@/components/scheme-analysis-chart";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -23,20 +24,31 @@ import { fundQueryOptions } from "@/lib/fund-queries";
 import { isSchemeCode } from "@/lib/fund-input";
 import type { FundPair, FundResearch, MetricKey, Scheme, WeightedItem } from "@/lib/fund-types";
 import { isFundPair } from "@/lib/fund-types";
-import { formatNumber, formatPercent } from "@/lib/utils";
+import { filterSeriesByRange, investmentOutcome, type PerformanceRange } from "@/lib/analytics";
+import {
+  formatFullDate,
+  formatNumber,
+  formatPercent,
+  formatRupees,
+  formatSignedPercent,
+} from "@/lib/utils";
 
 type MetricRow = readonly [label: string, key: MetricKey];
 type DisplayRow = readonly [label: string, value: (fund: FundResearch) => string];
 
 interface AllocationComparisonProps {
   title: string;
+  description: string;
   left: readonly WeightedItem[];
   right: readonly WeightedItem[];
+  leftFundName: string;
+  rightFundName: string;
 }
 
 interface CompareViewProps {
   initialFund?: string;
   initialAgainst?: string;
+  initialRange?: string;
 }
 
 const factRows = [
@@ -49,7 +61,18 @@ const factRows = [
   ["Risk", (fund: FundResearch) => fund.facts.riskLabel ?? "—"],
 ] satisfies readonly DisplayRow[];
 
-function AllocationComparison({ title, left, right }: AllocationComparisonProps) {
+function isPerformanceRange(value: string | undefined): value is PerformanceRange {
+  return ["6m", "1y", "3y", "5y", "max"].includes(value ?? "");
+}
+
+function AllocationComparison({
+  title,
+  description,
+  left,
+  right,
+  leftFundName,
+  rightFundName,
+}: AllocationComparisonProps) {
   const names = [...new Set([...left, ...right].map((item) => item.name))];
   if (!names.length) return null;
   const leftWeights = new Map(left.map((item) => [item.name, item.weight]));
@@ -58,14 +81,15 @@ function AllocationComparison({ title, left, right }: AllocationComparisonProps)
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Allocation</TableHead>
-              <TableHead>{left.length ? "Fund 1" : "—"}</TableHead>
-              <TableHead>{right.length ? "Fund 2" : "—"}</TableHead>
+              <TableHead>{left.length ? leftFundName : "—"}</TableHead>
+              <TableHead>{right.length ? rightFundName : "—"}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -87,8 +111,58 @@ function AllocationComparison({ title, left, right }: AllocationComparisonProps)
   );
 }
 
-export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
+interface PortfolioMetricComparisonProps {
+  leftFundName: string;
+  rightFundName: string;
+  leftValue: number | null;
+  rightValue: number | null;
+}
+
+function PortfolioMetricComparison({
+  leftFundName,
+  rightFundName,
+  leftValue,
+  rightValue,
+}: PortfolioMetricComparisonProps) {
+  if (leftValue === null && rightValue === null) return null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Top-10 concentration</CardTitle>
+        <CardDescription>
+          Share of each reported portfolio held in its ten largest positions.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-2">
+        {(
+          [
+            [leftFundName, leftValue],
+            [rightFundName, rightValue],
+          ] as const
+        ).map(([fundName, value]) => (
+          <div key={fundName} className="min-w-0">
+            <p className="truncate text-xs text-muted-foreground" title={fundName}>
+              {fundName}
+            </p>
+            <p className="mt-1 font-mono text-2xl font-medium tabular-nums">
+              {formatPercent(typeof value === "number" ? value / 100 : null)}
+            </p>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function CompareView({ initialFund, initialAgainst, initialRange }: CompareViewProps) {
   const router = useRouter();
+  const [performanceRange, setPerformanceRange] = useState<PerformanceRange>(
+    isPerformanceRange(initialRange) ? initialRange : "3y",
+  );
+  useEffect(
+    () => setPerformanceRange(isPerformanceRange(initialRange) ? initialRange : "3y"),
+    [initialRange],
+  );
   const selectedCodes = [initialFund, initialAgainst].filter((schemeCode): schemeCode is string =>
     Boolean(schemeCode && isSchemeCode(schemeCode)),
   );
@@ -103,21 +177,33 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
   const message = comparisonError instanceof Error ? comparisonError.message : "";
   const funds = comparisonQueries.flatMap((query) => (query.data ? [query.data] : []));
 
+  function updateSelection(nextCodes: string[], nextRange = performanceRange) {
+    const firstCode = nextCodes[0];
+    if (!firstCode) return router.push("/compare");
+    const params = new URLSearchParams({ fund: firstCode });
+    if (nextCodes[1]) params.set("against", nextCodes[1]);
+    if (nextRange !== "3y") params.set("range", nextRange);
+    router.push(`/compare?${params.toString()}`);
+  }
+
   function choose(scheme: Scheme) {
     if (selectedCodes.includes(scheme.schemeCode) || selectedCodes.length === 2) return;
-    const nextCodes = [...selectedCodes, scheme.schemeCode];
-    router.push(`/compare?fund=${nextCodes[0]}${nextCodes[1] ? `&against=${nextCodes[1]}` : ""}`);
+    updateSelection([...selectedCodes, scheme.schemeCode]);
   }
 
   function remove(index: number) {
-    const nextCodes = selectedCodes.filter((_, selectedIndex) => selectedIndex !== index);
-    router.push(nextCodes.length ? `/compare?fund=${nextCodes[0]}` : "/compare");
+    updateSelection(selectedCodes.filter((_, selectedIndex) => selectedIndex !== index));
   }
 
-  const selected = selectedCodes.flatMap((schemeCode) => {
-    const fund = funds.find((item) => item.scheme.schemeCode === schemeCode);
-    return fund ? [fund.scheme] : [];
-  });
+  function updatePerformanceRange(nextRange: PerformanceRange) {
+    setPerformanceRange(nextRange);
+    updateSelection(selectedCodes, nextRange);
+  }
+
+  const selectedFunds = selectedCodes.map((schemeCode) =>
+    funds.find((item) => item.scheme.schemeCode === schemeCode),
+  );
+  const selected = selectedFunds.flatMap((fund) => (fund ? [fund.scheme] : []));
   const displayedFunds: FundPair<FundResearch> | null =
     funds.length === 2 &&
     selectedCodes.length === 2 &&
@@ -133,7 +219,7 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
     }),
   );
   const rows = [
-    ["1Y annualized", "oneYear"],
+    ["1Y return", "oneYear"],
     ["3Y annualized", "threeYear"],
     ["5Y annualized", "fiveYear"],
     ["1Y volatility", "volatility"],
@@ -145,6 +231,12 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
     leftPortfolio && rightPortfolio ? { left: leftPortfolio, right: rightPortfolio } : null;
   const historyReady =
     displayedFunds?.every((fund) => fund.availability.navHistory.available) ?? false;
+  const unavailableNavFunds = (displayedFunds ?? [])
+    .filter((fund) => !fund.availability.navHistory.available)
+    .map((fund) => fund.scheme.schemeName);
+  const selectedOutcomes = (displayedFunds ?? []).map((fund) =>
+    investmentOutcome(filterSeriesByRange(fund.nav, performanceRange)),
+  );
   return (
     <main id="main-content" className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
       <Link href="/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
@@ -167,16 +259,26 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
             <CardHeader>
               <CardDescription>Fund {index + 1}</CardDescription>
               <CardTitle>
-                {selected[index]?.schemeName ??
+                {selectedFunds[index]?.scheme.schemeName ??
                   (selectedCodes[index] ? "Loading selected fund…" : "Choose a fund")}
               </CardTitle>
+              {selectedFunds[index] ? (
+                <p className="text-sm text-muted-foreground">
+                  {selectedFunds[index].scheme.amc} · {selectedFunds[index].scheme.category} ·{" "}
+                  {selectedFunds[index].scheme.plan} {selectedFunds[index].scheme.option}
+                </p>
+              ) : null}
             </CardHeader>
             <CardContent>
               {selectedCodes[index] ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {comparisonQueries[index]?.isError
-                    ? "This fund could not be loaded."
-                    : "Selected"}
+                <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+                  <p>
+                    {comparisonQueries[index]?.isError
+                      ? "This fund could not be loaded."
+                      : selectedFunds[index]?.currentNav
+                        ? `Latest NAV ${formatRupees(selectedFunds[index].currentNav.nav)} · ${formatFullDate(selectedFunds[index].currentNav.date)}`
+                        : "Latest NAV unavailable."}
+                  </p>
                   <Button
                     type="button"
                     variant="ghost"
@@ -214,18 +316,52 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
           <Card className="mt-6">
             <CardHeader>
               <CardTitle>Relative performance</CardTitle>
-              <CardDescription>Total return over the selected period</CardDescription>
+              <CardDescription>
+                Each fund’s return from the start of the selected period.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {historyReady ? (
-                <SchemeAnalysisChart series={chartSeries} />
+                <>
+                  <div className="mb-6 grid gap-3 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2">
+                    {displayedFunds.map((fund, index) => {
+                      const outcome = selectedOutcomes[index];
+                      return (
+                        <div key={fund.scheme.schemeCode} className="min-w-0">
+                          <p
+                            className="truncate text-sm font-medium"
+                            title={fund.scheme.schemeName}
+                          >
+                            {fund.scheme.schemeName}
+                          </p>
+                          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <p
+                              className={`font-mono text-xl font-semibold tabular-nums ${(outcome?.returnPercent ?? 0) < 0 ? "text-negative" : "text-positive"}`}
+                            >
+                              {outcome ? formatSignedPercent(outcome.returnPercent) : "—"}
+                            </p>
+                            <p className="font-mono text-sm text-muted-foreground tabular-nums">
+                              {outcome ? formatRupees(outcome.value) : "—"}
+                              <span className="ml-1 font-sans text-xs">ending value</span>
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <SchemeAnalysisChart
+                    series={chartSeries}
+                    initialRange={performanceRange}
+                    onRangeChange={updatePerformanceRange}
+                  />
+                </>
               ) : (
                 <Alert>
                   <CircleAlertIcon />
                   <AlertTitle>NAV comparison unavailable</AlertTitle>
                   <AlertDescription>
-                    Historical NAV data is unavailable for one or both funds, so performance
-                    comparison cannot be shown.
+                    Historical NAV data is unavailable for {unavailableNavFunds.join(" and ")}, so
+                    performance comparison cannot be shown.
                   </AlertDescription>
                 </Alert>
               )}
@@ -234,37 +370,52 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
           <Card className="mt-6">
             <CardHeader>
               <CardTitle>Performance characteristics</CardTitle>
-              <CardDescription>Calculated from NAV history</CardDescription>
+              <CardDescription>
+                Return and risk measures calculated from available NAV history.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Metric</TableHead>
-                    {displayedFunds.map((fund) => (
-                      <TableHead key={fund.scheme.schemeCode}>{fund.scheme.schemeName}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map(([label, key]) => (
-                    <TableRow key={key}>
-                      <TableCell className="font-medium">{label}</TableCell>
+              {historyReady ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Metric</TableHead>
                       {displayedFunds.map((fund) => (
-                        <TableCell key={fund.scheme.schemeCode} className="font-mono">
-                          {formatPercent(fund.metrics[key].value)}
-                        </TableCell>
+                        <TableHead key={fund.scheme.schemeCode}>{fund.scheme.schemeName}</TableHead>
                       ))}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map(([label, key]) => (
+                      <TableRow key={key}>
+                        <TableCell className="font-medium">{label}</TableCell>
+                        {displayedFunds.map((fund) => (
+                          <TableCell key={fund.scheme.schemeCode} className="font-mono">
+                            {formatPercent(fund.metrics[key].value)}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Alert>
+                  <CircleAlertIcon />
+                  <AlertTitle>Performance metrics unavailable</AlertTitle>
+                  <AlertDescription>
+                    Historical NAV data is unavailable for {unavailableNavFunds.join(" and ")}, so
+                    return and risk measures cannot be compared.
+                  </AlertDescription>
+                </Alert>
+              )}
             </CardContent>
           </Card>
           <Card className="mt-6">
             <CardHeader>
               <CardTitle>Fund facts</CardTitle>
-              <CardDescription>Fund details</CardDescription>
+              <CardDescription>
+                Key scheme details, including assets, fees, turnover, and stated risk.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -297,25 +448,40 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {portfolios.left.asOf && portfolios.right.asOf
-                    ? `Portfolio disclosure dates: ${portfolios.left.asOf} and ${portfolios.right.asOf}`
+                    ? `Reported as of ${formatFullDate(portfolios.left.asOf)} and ${formatFullDate(portfolios.right.asOf)}.`
                     : "Portfolio report date unavailable for one or both funds."}
                 </p>
               </div>
               <div className="grid gap-4 lg:grid-cols-2">
                 <AllocationComparison
                   title="Sector allocation"
+                  description="How each reported portfolio is distributed across sectors."
                   left={portfolios.left.sectors}
                   right={portfolios.right.sectors}
+                  leftFundName={displayedFunds[0].scheme.schemeName}
+                  rightFundName={displayedFunds[1].scheme.schemeName}
+                />
+                <PortfolioMetricComparison
+                  leftFundName={displayedFunds[0].scheme.schemeName}
+                  rightFundName={displayedFunds[1].scheme.schemeName}
+                  leftValue={portfolios.left.topTenConcentration}
+                  rightValue={portfolios.right.topTenConcentration}
                 />
                 <AllocationComparison
                   title="Asset allocation"
+                  description="How each reported portfolio is divided among equity, debt, cash, and other assets."
                   left={portfolios.left.assetAllocation}
                   right={portfolios.right.assetAllocation}
+                  leftFundName={displayedFunds[0].scheme.schemeName}
+                  rightFundName={displayedFunds[1].scheme.schemeName}
                 />
                 <AllocationComparison
                   title="Market-cap allocation"
+                  description="How each reported equity allocation is spread across large-, mid-, and small-cap companies."
                   left={portfolios.left.marketCapAllocation}
                   right={portfolios.right.marketCapAllocation}
+                  leftFundName={displayedFunds[0].scheme.schemeName}
+                  rightFundName={displayedFunds[1].scheme.schemeName}
                 />
               </div>
             </section>
