@@ -9,7 +9,7 @@ export default function DataAndLimitationsPage() {
     <main id="main-content" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <Link href="/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
         <ArrowLeftIcon data-icon="inline-start" />
-        Search funds
+        Back to research
       </Link>
       <header className="mt-10">
         <p className="text-sm font-medium text-muted-foreground">About navnote data</p>

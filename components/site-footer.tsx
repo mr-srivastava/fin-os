@@ -11,9 +11,6 @@ export function SiteFooter() {
           <Link href="/data-and-limitations" className="font-medium text-foreground">
             Data &amp; limitations
           </Link>
-          <Link href="/compare" className="font-medium text-foreground">
-            Compare two funds →
-          </Link>
         </div>
       </div>
     </footer>

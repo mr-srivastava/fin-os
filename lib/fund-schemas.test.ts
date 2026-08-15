@@ -2,7 +2,9 @@ import { assert, test } from "vitest";
 import * as v from "valibot";
 import {
   ApiErrorSchema,
+  ComparisonViewSchema,
   FundResearchSchema,
+  FundResearchViewSchema,
   NavPointSchema,
   SchemeSearchSchema,
 } from "./fund-schemas.ts";
@@ -33,6 +35,14 @@ test("rejects an invalid nested fund response", () => {
   });
 
   assert.equal(result.success, false);
+});
+
+test("rejects malformed nested research views", () => {
+  assert.equal(v.safeParse(FundResearchViewSchema, { scheme: {}, performance: {} }).success, false);
+  assert.equal(
+    v.safeParse(ComparisonViewSchema, { selections: [], comparison: {} }).success,
+    false,
+  );
 });
 
 test("rejects invalid NAV domain values", () => {

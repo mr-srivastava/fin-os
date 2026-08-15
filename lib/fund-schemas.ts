@@ -107,15 +107,125 @@ export const ApiErrorSchema: v.GenericSchema<ApiError> = v.object({
   message: v.string(),
 });
 
-// Read models are produced by this application but still validated at the browser boundary.
-// Their detailed invariants are covered by the pure mapper tests.
-export const FundResearchViewSchema: v.GenericSchema<FundResearchView> = v.custom<FundResearchView>(
-  (input) =>
-    typeof input === "object" && input !== null && "scheme" in input && "performance" in input,
-  "Expected a fund research view.",
-);
-export const ComparisonViewSchema: v.GenericSchema<ComparisonView> = v.custom<ComparisonView>(
-  (input) =>
-    typeof input === "object" && input !== null && "selections" in input && "comparison" in input,
-  "Expected a comparison view.",
-);
+const ToneSchema = v.picklist(["gain", "loss", "neutral"]);
+const DatedValueSchema = v.object({ date: IsoDateSchema, value: FiniteNumberSchema });
+const PerformanceRangeViewSchema = v.object({
+  label: v.string(),
+  series: v.array(v.object({ name: v.string(), points: v.array(DatedValueSchema) })),
+  outcomes: v.array(
+    v.object({
+      name: v.string(),
+      returnPercent: NullableFiniteNumberSchema,
+      endingValue: NullableFiniteNumberSchema,
+      tone: ToneSchema,
+    }),
+  ),
+});
+const PerformanceRangesSchema = v.object({
+  "6m": PerformanceRangeViewSchema,
+  "1y": PerformanceRangeViewSchema,
+  "3y": PerformanceRangeViewSchema,
+  "5y": PerformanceRangeViewSchema,
+  max: PerformanceRangeViewSchema,
+});
+const UnavailableSectionSchema = v.object({
+  status: v.literal("unavailable"),
+  message: v.string(),
+});
+const ReadySection = <T>(schema: v.GenericSchema<T>) =>
+  v.object({ status: v.literal("ready"), data: schema });
+const SectionSchema = <T>(schema: v.GenericSchema<T>) =>
+  v.union([ReadySection(schema), UnavailableSectionSchema]);
+const WeightedViewItemSchema = v.object({
+  name: v.string(),
+  weight: NonNegativeFiniteNumberSchema,
+});
+const FundPortfolioViewSchema = v.object({
+  asOf: v.nullable(IsoDateSchema),
+  sectors: v.array(
+    v.object({ ...WeightedViewItemSchema.entries, holdings: v.array(WeightedViewItemSchema) }),
+  ),
+  assetAllocation: v.array(WeightedViewItemSchema),
+  marketCapAllocation: v.array(WeightedViewItemSchema),
+  topTenConcentration: NullableFiniteNumberSchema,
+});
+
+export const FundResearchViewSchema = v.object({
+  scheme: SchemeSchema,
+  currentNav: v.nullable(NavPointSchema),
+  benchmarkName: v.nullable(v.string()),
+  performance: SectionSchema(PerformanceRangesSchema),
+  metricGroups: v.array(
+    v.object({
+      id: v.picklist(["returns", "risk"]),
+      metrics: v.array(
+        v.object({ id: v.string(), value: NullableFiniteNumberSchema, tone: ToneSchema }),
+      ),
+    }),
+  ),
+  facts: v.object({
+    aum: NullableFiniteNumberSchema,
+    expenseRatio: NullableFiniteNumberSchema,
+    portfolioTurnover: NullableFiniteNumberSchema,
+    benchmark: v.nullable(v.string()),
+    riskLabel: v.nullable(v.string()),
+    managers: v.array(v.string()),
+  }),
+  portfolio: SectionSchema(FundPortfolioViewSchema),
+}) satisfies v.GenericSchema<FundResearchView>;
+
+const ComparisonPortfolioViewSchema = v.object({
+  reportDates: v.tuple([v.nullable(IsoDateSchema), v.nullable(IsoDateSchema)]),
+  sectorAllocation: v.array(
+    v.object({
+      name: v.string(),
+      weights: v.tuple([NullableFiniteNumberSchema, NullableFiniteNumberSchema]),
+    }),
+  ),
+  assetAllocation: v.array(
+    v.object({
+      name: v.string(),
+      weights: v.tuple([NullableFiniteNumberSchema, NullableFiniteNumberSchema]),
+    }),
+  ),
+  marketCapAllocation: v.array(
+    v.object({
+      name: v.string(),
+      weights: v.tuple([NullableFiniteNumberSchema, NullableFiniteNumberSchema]),
+    }),
+  ),
+  concentration: v.tuple([NullableFiniteNumberSchema, NullableFiniteNumberSchema]),
+});
+const ComparisonSelectionSchema = v.union([
+  v.object({
+    status: v.literal("ready"),
+    scheme: SchemeSchema,
+    currentNav: v.nullable(NavPointSchema),
+  }),
+  v.object({ status: v.literal("unavailable"), schemeCode: v.string(), message: v.string() }),
+]);
+
+export const ComparisonViewSchema = v.object({
+  selections: v.tuple([ComparisonSelectionSchema, ComparisonSelectionSchema]),
+  comparison: SectionSchema(
+    v.object({
+      fundNames: v.tuple([v.string(), v.string()]),
+      performance: SectionSchema(PerformanceRangesSchema),
+      metrics: SectionSchema(
+        v.array(
+          v.object({
+            id: v.string(),
+            values: v.array(v.object({ value: NullableFiniteNumberSchema, tone: ToneSchema })),
+          }),
+        ),
+      ),
+      facts: v.array(
+        v.object({
+          id: v.string(),
+          values: v.array(v.union([v.string(), FiniteNumberSchema, v.null()])),
+        }),
+      ),
+      portfolio: SectionSchema(ComparisonPortfolioViewSchema),
+    }),
+  ),
+}) satisfies v.GenericSchema<ComparisonView>;

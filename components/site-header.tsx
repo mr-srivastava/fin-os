@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { ArrowRightIcon } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
 
 export function SiteHeader() {
   return (
@@ -11,9 +9,6 @@ export function SiteHeader() {
       >
         <Link href="/" className="text-lg font-semibold tracking-tight">
           navnote
-        </Link>
-        <Link href="/compare" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-          Compare funds <ArrowRightIcon data-icon="inline-end" />
         </Link>
       </nav>
     </header>

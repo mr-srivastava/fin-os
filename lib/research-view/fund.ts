@@ -1,44 +1,11 @@
-import { filterSeriesByRange, investmentOutcome, relativeReturnSeries } from "@/lib/analytics";
 import type { FundResearch, WeightedItem } from "@/lib/fund-types";
-import { PERFORMANCE_RANGES } from "@/lib/research-route-state";
-import type { FundResearchView, PerformanceRangeView, Tone } from "./types";
-
-function tone(value: number | null): Tone {
-  return value === null || value === 0 ? "neutral" : value > 0 ? "gain" : "loss";
-}
+import { financialTone, performanceRanges } from "./performance";
+import type { FundResearchView } from "./types";
 
 function allocation(items: readonly WeightedItem[]) {
   return [...items]
     .sort((a, b) => b.weight - a.weight)
     .map(({ name, weight }) => ({ name, weight }));
-}
-
-function rangeView(
-  fund: FundResearch,
-  range: (typeof PERFORMANCE_RANGES)[number]["value"],
-): PerformanceRangeView {
-  const fundPoints = filterSeriesByRange(fund.nav, range);
-  const sources = [{ name: "This fund", points: fundPoints }].concat(
-    fund.benchmark
-      ? [{ name: fund.benchmark.name, points: filterSeriesByRange(fund.benchmark.nav, range) }]
-      : [],
-  );
-  return {
-    label: PERFORMANCE_RANGES.find((item) => item.value === range)?.label ?? range,
-    series: sources.map((source) => ({
-      name: source.name,
-      points: relativeReturnSeries(source.points),
-    })),
-    outcomes: sources.map((source) => {
-      const outcome = investmentOutcome(source.points);
-      return {
-        name: source.name,
-        returnPercent: outcome?.returnPercent ?? null,
-        endingValue: outcome?.value ?? null,
-        tone: tone(outcome?.returnPercent ?? null),
-      };
-    }),
-  };
 }
 
 export function toFundResearchView(fund: FundResearch): FundResearchView {
@@ -65,9 +32,10 @@ export function toFundResearchView(fund: FundResearch): FundResearchView {
         holdings: (holdings.get(sector.name) ?? []).map(({ name, weight }) => ({ name, weight })),
       }))
     : [];
-  const ranges = Object.fromEntries(
-    PERFORMANCE_RANGES.map(({ value }) => [value, rangeView(fund, value)]),
-  ) as FundResearchView["performance"] extends { data: infer T } ? T : never;
+  const ranges = performanceRanges([
+    { name: "This fund", points: fund.nav },
+    ...(fund.benchmark ? [{ name: fund.benchmark.name, points: fund.benchmark.nav }] : []),
+  ]);
   return {
     scheme: fund.scheme,
     currentNav: fund.currentNav,
@@ -81,7 +49,7 @@ export function toFundResearchView(fund: FundResearch): FundResearchView {
         metrics: ["oneYear", "threeYear", "fiveYear"].map((id) => ({
           id,
           value: fund.metrics[id as keyof typeof fund.metrics].value,
-          tone: tone(fund.metrics[id as keyof typeof fund.metrics].value),
+          tone: financialTone(fund.metrics[id as keyof typeof fund.metrics].value),
         })),
       },
       {

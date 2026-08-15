@@ -1,38 +1,7 @@
-import { filterSeriesByRange, investmentOutcome, relativeReturnSeries } from "@/lib/analytics";
 import type { FundResearch, WeightedItem } from "@/lib/fund-types";
-import { PERFORMANCE_RANGES } from "@/lib/research-route-state";
 import { toFundResearchView } from "./fund";
-import type { ComparisonView, PerformanceRangeView, Tone } from "./types";
-
-function tone(value: number | null): Tone {
-  return value === null || value === 0 ? "neutral" : value > 0 ? "gain" : "loss";
-}
-
-function performance(
-  funds: readonly [FundResearch, FundResearch],
-  range: (typeof PERFORMANCE_RANGES)[number]["value"],
-): PerformanceRangeView {
-  const sources = funds.map((fund) => ({
-    name: fund.scheme.schemeName,
-    points: filterSeriesByRange(fund.nav, range),
-  }));
-  return {
-    label: PERFORMANCE_RANGES.find((item) => item.value === range)?.label ?? range,
-    series: sources.map((source) => ({
-      name: source.name,
-      points: relativeReturnSeries(source.points),
-    })),
-    outcomes: sources.map((source) => {
-      const outcome = investmentOutcome(source.points);
-      return {
-        name: source.name,
-        returnPercent: outcome?.returnPercent ?? null,
-        endingValue: outcome?.value ?? null,
-        tone: tone(outcome?.returnPercent ?? null),
-      };
-    }),
-  };
-}
+import { financialTone, performanceRanges } from "./performance";
+import type { ComparisonView } from "./types";
 
 function joined(left: readonly WeightedItem[], right: readonly WeightedItem[]) {
   const leftByName = new Map(left.map((item) => [item.name, item.weight]));
@@ -78,9 +47,9 @@ export function toComparisonView(
   const unavailableNav = pair
     .filter((fund) => !fund.availability.navHistory.available)
     .map((fund) => fund.scheme.schemeName);
-  const ranges = Object.fromEntries(
-    PERFORMANCE_RANGES.map(({ value }) => [value, performance(pair, value)]),
-  ) as Record<(typeof PERFORMANCE_RANGES)[number]["value"], PerformanceRangeView>;
+  const ranges = performanceRanges(
+    pair.map((fund) => ({ name: fund.scheme.schemeName, points: fund.nav })),
+  );
   const leftPortfolio = pair[0].portfolio;
   const rightPortfolio = pair[1].portfolio;
   const portfolio =
@@ -133,7 +102,7 @@ export function toComparisonView(
                   tone:
                     id === "volatility" || id === "maxDrawdown"
                       ? "neutral"
-                      : tone(fund.metrics[id].value),
+                      : financialTone(fund.metrics[id].value),
                 })),
               })),
             },
