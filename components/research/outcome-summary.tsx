@@ -1,20 +1,16 @@
-import { formatRupees, formatSignedPercent } from "@/lib/utils";
-
-export interface InvestmentOutcomeValue {
-  value: number;
-  returnPercent: number;
-}
-
 export function OutcomeSummary({
   name,
   colorClassName,
-  outcome,
+  returnText,
+  valueText,
+  status,
 }: {
   name: string;
   colorClassName: string;
-  outcome: InvestmentOutcomeValue | null;
+  returnText: string;
+  valueText: string;
+  status: "gain" | "loss" | "neutral";
 }) {
-  const isLoss = (outcome?.returnPercent ?? 0) < 0;
   return (
     <div className="min-w-0">
       <p className="flex items-center gap-2 text-sm font-medium">
@@ -23,12 +19,12 @@ export function OutcomeSummary({
       </p>
       <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <p
-          className={`font-mono text-xl font-semibold tabular-nums ${isLoss ? "text-negative" : "text-positive"}`}
+          className={`font-mono text-xl font-semibold tabular-nums ${status === "loss" ? "text-negative" : status === "gain" ? "text-positive" : "text-foreground"}`}
         >
-          {outcome ? formatSignedPercent(outcome.returnPercent) : "—"}
+          {returnText}
         </p>
         <p className="font-mono text-sm font-medium text-muted-foreground tabular-nums">
-          {outcome ? formatRupees(outcome.value) : "—"}
+          {valueText}
           <span className="ml-1 font-sans text-xs">ending value</span>
         </p>
       </div>

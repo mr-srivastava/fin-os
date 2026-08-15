@@ -45,27 +45,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { filterSeriesByRange, investmentOutcome, type PerformanceRange } from "@/lib/analytics";
+import { type PerformanceRange } from "@/lib/analytics";
 import { fundQueryOptions } from "@/lib/fund-queries";
-import type { AllocationItem, PortfolioItem } from "@/lib/fund-types";
+import type { AllocationItem, FundResearch, PortfolioItem } from "@/lib/fund-types";
+import type { AllocationDisplay } from "@/lib/research-display/types";
+import { type FundResearchRouteState, toFundResearchHref } from "@/lib/research-route-state";
+import { formatFullDate, formatPercent, formatSignedPercent } from "@/lib/utils";
 import {
-  type FundResearchRouteState,
-  PERFORMANCE_RANGES,
-  toFundResearchHref,
-} from "@/lib/research-route-state";
-import { formatFullDate, formatPercent, formatRupees } from "@/lib/utils";
+  toAllocationDisplay,
+  toFundFactsDisplay,
+  toPercentagePointsText,
+  toPerformanceDisplay,
+} from "@/lib/research-display/fund-research";
 
-const allocationColors = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-];
 interface AllocationBarProps {
   title: string;
   description: string;
-  items: readonly AllocationItem[];
+  items: readonly AllocationDisplay[];
 }
 
 interface SectorHoldingsProps {
@@ -80,8 +76,7 @@ interface FundResearchViewProps {
 
 function AllocationBar({ title, description, items }: AllocationBarProps) {
   if (!items.length) return null;
-  const sortedItems = [...items].sort((left, right) => right.weight - left.weight);
-  const visibleItems = sortedItems.filter((item) => item.weight > 0);
+  const visibleItems = items.filter((item) => item.weight > 0);
   return (
     <Card>
       <CardHeader>
@@ -91,15 +86,15 @@ function AllocationBar({ title, description, items }: AllocationBarProps) {
       <CardContent>
         <div
           className="flex h-3 overflow-hidden rounded-full bg-muted"
-          aria-label={`${title}: ${visibleItems.map((item) => `${item.name} ${formatPercent(item.weight)}`).join(", ")}`}
+          aria-label={`${title}: ${visibleItems.map((item) => `${item.name} ${item.weightText}`).join(", ")}`}
         >
-          {visibleItems.map((item, index) => {
+          {visibleItems.map((item) => {
             return (
               <div
                 key={item.name}
                 className="min-w-px first:rounded-l-full last:rounded-r-full"
                 style={{
-                  backgroundColor: allocationColors[index % allocationColors.length],
+                  backgroundColor: item.color,
                   flex: item.weight,
                 }}
               />
@@ -107,7 +102,7 @@ function AllocationBar({ title, description, items }: AllocationBarProps) {
           })}
         </div>
         <div className="mt-4 flex flex-col gap-2.5">
-          {sortedItems.map((item, index) => (
+          {items.map((item) => (
             <div
               key={item.name}
               className="flex items-center justify-between gap-3 text-sm tabular-nums"
@@ -116,11 +111,11 @@ function AllocationBar({ title, description, items }: AllocationBarProps) {
                 <span
                   aria-hidden="true"
                   className="size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: allocationColors[index % allocationColors.length] }}
+                  style={{ backgroundColor: item.color }}
                 />
                 <span className="truncate">{item.name}</span>
               </span>
-              <span className="font-mono text-muted-foreground">{formatPercent(item.weight)}</span>
+              <span className="font-mono text-muted-foreground">{item.weightText}</span>
             </div>
           ))}
         </div>
@@ -225,7 +220,7 @@ function FundLoading() {
   );
 }
 
-export function FundResearchView({ schemeCode, routeState }: FundResearchViewProps) {
+export function FundResearchDataProvider({ schemeCode, routeState }: FundResearchViewProps) {
   const router = useRouter();
   const fundQuery = useQuery(fundQueryOptions(schemeCode));
   const [performanceRange, setPerformanceRange] = useState<PerformanceRange>(routeState.range);
@@ -263,19 +258,82 @@ export function FundResearchView({ schemeCode, routeState }: FundResearchViewPro
       </main>
     );
   if (!fundQuery.data) return <FundLoading />;
-  const fund = fundQuery.data;
-  const selectedOutcome = investmentOutcome(filterSeriesByRange(fund.nav, performanceRange));
-  const selectedBenchmarkOutcome = investmentOutcome(
-    filterSeriesByRange(fund.benchmark?.nav ?? [], performanceRange),
+  return (
+    <FundResearchScreen
+      schemeCode={schemeCode}
+      fund={fundQuery.data}
+      performanceRange={performanceRange}
+      showBenchmark={showBenchmark}
+      onChartState={updateChartState}
+    />
   );
+}
+
+export const FundResearchView = FundResearchDataProvider;
+
+function FundResearchScreen({
+  schemeCode,
+  fund,
+  performanceRange,
+  showBenchmark,
+  onChartState,
+}: {
+  schemeCode: string;
+  fund: FundResearch;
+  performanceRange: PerformanceRange;
+  showBenchmark: boolean;
+  onChartState: (range: PerformanceRange, showBenchmark: boolean) => void;
+}) {
+  const performance = toPerformanceDisplay(fund, performanceRange, showBenchmark);
   const returns = [
-    { label: "1Y return", value: fund.metrics.oneYear.value, format: "signed-percent", direction: "positive-is-good" },
-    { label: "3Y annualised", value: fund.metrics.threeYear.value, format: "signed-percent", direction: "positive-is-good" },
-    { label: "5Y annualised", value: fund.metrics.fiveYear.value, format: "signed-percent", direction: "positive-is-good" },
+    {
+      label: "1Y return",
+      valueText: formatSignedPercent(fund.metrics.oneYear.value),
+      status:
+        fund.metrics.oneYear.value === null
+          ? "neutral"
+          : fund.metrics.oneYear.value > 0
+            ? "gain"
+            : fund.metrics.oneYear.value < 0
+              ? "loss"
+              : "neutral",
+    },
+    {
+      label: "3Y annualised",
+      valueText: formatSignedPercent(fund.metrics.threeYear.value),
+      status:
+        fund.metrics.threeYear.value === null
+          ? "neutral"
+          : fund.metrics.threeYear.value > 0
+            ? "gain"
+            : fund.metrics.threeYear.value < 0
+              ? "loss"
+              : "neutral",
+    },
+    {
+      label: "5Y annualised",
+      valueText: formatSignedPercent(fund.metrics.fiveYear.value),
+      status:
+        fund.metrics.fiveYear.value === null
+          ? "neutral"
+          : fund.metrics.fiveYear.value > 0
+            ? "gain"
+            : fund.metrics.fiveYear.value < 0
+              ? "loss"
+              : "neutral",
+    },
   ] satisfies readonly MetricCardValue[];
   const risks = [
-    { label: "Volatility", value: fund.metrics.volatility.value, format: "percent", direction: "neutral" },
-    { label: "Max drawdown", value: fund.metrics.maxDrawdown.value, format: "signed-percent", direction: "neutral" },
+    {
+      label: "Volatility",
+      valueText: formatPercent(fund.metrics.volatility.value),
+      status: "neutral",
+    },
+    {
+      label: "Max drawdown",
+      valueText: formatSignedPercent(fund.metrics.maxDrawdown.value),
+      status: "neutral",
+    },
   ] satisfies readonly MetricCardValue[];
   return (
     <main id="main-content" className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
@@ -318,18 +376,17 @@ export function FundResearchView({ schemeCode, routeState }: FundResearchViewPro
               </div>
               <CardDescription>If you had invested at the start of this period</CardDescription>
               <p className="mt-2 text-xs font-medium text-muted-foreground">
-                Selected period:{" "}
-                {PERFORMANCE_RANGES.find((range) => range.value === performanceRange)?.label}
+                Selected period: {performance.periodLabel}
                 {" total return"}
               </p>
             </div>
             <div className="sm:text-right">
               <p className="text-xs font-medium text-muted-foreground">Latest NAV</p>
               <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
-                {formatRupees(fund.currentNav?.nav ?? null)}
+                {performance.latestNavText}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                As of {fund.currentNav?.date ? formatFullDate(fund.currentNav.date) : "—"}
+                As of {performance.latestNavDateText}
               </p>
             </div>
           </div>
@@ -343,14 +400,18 @@ export function FundResearchView({ schemeCode, routeState }: FundResearchViewPro
             <OutcomeSummary
               name="This fund"
               colorClassName="bg-(--chart-1)"
-              outcome={selectedOutcome}
+              returnText={performance.outcomes[0]?.returnText ?? "—"}
+              valueText={performance.outcomes[0]?.valueText ?? "—"}
+              status={performance.outcomes[0]?.status ?? "neutral"}
             />
             {showBenchmark && fund.benchmark ? (
               <div className="border-t pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
                 <OutcomeSummary
                   name={fund.benchmark.name}
                   colorClassName="bg-(--chart-3)"
-                  outcome={selectedBenchmarkOutcome}
+                  returnText={performance.outcomes[1]?.returnText ?? "—"}
+                  valueText={performance.outcomes[1]?.valueText ?? "—"}
+                  status={performance.outcomes[1]?.status ?? "neutral"}
                 />
               </div>
             ) : null}
@@ -360,7 +421,7 @@ export function FundResearchView({ schemeCode, routeState }: FundResearchViewPro
                   <Switch
                     id={`show-benchmark-${schemeCode}`}
                     checked={showBenchmark}
-                    onCheckedChange={(checked) => updateChartState(performanceRange, checked)}
+                    onCheckedChange={(checked) => onChartState(performanceRange, checked)}
                   />
                   <label
                     htmlFor={`show-benchmark-${schemeCode}`}
@@ -382,20 +443,9 @@ export function FundResearchView({ schemeCode, routeState }: FundResearchViewPro
         <CardContent>
           {fund.availability.navHistory.available ? (
             <SchemeAnalysisChart
-              series={[
-                { name: "This fund", color: "chart-1", points: fund.nav },
-                ...(showBenchmark && fund.benchmark
-                  ? [
-                      {
-                        name: fund.benchmark.name,
-                        color: "chart-3" as const,
-                        points: fund.benchmark.nav,
-                      },
-                    ]
-                  : []),
-              ]}
+              series={performance.series}
               range={performanceRange}
-              onRangeChange={(range) => updateChartState(range, showBenchmark)}
+              onRangeChange={(range) => onChartState(range, showBenchmark)}
             />
           ) : (
             <Alert>
@@ -414,7 +464,7 @@ export function FundResearchView({ schemeCode, routeState }: FundResearchViewPro
         <MetricCardGroup title="Risk" metrics={risks} />
       </section>
       <div className="mt-6">
-        <FundFactsGrid facts={fund.facts} />
+        <FundFactsGrid facts={toFundFactsDisplay(fund)} />
       </div>
       <section className="mt-6">
         <div className="mb-4 flex items-center gap-2">
@@ -436,15 +486,17 @@ export function FundResearchView({ schemeCode, routeState }: FundResearchViewPro
               <AllocationBar
                 title="Asset allocation"
                 description="How the reported portfolio is divided among equity, debt, cash, and other assets."
-                items={fund.portfolio.assetAllocation}
+                items={toAllocationDisplay(fund.portfolio.assetAllocation)}
               />
               <AllocationBar
                 title="Market-cap allocation"
                 description="How the reported equity allocation is spread across large-, mid-, and small-cap companies."
-                items={fund.portfolio.marketCapAllocation}
+                items={toAllocationDisplay(fund.portfolio.marketCapAllocation)}
               />
               {fund.portfolio.topTenConcentration !== null && (
-                <PortfolioConcentrationCard value={fund.portfolio.topTenConcentration} />
+                <PortfolioConcentrationCard
+                  valueText={toPercentagePointsText(fund.portfolio.topTenConcentration)}
+                />
               )}
             </div>
           </>

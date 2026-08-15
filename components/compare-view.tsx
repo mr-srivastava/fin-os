@@ -6,7 +6,7 @@ import { useQueries } from "@tanstack/react-query";
 import { ArrowLeftIcon, CircleAlertIcon, GitCompareArrowsIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FundSearch } from "@/components/fund-search";
-import { SchemeAnalysisChart, type SchemeAnalysisSeries } from "@/components/scheme-analysis-chart";
+import { SchemeAnalysisChart } from "@/components/scheme-analysis-chart";
 import { OutcomeSummary } from "@/components/research/outcome-summary";
 import { FundFactsComparisonTable } from "@/components/research/fund-facts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -23,19 +23,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { fundQueryOptions } from "@/lib/fund-queries";
-import type { FundPair, FundResearch, MetricKey, Scheme, WeightedItem } from "@/lib/fund-types";
+import type { FundPair, FundResearch, Scheme } from "@/lib/fund-types";
 import { isFundPair } from "@/lib/fund-types";
-import { filterSeriesByRange, investmentOutcome, type PerformanceRange } from "@/lib/analytics";
+import { type PerformanceRange } from "@/lib/analytics";
+import {
+  toComparisonFactsDisplay,
+  toComparisonAllocationDisplay,
+  toComparisonMetricDisplay,
+  toComparisonPerformanceDisplay,
+} from "@/lib/research-display/comparison";
 import { type ComparisonRouteState, toComparisonHref } from "@/lib/research-route-state";
 import { formatFullDate, formatPercent, formatRupees } from "@/lib/utils";
-
-type MetricRow = readonly [label: string, key: MetricKey];
 
 interface AllocationComparisonProps {
   title: string;
   description: string;
-  left: readonly WeightedItem[];
-  right: readonly WeightedItem[];
+  rows: readonly { name: string; leftText: string; rightText: string }[];
   leftFundName: string;
   rightFundName: string;
 }
@@ -47,15 +50,11 @@ interface CompareViewProps {
 function AllocationComparison({
   title,
   description,
-  left,
-  right,
+  rows,
   leftFundName,
   rightFundName,
 }: AllocationComparisonProps) {
-  const names = [...new Set([...left, ...right].map((item) => item.name))];
-  if (!names.length) return null;
-  const leftWeights = new Map(left.map((item) => [item.name, item.weight]));
-  const rightWeights = new Map(right.map((item) => [item.name, item.weight]));
+  if (!rows.length) return null;
   return (
     <Card>
       <CardHeader>
@@ -67,20 +66,16 @@ function AllocationComparison({
           <TableHeader>
             <TableRow>
               <TableHead>Allocation</TableHead>
-              <TableHead>{left.length ? leftFundName : "—"}</TableHead>
-              <TableHead>{right.length ? rightFundName : "—"}</TableHead>
+              <TableHead>{leftFundName}</TableHead>
+              <TableHead>{rightFundName}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {names.map((name) => (
-              <TableRow key={name}>
-                <TableCell className="font-medium">{name}</TableCell>
-                <TableCell className="font-mono">
-                  {formatPercent(leftWeights.get(name) ?? null)}
-                </TableCell>
-                <TableCell className="font-mono">
-                  {formatPercent(rightWeights.get(name) ?? null)}
-                </TableCell>
+            {rows.map((row) => (
+              <TableRow key={row.name}>
+                <TableCell className="font-medium">{row.name}</TableCell>
+                <TableCell className="font-mono">{row.leftText}</TableCell>
+                <TableCell className="font-mono">{row.rightText}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -93,17 +88,17 @@ function AllocationComparison({
 interface PortfolioMetricComparisonProps {
   leftFundName: string;
   rightFundName: string;
-  leftValue: number | null;
-  rightValue: number | null;
+  leftValueText: string | null;
+  rightValueText: string | null;
 }
 
 function PortfolioMetricComparison({
   leftFundName,
   rightFundName,
-  leftValue,
-  rightValue,
+  leftValueText,
+  rightValueText,
 }: PortfolioMetricComparisonProps) {
-  if (leftValue === null && rightValue === null) return null;
+  if (leftValueText === null && rightValueText === null) return null;
   return (
     <Card>
       <CardHeader>
@@ -115,17 +110,15 @@ function PortfolioMetricComparison({
       <CardContent className="grid gap-4 sm:grid-cols-2">
         {(
           [
-            [leftFundName, leftValue],
-            [rightFundName, rightValue],
+            [leftFundName, leftValueText],
+            [rightFundName, rightValueText],
           ] as const
         ).map(([fundName, value]) => (
           <div key={fundName} className="min-w-0">
             <p className="truncate text-xs text-muted-foreground" title={fundName}>
               {fundName}
             </p>
-            <p className="mt-1 font-mono text-2xl font-medium tabular-nums">
-              {formatPercent(typeof value === "number" ? value / 100 : null)}
-            </p>
+            <p className="mt-1 font-mono text-2xl font-medium tabular-nums">{value ?? "—"}</p>
           </div>
         ))}
       </CardContent>
@@ -133,7 +126,7 @@ function PortfolioMetricComparison({
   );
 }
 
-export function CompareView({ routeState }: CompareViewProps) {
+export function ComparisonDataProvider({ routeState }: CompareViewProps) {
   const router = useRouter();
   const [performanceRange, setPerformanceRange] = useState<PerformanceRange>(routeState.range);
   useEffect(() => setPerformanceRange(routeState.range), [routeState]);
@@ -178,20 +171,10 @@ export function CompareView({ routeState }: CompareViewProps) {
     isFundPair(funds)
       ? funds
       : null;
-  const chartSeries: readonly SchemeAnalysisSeries[] = (displayedFunds ?? []).map(
-    (fund, index) => ({
-      name: fund.scheme.schemeName,
-      color: index === 0 ? "foreground" : "chart-3",
-      points: fund.nav,
-    }),
-  );
-  const rows = [
-    ["1Y return", "oneYear"],
-    ["3Y annualized", "threeYear"],
-    ["5Y annualized", "fiveYear"],
-    ["1Y volatility", "volatility"],
-    ["Max drawdown", "maxDrawdown"],
-  ] satisfies readonly MetricRow[];
+  const comparisonPerformance = displayedFunds
+    ? toComparisonPerformanceDisplay(displayedFunds, performanceRange)
+    : null;
+  const rows = displayedFunds ? toComparisonMetricDisplay(displayedFunds) : [];
   const leftPortfolio = displayedFunds?.[0].portfolio;
   const rightPortfolio = displayedFunds?.[1].portfolio;
   const portfolios =
@@ -201,9 +184,6 @@ export function CompareView({ routeState }: CompareViewProps) {
   const unavailableNavFunds = (displayedFunds ?? [])
     .filter((fund) => !fund.availability.navHistory.available)
     .map((fund) => fund.scheme.schemeName);
-  const selectedOutcomes = (displayedFunds ?? []).map((fund) =>
-    investmentOutcome(filterSeriesByRange(fund.nav, performanceRange)),
-  );
   return (
     <main id="main-content" className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
       <Link href="/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
@@ -291,17 +271,19 @@ export function CompareView({ routeState }: CompareViewProps) {
               {historyReady ? (
                 <>
                   <div className="mb-6 grid gap-3 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2">
-                    {displayedFunds.map((fund, index) => (
+                    {comparisonPerformance?.outcomes.map((outcome, index) => (
                       <OutcomeSummary
-                        key={fund.scheme.schemeCode}
-                        name={fund.scheme.schemeName}
+                        key={outcome.name}
+                        name={outcome.name}
                         colorClassName={index === 0 ? "bg-foreground" : "bg-(--chart-3)"}
-                        outcome={selectedOutcomes[index] ?? null}
+                        returnText={outcome.returnText}
+                        valueText={outcome.valueText}
+                        status={outcome.status}
                       />
                     ))}
                   </div>
                   <SchemeAnalysisChart
-                    series={chartSeries}
+                    series={comparisonPerformance?.series ?? []}
                     range={performanceRange}
                     onRangeChange={updatePerformanceRange}
                   />
@@ -337,12 +319,12 @@ export function CompareView({ routeState }: CompareViewProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {rows.map(([label, key]) => (
-                      <TableRow key={key}>
-                        <TableCell className="font-medium">{label}</TableCell>
-                        {displayedFunds.map((fund) => (
-                          <TableCell key={fund.scheme.schemeCode} className="font-mono">
-                            {formatPercent(fund.metrics[key].value)}
+                    {rows.map((row) => (
+                      <TableRow key={row.label}>
+                        <TableCell className="font-medium">{row.label}</TableCell>
+                        {row.values.map((value) => (
+                          <TableCell key={value.label} className="font-mono">
+                            {value.valueText}
                           </TableCell>
                         ))}
                       </TableRow>
@@ -361,7 +343,10 @@ export function CompareView({ routeState }: CompareViewProps) {
               )}
             </CardContent>
           </Card>
-          <FundFactsComparisonTable funds={displayedFunds} />
+          <FundFactsComparisonTable
+            fundNames={displayedFunds.map((fund) => fund.scheme.schemeName)}
+            rows={toComparisonFactsDisplay(displayedFunds)}
+          />
           {portfolios ? (
             <section className="mt-6">
               <div className="mb-4">
@@ -378,30 +363,44 @@ export function CompareView({ routeState }: CompareViewProps) {
                 <AllocationComparison
                   title="Sector allocation"
                   description="How each reported portfolio is distributed across sectors."
-                  left={portfolios.left.sectors}
-                  right={portfolios.right.sectors}
+                  rows={toComparisonAllocationDisplay(
+                    portfolios.left.sectors,
+                    portfolios.right.sectors,
+                  )}
                   leftFundName={displayedFunds[0].scheme.schemeName}
                   rightFundName={displayedFunds[1].scheme.schemeName}
                 />
                 <PortfolioMetricComparison
                   leftFundName={displayedFunds[0].scheme.schemeName}
                   rightFundName={displayedFunds[1].scheme.schemeName}
-                  leftValue={portfolios.left.topTenConcentration}
-                  rightValue={portfolios.right.topTenConcentration}
+                  leftValueText={
+                    portfolios.left.topTenConcentration === null
+                      ? null
+                      : formatPercent(portfolios.left.topTenConcentration / 100)
+                  }
+                  rightValueText={
+                    portfolios.right.topTenConcentration === null
+                      ? null
+                      : formatPercent(portfolios.right.topTenConcentration / 100)
+                  }
                 />
                 <AllocationComparison
                   title="Asset allocation"
                   description="How each reported portfolio is divided among equity, debt, cash, and other assets."
-                  left={portfolios.left.assetAllocation}
-                  right={portfolios.right.assetAllocation}
+                  rows={toComparisonAllocationDisplay(
+                    portfolios.left.assetAllocation,
+                    portfolios.right.assetAllocation,
+                  )}
                   leftFundName={displayedFunds[0].scheme.schemeName}
                   rightFundName={displayedFunds[1].scheme.schemeName}
                 />
                 <AllocationComparison
                   title="Market-cap allocation"
                   description="How each reported equity allocation is spread across large-, mid-, and small-cap companies."
-                  left={portfolios.left.marketCapAllocation}
-                  right={portfolios.right.marketCapAllocation}
+                  rows={toComparisonAllocationDisplay(
+                    portfolios.left.marketCapAllocation,
+                    portfolios.right.marketCapAllocation,
+                  )}
                   leftFundName={displayedFunds[0].scheme.schemeName}
                   rightFundName={displayedFunds[1].scheme.schemeName}
                 />
@@ -430,3 +429,5 @@ export function CompareView({ routeState }: CompareViewProps) {
     </main>
   );
 }
+
+export const CompareView = ComparisonDataProvider;

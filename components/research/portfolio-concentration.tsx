@@ -1,10 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatPercent } from "@/lib/utils";
-
-/** Percentage points, where 100 represents 100%. */
-export type PercentagePoints = number;
-
-export function PortfolioConcentrationCard({ value }: { value: PercentagePoints }) {
+export function PortfolioConcentrationCard({ valueText }: { valueText: string }) {
   return (
     <Card>
       <CardHeader>
@@ -14,7 +9,7 @@ export function PortfolioConcentrationCard({ value }: { value: PercentagePoints 
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="font-mono text-2xl font-medium">{formatPercent(value / 100)}</p>
+        <p className="font-mono text-2xl font-medium">{valueText}</p>
       </CardContent>
     </Card>
   );

@@ -1,17 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
 import { LineChart, type ChartColor, type ChartSeries } from "@/components/line-chart";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { filterSeriesByRange, relativeReturnSeries, type PerformanceRange } from "@/lib/analytics";
-import type { NavPoint } from "@/lib/fund-types";
+import type { PerformanceRange } from "@/lib/analytics";
 import { PERFORMANCE_RANGES } from "@/lib/research-route-state";
 
-export interface SchemeAnalysisSeries {
-  name: string;
+export interface SchemeAnalysisSeries extends ChartSeries {
   color: ChartColor;
-  points: readonly NavPoint[];
 }
 
 interface SchemeAnalysisChartProps {
@@ -21,15 +17,6 @@ interface SchemeAnalysisChartProps {
 }
 
 export function SchemeAnalysisChart({ series, range, onRangeChange }: SchemeAnalysisChartProps) {
-  const chartSeries = useMemo<readonly ChartSeries[]>(
-    () =>
-      series.map((item) => ({
-        ...item,
-        points: relativeReturnSeries(filterSeriesByRange([...item.points], range)),
-      })),
-    [range, series],
-  );
-
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
@@ -52,9 +39,9 @@ export function SchemeAnalysisChart({ series, range, onRangeChange }: SchemeAnal
           ))}
         </ToggleGroup>
       </div>
-      <LineChart series={chartSeries} valueMode="return" />
+      <LineChart series={series} valueMode="return" />
       <div className="mt-4 flex flex-wrap gap-3" aria-label="Chart series">
-        {chartSeries.map((item) => (
+        {series.map((item) => (
           <Badge key={item.name} variant="outline">
             <i
               aria-hidden="true"
