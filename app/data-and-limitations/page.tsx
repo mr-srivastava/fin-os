@@ -6,7 +6,7 @@ const externalLinkClassName = "font-medium text-foreground underline underline-o
 
 export default function DataAndLimitationsPage() {
   return (
-    <main id="main-content" className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+    <main id="main-content" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <Link href="/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
         <ArrowLeftIcon data-icon="inline-start" />
         Search funds

@@ -261,11 +261,13 @@ export async function searchSchemes(query: string) {
     .slice(0, 12);
 }
 
-export async function getFundResearch(schemeCode: string): Promise<FundResearch | null> {
-  const [fundResult, navResult, benchmarkResult] = await Promise.allSettled([
+async function loadFundResearch(
+  schemeCode: string,
+  benchmark: Promise<PromiseSettledResult<NavPoint[]>>,
+): Promise<FundResearch | null> {
+  const [fundResult, navResult] = await Promise.allSettled([
     request(`/scheme-code/${schemeCode}`),
     getTigzigNav(schemeCode),
-    getTigzigNifty500(),
   ]);
   if (fundResult.status === "rejected") throw fundResult.reason;
   const normalized = normalizeFundPayload(fundResult.value);
@@ -283,6 +285,7 @@ export async function getFundResearch(schemeCode: string): Promise<FundResearch 
     return normalized;
   }
   applyNavHistory(normalized, navResult.value);
+  const benchmarkResult = await benchmark;
   if (benchmarkResult.status === "fulfilled" && benchmarkResult.value.length > 1) {
     normalized.benchmark = {
       name: "Nifty 500 (price index)",
@@ -290,6 +293,23 @@ export async function getFundResearch(schemeCode: string): Promise<FundResearch 
     };
   }
   return normalized;
+}
+
+/** Loads one or more funds while sharing the benchmark request across the batch. */
+export async function getFundResearchBatch(
+  schemeCodes: readonly string[],
+): Promise<PromiseSettledResult<FundResearch | null>[]> {
+  const benchmark = Promise.allSettled([getTigzigNifty500()]).then(([result]) => result!);
+  return Promise.allSettled(
+    schemeCodes.map((schemeCode) => loadFundResearch(schemeCode, benchmark)),
+  );
+}
+
+export async function getFundResearch(schemeCode: string): Promise<FundResearch | null> {
+  const [result] = await getFundResearchBatch([schemeCode]);
+  if (!result) throw new ProviderError("We could not load this fund right now.");
+  if (result.status === "rejected") throw result.reason;
+  return result.value;
 }
 
 function clearNavResearch(fund: FundResearch) {

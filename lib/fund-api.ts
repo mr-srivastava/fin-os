@@ -1,6 +1,12 @@
 import * as v from "valibot";
-import { ApiErrorSchema, FundResearchSchema, SchemeSearchSchema } from "@/lib/fund-schemas";
-import type { ApiErrorCode, FundResearch, Scheme } from "@/lib/fund-types";
+import {
+  ApiErrorSchema,
+  ComparisonViewSchema,
+  FundResearchViewSchema,
+  SchemeSearchSchema,
+} from "@/lib/fund-schemas";
+import type { ApiErrorCode, Scheme } from "@/lib/fund-types";
+import type { ComparisonView, FundResearchView } from "@/lib/research-view/types";
 
 export type ClientApiErrorCode = ApiErrorCode | "invalid_response" | "network_error";
 
@@ -46,9 +52,17 @@ export function searchFunds(query: string, signal?: AbortSignal) {
 }
 
 export function loadFundResearch(schemeCode: string, signal?: AbortSignal) {
-  return request<FundResearch>(
+  return request<FundResearchView>(
     `/api/funds/${encodeURIComponent(schemeCode)}`,
-    FundResearchSchema,
+    FundResearchViewSchema,
+    signal,
+  );
+}
+
+export function loadComparison(fund: string, against: string, signal?: AbortSignal) {
+  return request<ComparisonView>(
+    `/api/compare?fund=${encodeURIComponent(fund)}&against=${encodeURIComponent(against)}`,
+    ComparisonViewSchema,
     signal,
   );
 }

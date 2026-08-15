@@ -45,6 +45,7 @@ test("requires the complete API error contract", () => {
   const errorCodes: readonly ApiErrorCode[] = [
     "invalid_query",
     "invalid_scheme_code",
+    "invalid_comparison",
     "not_found",
     "provider_error",
   ];

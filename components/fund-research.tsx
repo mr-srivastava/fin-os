@@ -179,7 +179,7 @@ function SectorHoldings({ sectors }: SectorHoldingsProps) {
 
 function FundLoading() {
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <Skeleton className="mb-12 h-5 w-32" />
       <div className="flex flex-col gap-4">
         <Skeleton className="h-5 w-36" />
@@ -218,7 +218,7 @@ export function FundResearchDataProvider({ schemeCode, routeState }: FundResearc
   });
   if (screenModel.status === "error")
     return (
-      <main className="mx-auto grid min-h-screen max-w-5xl place-items-center px-4 sm:px-6">
+      <main className="mx-auto grid min-h-screen max-w-6xl place-items-center px-4 sm:px-6">
         <Empty className="max-w-lg">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -262,7 +262,7 @@ function FundResearchScreen({
 }) {
   const performance = model.performance.status === "ready" ? model.performance.data : null;
   return (
-    <main id="main-content" className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
+    <main id="main-content" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <Link href="/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
         <ArrowLeftIcon data-icon="inline-start" />
         Search funds

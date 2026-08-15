@@ -17,13 +17,19 @@ Browser
        -> FinAPI fund facts and portfolio
        -> TigZig NAV history
        -> TigZig Nifty 500 benchmark
-       -> normalized FundResearch response
+       -> semantic single-fund research view
+  -> /api/compare?fund=...&against=...
+       -> concurrent two-fund research with one shared Nifty 500 request
+       -> semantic comparison view, including partial availability
 ```
 
 The search experience uses `GET /api/schemes?q=<query>`. It accepts a trimmed
 query of 2–80 characters and returns at most 12 eligible schemes. Fund research
 uses `GET /api/funds/<schemeCode>`, where the scheme code must contain 4–7
-digits.
+digits. It returns the browser-facing research view rather than the internal
+provider-normalized resource. Comparisons use `GET /api/compare` with two
+different 4–7 digit scheme codes. A valid comparison request returns section
+availability in its body even when one selected fund cannot be loaded.
 
 ## Provider boundaries
 
@@ -45,10 +51,14 @@ that degraded behavior.
 portfolio data, allowing the interface to distinguish unavailable data from a
 zero or empty value.
 
+`lib/research-view/` converts that internal contract into semantic browser
+read models. It owns cross-provider availability policy, range-specific
+performance calculations, portfolio normalization, and comparison joining.
 `lib/fund-schemas.ts` defines Valibot schemas for browser-facing API responses.
 `lib/fund-api.ts` validates every client response against those schemas before
-TanStack Query exposes it to UI components. When changing a response, update
-the type, schema, route, consumer, and tests as one change.
+TanStack Query exposes it to UI components. The client retains locale formatting
+and visual tokens. When changing a response, update the type, schema, route,
+consumer, and tests as one change.
 
 ## Presentation layers
 

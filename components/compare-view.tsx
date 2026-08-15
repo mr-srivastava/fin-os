@@ -137,7 +137,7 @@ function ComparisonScreen({
 
   const comparison = screenModel.comparison.status === "ready" ? screenModel.comparison.data : null;
   return (
-    <main id="main-content" className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
+    <main id="main-content" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <Link href="/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
         <ArrowLeftIcon data-icon="inline-start" />
         Search funds

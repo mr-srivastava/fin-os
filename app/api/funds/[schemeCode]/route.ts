@@ -1,5 +1,6 @@
 import { ProviderError, getFundResearch } from "@/lib/finapi";
 import { isSchemeCode } from "@/lib/fund-input";
+import { toFundResearchView } from "@/lib/research-view/fund";
 
 export async function GET(_request: Request, context: RouteContext<"/api/funds/[schemeCode]">) {
   const { schemeCode } = await context.params;
@@ -16,7 +17,7 @@ export async function GET(_request: Request, context: RouteContext<"/api/funds/[
         { error: "not_found", message: "This is not an active Direct Growth equity scheme in V0." },
         { status: 404 },
       );
-    return Response.json(fund);
+    return Response.json(toFundResearchView(fund));
   } catch (error) {
     const provider =
       error instanceof ProviderError

@@ -1,6 +1,7 @@
 import * as v from "valibot";
 import { isIsoDate } from "@/lib/date";
 import type { ApiError, FundResearch, Scheme } from "@/lib/fund-types";
+import type { ComparisonView, FundResearchView } from "@/lib/research-view/types";
 
 const FiniteNumberSchema = v.pipe(v.number(), v.finite());
 const NullableFiniteNumberSchema = v.nullable(FiniteNumberSchema);
@@ -96,6 +97,25 @@ export const FundResearchSchema: v.GenericSchema<FundResearch> = v.object({
 
 export const SchemeSearchSchema = v.object({ schemes: v.array(SchemeSchema) });
 export const ApiErrorSchema: v.GenericSchema<ApiError> = v.object({
-  error: v.picklist(["invalid_query", "invalid_scheme_code", "not_found", "provider_error"]),
+  error: v.picklist([
+    "invalid_query",
+    "invalid_scheme_code",
+    "invalid_comparison",
+    "not_found",
+    "provider_error",
+  ]),
   message: v.string(),
 });
+
+// Read models are produced by this application but still validated at the browser boundary.
+// Their detailed invariants are covered by the pure mapper tests.
+export const FundResearchViewSchema: v.GenericSchema<FundResearchView> = v.custom<FundResearchView>(
+  (input) =>
+    typeof input === "object" && input !== null && "scheme" in input && "performance" in input,
+  "Expected a fund research view.",
+);
+export const ComparisonViewSchema: v.GenericSchema<ComparisonView> = v.custom<ComparisonView>(
+  (input) =>
+    typeof input === "object" && input !== null && "selections" in input && "comparison" in input,
+  "Expected a comparison view.",
+);

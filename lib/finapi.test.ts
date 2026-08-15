@@ -1,5 +1,5 @@
 import { assert, expect, test } from "vitest";
-import { getFundResearch, normalizeFundPayload } from "./finapi.ts";
+import { getFundResearch, getFundResearchBatch, normalizeFundPayload } from "./finapi.ts";
 import { metricsFor, unavailableMetrics } from "./fund-metrics.ts";
 import { ProviderError, toNav } from "./provider.ts";
 import { METRIC_KEYS } from "./fund-types.ts";
@@ -165,6 +165,25 @@ test("keeps TigZig-only data from creating a research page when FinAPI fails", a
   }) as typeof fetch;
   try {
     await expect(getFundResearch("122639")).rejects.toBeInstanceOf(ProviderError);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("shares one benchmark request when loading a comparison batch", async () => {
+  const originalFetch = globalThis.fetch;
+  const requests: string[] = [];
+  globalThis.fetch = (async (input: string | URL | Request) => {
+    const url = String(input);
+    requests.push(url);
+    return new Response(JSON.stringify(url.includes("api.tigzig.com") ? tigzigPayload : payload), {
+      status: 200,
+    });
+  }) as typeof fetch;
+  try {
+    const results = await getFundResearchBatch(["122639", "122640"]);
+    expect(results.every((result) => result.status === "fulfilled")).toBe(true);
+    expect(requests.filter((url) => url.includes("/series?ids=")).length).toBe(1);
   } finally {
     globalThis.fetch = originalFetch;
   }

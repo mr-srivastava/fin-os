@@ -92,7 +92,12 @@ export interface FundResearch {
   metrics: FundMetrics;
 }
 
-export type ApiErrorCode = "invalid_query" | "invalid_scheme_code" | "not_found" | "provider_error";
+export type ApiErrorCode =
+  | "invalid_query"
+  | "invalid_scheme_code"
+  | "invalid_comparison"
+  | "not_found"
+  | "provider_error";
 
 export interface ApiError {
   error: ApiErrorCode;
