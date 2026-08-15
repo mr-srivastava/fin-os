@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# navnote
 
-## Getting Started
+navnote is a research interface for active, Direct Growth Indian equity mutual
+funds. You can search eligible schemes, examine their NAV history and calculated
+performance characteristics, review available fund facts and portfolio data, and
+compare two funds side by side.
 
-First, run the development server:
+It is a research tool, not investment advice. Data can be incomplete, delayed,
+or temporarily unavailable. Verify information with the fund house before making
+an investment decision.
+
+## Run the project
+
+You need Node.js 24 and pnpm 11.18.0. The application does not require local
+credentials for its current public data providers.
+
+1. Install dependencies:
+
+   ```bash
+   pnpm install
+   ```
+
+2. Start the development server:
+
+   ```bash
+   pnpm dev
+   ```
+
+3. Open [http://localhost:3000](http://localhost:3000).
+
+## Validate changes
+
+Run the checks that match your change before opening a pull request.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm test
+pnpm test:e2e
+pnpm lint
+pnpm format:check
+pnpm build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`pnpm preflight:finapi` makes live requests to the upstream providers and
+reports whether a small set of representative schemes still returns usable
+research data. Run it when changing provider integration or before a deployment
+that depends on fresh provider behavior.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`pnpm test` runs deterministic unit and route tests. `pnpm test:e2e` runs the
+browser smoke tests and requires Playwright's Chromium browser. Install it once
+with `pnpm exec playwright install chromium`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Data and scope
 
-## Learn More
+navnote deliberately limits its V0 search results to schemes that are active,
+Direct, Growth, and within the supported equity categories. The app combines:
 
-To learn more about Next.js, take a look at the following resources:
+- FinAPI for scheme discovery, fund facts, and reported portfolio data.
+- TigZig for up to five years of NAV history and the Nifty 500 price-index
+  benchmark.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Server-side requests time out after 10 seconds and are revalidated every five
+minutes. If TigZig data is unavailable, fund facts can still render, but
+NAV-derived charts and metrics are unavailable. You can set
+`FINAPI_PORTFOLIO_ENABLED=false` to hide portfolio data while retaining the
+rest of the research experience.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project map
 
-## Deploy on Vercel
+The project uses the Next.js App Router and TypeScript.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `app/` contains routes, pages, and server-side API endpoints.
+- `components/` contains the client-side research, search, comparison, and UI
+  components.
+- `lib/` contains provider adapters, runtime schemas, data types, and analytics.
+- `scripts/preflight-finapi.ts` probes the live provider integration.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+For implementation details, see [the architecture guide](docs/architecture.md)
+and [the development guide](docs/development.md). Contributors and coding agents
+should also read [AGENTS.md](AGENTS.md).
+
+## Next steps
+
+Start the app, search for an eligible scheme, and use the **Compare funds**
+action to evaluate two funds on the same normalized return path.
