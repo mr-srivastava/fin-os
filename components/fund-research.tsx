@@ -10,11 +10,13 @@ import {
   CircleHelpIcon,
   DatabaseIcon,
   PieChartIcon,
-  TrendingDownIcon,
-  TrendingUpIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { SchemeAnalysisChart } from "@/components/scheme-analysis-chart";
+import { MetricCardGroup, type MetricCardValue } from "@/components/research/metric-card-group";
+import { FundFactsGrid } from "@/components/research/fund-facts";
+import { OutcomeSummary } from "@/components/research/outcome-summary";
+import { PortfolioConcentrationCard } from "@/components/research/portfolio-concentration";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Accordion,
@@ -47,12 +49,11 @@ import { filterSeriesByRange, investmentOutcome, type PerformanceRange } from "@
 import { fundQueryOptions } from "@/lib/fund-queries";
 import type { AllocationItem, PortfolioItem } from "@/lib/fund-types";
 import {
-  formatFullDate,
-  formatNumber,
-  formatPercent,
-  formatRupees,
-  formatSignedPercent,
-} from "@/lib/utils";
+  type FundResearchRouteState,
+  PERFORMANCE_RANGES,
+  toFundResearchHref,
+} from "@/lib/research-route-state";
+import { formatFullDate, formatPercent, formatRupees } from "@/lib/utils";
 
 const allocationColors = [
   "var(--chart-1)",
@@ -61,13 +62,6 @@ const allocationColors = [
   "var(--chart-4)",
   "var(--chart-5)",
 ];
-interface PerformanceRangeOption {
-  value: PerformanceRange;
-  label: string;
-}
-
-type MetricRow = readonly [label: string, value: number | null];
-
 interface AllocationBarProps {
   title: string;
   description: string;
@@ -79,25 +73,10 @@ interface SectorHoldingsProps {
   sectors: readonly AllocationItem[];
 }
 
-interface MetricGroupProps {
-  title: string;
-  metrics: readonly MetricRow[];
-  semantic: "return" | "risk";
-}
-
 interface FundResearchViewProps {
   schemeCode: string;
-  initialRange?: string;
-  initialShowBenchmark?: boolean;
+  routeState: FundResearchRouteState;
 }
-
-const performanceRanges = [
-  { value: "6m", label: "6M" },
-  { value: "1y", label: "1Y" },
-  { value: "3y", label: "3Y" },
-  { value: "5y", label: "5Y" },
-  { value: "max", label: "Max" },
-] satisfies readonly PerformanceRangeOption[];
 
 function AllocationBar({ title, description, items }: AllocationBarProps) {
   if (!items.length) return null;
@@ -231,46 +210,6 @@ function SectorHoldings({ holdings, sectors }: SectorHoldingsProps) {
   );
 }
 
-function MetricGroup({ title, metrics, semantic }: MetricGroupProps) {
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent
-        className={`grid gap-3 ${metrics.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
-      >
-        {metrics.map(([label, value]) => {
-          const isLoss =
-            value !== null && (label === "Max drawdown" || (semantic === "return" && value < 0));
-          const isGain = value !== null && semantic === "return" && value > 0;
-          const valueClass = isLoss
-            ? "text-negative"
-            : isGain
-              ? "text-positive"
-              : "text-foreground";
-          const displayValue =
-            semantic === "return" || label === "Max drawdown"
-              ? formatSignedPercent(value)
-              : formatPercent(value);
-          return (
-            <div key={label} className="min-w-0 rounded-lg bg-muted/35 px-3 py-3">
-              <p className="text-xs text-muted-foreground">{label}</p>
-              <p
-                className={`mt-1 flex items-center gap-1.5 font-mono text-xl font-semibold tabular-nums ${valueClass}`}
-              >
-                {isGain ? <TrendingUpIcon className="size-4" aria-hidden="true" /> : null}
-                {isLoss ? <TrendingDownIcon className="size-4" aria-hidden="true" /> : null}
-                {displayValue}
-              </p>
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
-  );
-}
-
 function FundLoading() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
@@ -286,35 +225,24 @@ function FundLoading() {
   );
 }
 
-function isPerformanceRange(value: string | undefined): value is PerformanceRange {
-  return performanceRanges.some((range) => range.value === value);
-}
-
-export function FundResearchView({
-  schemeCode,
-  initialRange,
-  initialShowBenchmark,
-}: FundResearchViewProps) {
+export function FundResearchView({ schemeCode, routeState }: FundResearchViewProps) {
   const router = useRouter();
   const fundQuery = useQuery(fundQueryOptions(schemeCode));
-  const [performanceRange, setPerformanceRange] = useState<PerformanceRange>(
-    isPerformanceRange(initialRange) ? initialRange : "3y",
-  );
-  const [showBenchmark, setShowBenchmark] = useState(initialShowBenchmark ?? false);
+  const [performanceRange, setPerformanceRange] = useState<PerformanceRange>(routeState.range);
+  const [showBenchmark, setShowBenchmark] = useState(routeState.showBenchmark);
 
   useEffect(() => {
-    setPerformanceRange(isPerformanceRange(initialRange) ? initialRange : "3y");
-    setShowBenchmark(initialShowBenchmark ?? false);
-  }, [initialRange, initialShowBenchmark]);
+    setPerformanceRange(routeState.range);
+    setShowBenchmark(routeState.showBenchmark);
+  }, [routeState]);
 
   function updateChartState(nextRange: PerformanceRange, nextShowBenchmark: boolean) {
     setPerformanceRange(nextRange);
     setShowBenchmark(nextShowBenchmark);
-    const params = new URLSearchParams();
-    if (nextRange !== "3y") params.set("range", nextRange);
-    if (nextShowBenchmark) params.set("benchmark", "1");
-    const query = params.toString();
-    router.push(`/fund/${schemeCode}${query ? `?${query}` : ""}`, { scroll: false });
+    router.push(
+      toFundResearchHref(schemeCode, { range: nextRange, showBenchmark: nextShowBenchmark }),
+      { scroll: false },
+    );
   }
 
   if (fundQuery.isError && !fundQuery.data)
@@ -341,27 +269,14 @@ export function FundResearchView({
     filterSeriesByRange(fund.benchmark?.nav ?? [], performanceRange),
   );
   const returns = [
-    ["1Y return", fund.metrics.oneYear.value],
-    ["3Y annualised", fund.metrics.threeYear.value],
-    ["5Y annualised", fund.metrics.fiveYear.value],
-  ] satisfies readonly MetricRow[];
+    { label: "1Y return", value: fund.metrics.oneYear.value, format: "signed-percent", direction: "positive-is-good" },
+    { label: "3Y annualised", value: fund.metrics.threeYear.value, format: "signed-percent", direction: "positive-is-good" },
+    { label: "5Y annualised", value: fund.metrics.fiveYear.value, format: "signed-percent", direction: "positive-is-good" },
+  ] satisfies readonly MetricCardValue[];
   const risks = [
-    ["Volatility", fund.metrics.volatility.value],
-    ["Max drawdown", fund.metrics.maxDrawdown.value],
-  ] satisfies readonly MetricRow[];
-  const factCards = [
-    ["AUM", fund.facts.aum === null ? "—" : `₹${formatNumber(fund.facts.aum)} Cr`],
-    [
-      "Expense ratio",
-      fund.facts.expenseRatio === null ? "—" : `${formatNumber(fund.facts.expenseRatio)}%`,
-    ],
-    [
-      "Portfolio turnover",
-      fund.facts.portfolioTurnover === null
-        ? "—"
-        : `${formatNumber(fund.facts.portfolioTurnover)}%`,
-    ],
-  ];
+    { label: "Volatility", value: fund.metrics.volatility.value, format: "percent", direction: "neutral" },
+    { label: "Max drawdown", value: fund.metrics.maxDrawdown.value, format: "signed-percent", direction: "neutral" },
+  ] satisfies readonly MetricCardValue[];
   return (
     <main id="main-content" className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
       <Link href="/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
@@ -404,7 +319,7 @@ export function FundResearchView({
               <CardDescription>If you had invested at the start of this period</CardDescription>
               <p className="mt-2 text-xs font-medium text-muted-foreground">
                 Selected period:{" "}
-                {performanceRanges.find((range) => range.value === performanceRange)?.label}
+                {PERFORMANCE_RANGES.find((range) => range.value === performanceRange)?.label}
                 {" total return"}
               </p>
             </div>
@@ -425,54 +340,18 @@ export function FundResearchView({
                 : "sm:grid-cols-[minmax(0,1fr)_auto]"
             }`}
           >
-            <div className="min-w-0">
-              <div>
-                <p className="flex items-center gap-2 text-sm font-medium">
-                  <span aria-hidden="true" className="size-2 rounded-full bg-(--chart-1)" />
-                  This fund
-                </p>
-                <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <p
-                    className={`font-mono text-xl font-semibold tabular-nums ${
-                      (selectedOutcome?.returnPercent ?? 0) < 0 ? "text-negative" : "text-positive"
-                    }`}
-                  >
-                    {selectedOutcome ? formatSignedPercent(selectedOutcome.returnPercent) : "—"}
-                  </p>
-                  <p className="font-mono text-sm font-medium text-muted-foreground tabular-nums">
-                    {selectedOutcome ? formatRupees(selectedOutcome.value) : "—"}
-                    <span className="ml-1 font-sans text-xs">ending value</span>
-                  </p>
-                </div>
-              </div>
-            </div>
+            <OutcomeSummary
+              name="This fund"
+              colorClassName="bg-(--chart-1)"
+              outcome={selectedOutcome}
+            />
             {showBenchmark && fund.benchmark ? (
-              <div className="min-w-0 border-t pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
-                <div>
-                  <p className="flex items-center gap-2 text-sm font-medium">
-                    <span aria-hidden="true" className="size-2 rounded-full bg-(--chart-3)" />
-                    {fund.benchmark.name}
-                  </p>
-                  <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <p
-                      className={`font-mono text-xl font-semibold tabular-nums ${
-                        (selectedBenchmarkOutcome?.returnPercent ?? 0) < 0
-                          ? "text-negative"
-                          : "text-positive"
-                      }`}
-                    >
-                      {selectedBenchmarkOutcome
-                        ? formatSignedPercent(selectedBenchmarkOutcome.returnPercent)
-                        : "—"}
-                    </p>
-                    <p className="font-mono text-sm font-medium text-muted-foreground tabular-nums">
-                      {selectedBenchmarkOutcome
-                        ? formatRupees(selectedBenchmarkOutcome.value)
-                        : "—"}
-                      <span className="ml-1 font-sans text-xs">ending value</span>
-                    </p>
-                  </div>
-                </div>
+              <div className="border-t pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
+                <OutcomeSummary
+                  name={fund.benchmark.name}
+                  colorClassName="bg-(--chart-3)"
+                  outcome={selectedBenchmarkOutcome}
+                />
               </div>
             ) : null}
             <div className="flex flex-wrap items-center gap-3">
@@ -515,7 +394,7 @@ export function FundResearchView({
                     ]
                   : []),
               ]}
-              initialRange={performanceRange}
+              range={performanceRange}
               onRangeChange={(range) => updateChartState(range, showBenchmark)}
             />
           ) : (
@@ -531,43 +410,12 @@ export function FundResearchView({
         </CardContent>
       </Card>
       <section className="mt-4 grid gap-4 lg:grid-cols-[3fr_2fr]">
-        <MetricGroup title="Annualised returns" metrics={returns} semantic="return" />
-        <MetricGroup title="Risk" metrics={risks} semantic="risk" />
+        <MetricCardGroup title="Annualised returns" metrics={returns} />
+        <MetricCardGroup title="Risk" metrics={risks} />
       </section>
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Fund facts</CardTitle>
-          <CardDescription>
-            Key scheme details, including assets, fees, turnover, and stated risk.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {factCards.map(([label, value]) => (
-            <div key={label}>
-              <p className="text-xs text-muted-foreground">{label}</p>
-              <p className="mt-1 font-mono text-sm font-medium">{value}</p>
-            </div>
-          ))}
-          {fund.facts.benchmark && (
-            <div>
-              <p className="text-xs text-muted-foreground">Benchmark</p>
-              <p className="mt-1 text-sm font-medium">{fund.facts.benchmark}</p>
-            </div>
-          )}
-          {fund.facts.riskLabel && (
-            <div>
-              <p className="text-xs text-muted-foreground">Risk</p>
-              <p className="mt-1 text-sm font-medium">{fund.facts.riskLabel}</p>
-            </div>
-          )}
-          {fund.facts.managers.length > 0 && (
-            <div>
-              <p className="text-xs text-muted-foreground">Fund managers</p>
-              <p className="mt-1 text-sm font-medium">{fund.facts.managers.join(", ")}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="mt-6">
+        <FundFactsGrid facts={fund.facts} />
+      </div>
       <section className="mt-6">
         <div className="mb-4 flex items-center gap-2">
           <PieChartIcon />
@@ -596,19 +444,7 @@ export function FundResearchView({
                 items={fund.portfolio.marketCapAllocation}
               />
               {fund.portfolio.topTenConcentration !== null && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top-10 concentration</CardTitle>
-                    <CardDescription>
-                      Share of the reported portfolio held in its ten largest positions.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="font-mono text-2xl font-medium">
-                      {formatPercent(fund.portfolio.topTenConcentration / 100)}
-                    </p>
-                  </CardContent>
-                </Card>
+                <PortfolioConcentrationCard value={fund.portfolio.topTenConcentration} />
               )}
             </div>
           </>

@@ -1,11 +1,8 @@
 import { FundResearchView } from "@/components/fund-research";
+import { parseFundResearchSearchParams } from "@/lib/research-route-state";
 
 export default async function FundPage({ params, searchParams }: PageProps<"/fund/[schemeCode]">) {
   const { schemeCode } = await params;
-  const { range, benchmark } = await searchParams;
-  const initialChartState = {
-    ...(typeof range === "string" ? { initialRange: range } : {}),
-    ...(benchmark === "1" ? { initialShowBenchmark: true } : {}),
-  };
-  return <FundResearchView key={schemeCode} schemeCode={schemeCode} {...initialChartState} />;
+  const routeState = parseFundResearchSearchParams(await searchParams);
+  return <FundResearchView key={schemeCode} schemeCode={schemeCode} routeState={routeState} />;
 }

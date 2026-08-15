@@ -7,6 +7,8 @@ import { ArrowLeftIcon, CircleAlertIcon, GitCompareArrowsIcon, XIcon } from "luc
 import { useEffect, useState } from "react";
 import { FundSearch } from "@/components/fund-search";
 import { SchemeAnalysisChart, type SchemeAnalysisSeries } from "@/components/scheme-analysis-chart";
+import { OutcomeSummary } from "@/components/research/outcome-summary";
+import { FundFactsComparisonTable } from "@/components/research/fund-facts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -21,20 +23,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { fundQueryOptions } from "@/lib/fund-queries";
-import { isSchemeCode } from "@/lib/fund-input";
 import type { FundPair, FundResearch, MetricKey, Scheme, WeightedItem } from "@/lib/fund-types";
 import { isFundPair } from "@/lib/fund-types";
 import { filterSeriesByRange, investmentOutcome, type PerformanceRange } from "@/lib/analytics";
-import {
-  formatFullDate,
-  formatNumber,
-  formatPercent,
-  formatRupees,
-  formatSignedPercent,
-} from "@/lib/utils";
+import { type ComparisonRouteState, toComparisonHref } from "@/lib/research-route-state";
+import { formatFullDate, formatPercent, formatRupees } from "@/lib/utils";
 
 type MetricRow = readonly [label: string, key: MetricKey];
-type DisplayRow = readonly [label: string, value: (fund: FundResearch) => string];
 
 interface AllocationComparisonProps {
   title: string;
@@ -46,23 +41,7 @@ interface AllocationComparisonProps {
 }
 
 interface CompareViewProps {
-  initialFund?: string;
-  initialAgainst?: string;
-  initialRange?: string;
-}
-
-const factRows = [
-  [
-    "AUM",
-    (fund: FundResearch) => (fund.facts.aum === null ? "—" : `₹${formatNumber(fund.facts.aum)} Cr`),
-  ],
-  ["Expense ratio", (fund: FundResearch) => formatNumber(fund.facts.expenseRatio, "%")],
-  ["Portfolio turnover", (fund: FundResearch) => formatNumber(fund.facts.portfolioTurnover, "%")],
-  ["Risk", (fund: FundResearch) => fund.facts.riskLabel ?? "—"],
-] satisfies readonly DisplayRow[];
-
-function isPerformanceRange(value: string | undefined): value is PerformanceRange {
-  return ["6m", "1y", "3y", "5y", "max"].includes(value ?? "");
+  routeState: ComparisonRouteState;
 }
 
 function AllocationComparison({
@@ -154,18 +133,11 @@ function PortfolioMetricComparison({
   );
 }
 
-export function CompareView({ initialFund, initialAgainst, initialRange }: CompareViewProps) {
+export function CompareView({ routeState }: CompareViewProps) {
   const router = useRouter();
-  const [performanceRange, setPerformanceRange] = useState<PerformanceRange>(
-    isPerformanceRange(initialRange) ? initialRange : "3y",
-  );
-  useEffect(
-    () => setPerformanceRange(isPerformanceRange(initialRange) ? initialRange : "3y"),
-    [initialRange],
-  );
-  const selectedCodes = [initialFund, initialAgainst].filter((schemeCode): schemeCode is string =>
-    Boolean(schemeCode && isSchemeCode(schemeCode)),
-  );
+  const [performanceRange, setPerformanceRange] = useState<PerformanceRange>(routeState.range);
+  useEffect(() => setPerformanceRange(routeState.range), [routeState]);
+  const selectedCodes = routeState.schemeCodes;
   const comparisonQueries = useQueries({
     queries: selectedCodes.map((schemeCode) => ({
       ...fundQueryOptions(schemeCode),
@@ -177,13 +149,8 @@ export function CompareView({ initialFund, initialAgainst, initialRange }: Compa
   const message = comparisonError instanceof Error ? comparisonError.message : "";
   const funds = comparisonQueries.flatMap((query) => (query.data ? [query.data] : []));
 
-  function updateSelection(nextCodes: string[], nextRange = performanceRange) {
-    const firstCode = nextCodes[0];
-    if (!firstCode) return router.push("/compare");
-    const params = new URLSearchParams({ fund: firstCode });
-    if (nextCodes[1]) params.set("against", nextCodes[1]);
-    if (nextRange !== "3y") params.set("range", nextRange);
-    router.push(`/compare?${params.toString()}`);
+  function updateSelection(nextCodes: readonly string[], nextRange = performanceRange) {
+    router.push(toComparisonHref({ schemeCodes: nextCodes, range: nextRange }));
   }
 
   function choose(scheme: Scheme) {
@@ -324,34 +291,18 @@ export function CompareView({ initialFund, initialAgainst, initialRange }: Compa
               {historyReady ? (
                 <>
                   <div className="mb-6 grid gap-3 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2">
-                    {displayedFunds.map((fund, index) => {
-                      const outcome = selectedOutcomes[index];
-                      return (
-                        <div key={fund.scheme.schemeCode} className="min-w-0">
-                          <p
-                            className="truncate text-sm font-medium"
-                            title={fund.scheme.schemeName}
-                          >
-                            {fund.scheme.schemeName}
-                          </p>
-                          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                            <p
-                              className={`font-mono text-xl font-semibold tabular-nums ${(outcome?.returnPercent ?? 0) < 0 ? "text-negative" : "text-positive"}`}
-                            >
-                              {outcome ? formatSignedPercent(outcome.returnPercent) : "—"}
-                            </p>
-                            <p className="font-mono text-sm text-muted-foreground tabular-nums">
-                              {outcome ? formatRupees(outcome.value) : "—"}
-                              <span className="ml-1 font-sans text-xs">ending value</span>
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {displayedFunds.map((fund, index) => (
+                      <OutcomeSummary
+                        key={fund.scheme.schemeCode}
+                        name={fund.scheme.schemeName}
+                        colorClassName={index === 0 ? "bg-foreground" : "bg-(--chart-3)"}
+                        outcome={selectedOutcomes[index] ?? null}
+                      />
+                    ))}
                   </div>
                   <SchemeAnalysisChart
                     series={chartSeries}
-                    initialRange={performanceRange}
+                    range={performanceRange}
                     onRangeChange={updatePerformanceRange}
                   />
                 </>
@@ -410,36 +361,7 @@ export function CompareView({ initialFund, initialAgainst, initialRange }: Compa
               )}
             </CardContent>
           </Card>
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Fund facts</CardTitle>
-              <CardDescription>
-                Key scheme details, including assets, fees, turnover, and stated risk.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Metric</TableHead>
-                    {displayedFunds.map((fund) => (
-                      <TableHead key={fund.scheme.schemeCode}>{fund.scheme.schemeName}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {factRows.map(([label, value]) => (
-                    <TableRow key={label}>
-                      <TableCell className="font-medium">{label}</TableCell>
-                      {displayedFunds.map((fund) => (
-                        <TableCell key={fund.scheme.schemeCode}>{value(fund)}</TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <FundFactsComparisonTable funds={displayedFunds} />
           {portfolios ? (
             <section className="mt-6">
               <div className="mb-4">
