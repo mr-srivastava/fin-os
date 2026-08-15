@@ -162,7 +162,7 @@ export function normalizeFundPayload(payload: unknown): FundResearch | null {
       ? "Current portfolio research is temporarily unavailable."
       : hasPortfolioData
         ? undefined
-        : "FinAPI did not supply portfolio data for this fund.";
+        : "A reported portfolio is unavailable for this fund.";
   const hasFacts = Object.values(facts).some((value) =>
     Array.isArray(value) ? value.length > 0 : value !== null,
   );
@@ -178,13 +178,13 @@ export function normalizeFundPayload(payload: unknown): FundResearch | null {
       navHistory: {
         available: false,
         source: null,
-        reason: "TigZig NAV history has not been loaded yet.",
+        reason: "NAV history has not been loaded yet.",
       },
       facts: hasFacts
         ? { available: true }
         : {
             available: false,
-            reason: "FinAPI did not supply fund facts for this fund.",
+            reason: "Fund details are unavailable for this fund.",
           },
       portfolio:
         hasPortfolioData && process.env.FINAPI_PORTFOLIO_ENABLED !== "false"
@@ -278,7 +278,7 @@ export async function getFundResearch(schemeCode: string): Promise<FundResearch 
       reason:
         navResult.reason instanceof ProviderError
           ? navResult.reason.message
-          : "TigZig NAV history is unavailable right now.",
+          : "NAV history is unavailable right now.",
     };
     return normalized;
   }
@@ -300,7 +300,7 @@ function clearNavResearch(fund: FundResearch) {
   fund.availability.navHistory = {
     available: false,
     source: null,
-    reason: "TigZig NAV history has not been loaded yet.",
+    reason: "NAV history has not been loaded yet.",
   };
 }
 
@@ -309,7 +309,7 @@ function applyNavHistory(fund: FundResearch, nav: NavPoint[]) {
     fund.availability.navHistory = {
       available: false,
       source: null,
-      reason: "TigZig did not supply NAV history for this fund.",
+      reason: "NAV history is unavailable for this fund.",
     };
     return;
   }

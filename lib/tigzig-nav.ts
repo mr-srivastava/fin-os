@@ -27,23 +27,23 @@ export async function getTigzigNav(schemeCode: string): Promise<NavPoint[]> {
       },
     );
   } catch {
-    throw new ProviderError("TigZig NAV data is unavailable. Try again shortly.", 503);
+    throw new ProviderError("NAV data is unavailable. Try again shortly.", 503);
   } finally {
     clearTimeout(timeout);
   }
   if (!response.ok) {
     if (response.status === 429)
-      throw new ProviderError("TigZig NAV data is busy. Try again in a moment.", 429);
-    throw new ProviderError("We could not retrieve TigZig NAV data right now.", 502);
+      throw new ProviderError("NAV data is busy. Try again in a moment.", 429);
+    throw new ProviderError("We could not retrieve NAV data right now.", 502);
   }
   let payload: unknown;
   try {
     payload = await response.json();
   } catch {
-    throw new ProviderError("TigZig returned an invalid NAV response.", 502);
+    throw new ProviderError("NAV data could not be read right now.", 502);
   }
   const nav = normalizeTigzigNavPayload(payload);
-  if (nav === null) throw new ProviderError("TigZig returned an unexpected NAV response.", 502);
+  if (nav === null) throw new ProviderError("NAV data could not be read right now.", 502);
   return nav;
 }
 
@@ -69,24 +69,23 @@ export async function getTigzigNifty500(): Promise<NavPoint[]> {
       { next: { revalidate: 300 }, signal: controller.signal },
     );
   } catch {
-    throw new ProviderError("TigZig benchmark data is unavailable. Try again shortly.", 503);
+    throw new ProviderError("Benchmark data is unavailable. Try again shortly.", 503);
   } finally {
     clearTimeout(timeout);
   }
   if (!response.ok) {
     if (response.status === 429)
-      throw new ProviderError("TigZig benchmark data is busy. Try again in a moment.", 429);
-    throw new ProviderError("We could not retrieve TigZig benchmark data right now.", 502);
+      throw new ProviderError("Benchmark data is busy. Try again in a moment.", 429);
+    throw new ProviderError("We could not retrieve benchmark data right now.", 502);
   }
   let payload: unknown;
   try {
     payload = await response.json();
   } catch {
-    throw new ProviderError("TigZig returned an invalid benchmark response.", 502);
+    throw new ProviderError("Benchmark data could not be read right now.", 502);
   }
   const nav = normalizeTigzigNifty500Payload(payload);
-  if (nav === null)
-    throw new ProviderError("TigZig returned an unexpected benchmark response.", 502);
+  if (nav === null) throw new ProviderError("Benchmark data could not be read right now.", 502);
   return nav;
 }
 

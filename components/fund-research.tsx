@@ -365,7 +365,7 @@ export function FundResearchView({
         Search funds
       </Link>
       <header className="mt-10 max-w-4xl">
-        <Badge variant="secondary">TigZig NAV research</Badge>
+        <Badge variant="secondary">Fund research</Badge>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl">
           {fund.scheme.schemeName}
         </h1>
@@ -510,11 +510,10 @@ export function FundResearchView({
           ) : (
             <Alert>
               <DatabaseIcon />
-              <AlertTitle>TigZig NAV history unavailable</AlertTitle>
+              <AlertTitle>NAV history unavailable</AlertTitle>
               <AlertDescription>
                 {fund.availability.navHistory.reason ??
-                  "Historical NAV data is unavailable right now."}{" "}
-                Fund facts and portfolio research remain available.
+                  "Historical NAV data is unavailable right now."}
               </AlertDescription>
             </Alert>
           )}
@@ -527,7 +526,7 @@ export function FundResearchView({
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>Fund facts</CardTitle>
-          <CardDescription>FinAPI-supplied reference data</CardDescription>
+          <CardDescription>Fund details</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {factCards.map(([label, value]) => (
@@ -564,11 +563,11 @@ export function FundResearchView({
         {fund.portfolio ? (
           <>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <Badge variant="outline">FinAPI snapshot</Badge>
+              <Badge variant="outline">Reported portfolio</Badge>
               <p className="text-sm text-muted-foreground">
                 {fund.portfolio.asOf
                   ? `Portfolio as of ${formatFullDate(fund.portfolio.asOf)}`
-                  : "Portfolio disclosure date not supplied by FinAPI."}
+                  : "Portfolio report date unavailable."}
               </p>
             </div>
             <SectorHoldings holdings={fund.portfolio.holdings} sectors={fund.portfolio.sectors} />

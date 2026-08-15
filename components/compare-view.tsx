@@ -157,8 +157,8 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
           Compare the return paths.
         </h1>
         <p className="mt-4 text-sm text-muted-foreground">
-          Pick two active Direct Growth equity schemes. NAV metrics use TigZig; facts and portfolios
-          use FinAPI.
+          Pick two active Direct Growth equity schemes. Compare performance, fund details, and
+          reported portfolio allocations.
         </p>
       </header>
       <section className="mt-8 grid gap-4 md:grid-cols-2" aria-live="polite">
@@ -214,7 +214,7 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
           <Card className="mt-6">
             <CardHeader>
               <CardTitle>Relative performance</CardTitle>
-              <CardDescription>Total return over the selected period · TigZig NAV</CardDescription>
+              <CardDescription>Total return over the selected period</CardDescription>
             </CardHeader>
             <CardContent>
               {historyReady ? (
@@ -222,10 +222,10 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
               ) : (
                 <Alert>
                   <CircleAlertIcon />
-                  <AlertTitle>TigZig NAV comparison unavailable</AlertTitle>
+                  <AlertTitle>NAV comparison unavailable</AlertTitle>
                   <AlertDescription>
-                    TigZig did not supply historical NAV data for both funds. Fund facts and
-                    portfolio comparison remain available.
+                    Historical NAV data is unavailable for one or both funds, so performance
+                    comparison cannot be shown.
                   </AlertDescription>
                 </Alert>
               )}
@@ -234,7 +234,7 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
           <Card className="mt-6">
             <CardHeader>
               <CardTitle>Performance characteristics</CardTitle>
-              <CardDescription>TigZig NAV-derived metrics</CardDescription>
+              <CardDescription>Calculated from NAV history</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -264,7 +264,7 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
           <Card className="mt-6">
             <CardHeader>
               <CardTitle>Fund facts</CardTitle>
-              <CardDescription>FinAPI-supplied reference data</CardDescription>
+              <CardDescription>Fund details</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -298,7 +298,7 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
                 <p className="mt-1 text-sm text-muted-foreground">
                   {portfolios.left.asOf && portfolios.right.asOf
                     ? `Portfolio disclosure dates: ${portfolios.left.asOf} and ${portfolios.right.asOf}`
-                    : "Portfolio disclosure date not supplied by FinAPI for one or both funds."}
+                    : "Portfolio report date unavailable for one or both funds."}
                 </p>
               </div>
               <div className="grid gap-4 lg:grid-cols-2">
@@ -324,16 +324,17 @@ export function CompareView({ initialFund, initialAgainst }: CompareViewProps) {
               <CircleAlertIcon />
               <AlertTitle>Portfolio comparison unavailable</AlertTitle>
               <AlertDescription>
-                FinAPI did not supply portfolio data for both funds.
+                A reported portfolio is not available for both funds, so portfolio comparison cannot
+                be shown.
               </AlertDescription>
             </Alert>
           )}
           <Alert className="mt-6">
             <GitCompareArrowsIcon />
-            <AlertTitle>Portfolio overlap is not available in this beta</AlertTitle>
+            <AlertTitle>Portfolio overlap is not available</AlertTitle>
             <AlertDescription>
-              FinAPI does not yet supply the stable security identifiers and normalized security
-              types required for trustworthy overlap analysis.
+              The reported portfolio data does not include the stable security identifiers and
+              normalized security types needed for a trustworthy overlap analysis.
             </AlertDescription>
           </Alert>
         </>
