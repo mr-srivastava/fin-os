@@ -1,20 +1,9 @@
-import Link from "next/link";
-import { ArrowRightIcon } from "lucide-react";
 import { FundSearch } from "@/components/fund-search";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 
 export default function Home() {
   return (
     <main id="main-content" className="mx-auto flex max-w-6xl flex-col px-4 py-6 sm:px-6">
-      <nav className="flex items-center justify-between">
-        <Link href="/" className="text-lg font-semibold tracking-tight">
-          navnote
-        </Link>
-        <Link href="/compare" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-          Compare funds <ArrowRightIcon data-icon="inline-end" />
-        </Link>
-      </nav>
       <section className="flex flex-1 flex-col justify-center py-20 sm:py-28">
         <Badge variant="secondary" className="w-fit">
           India mutual fund research · V0
