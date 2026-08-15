@@ -5,8 +5,8 @@ import {
   type PerformanceRange,
 } from "@/lib/analytics";
 import type { FundPair, FundResearch } from "@/lib/fund-types";
-import { formatPercent, formatRupees, formatSignedPercent } from "@/lib/utils";
-import { financialStatus } from "./fund-research";
+import { formatFullDate, formatPercent, formatRupees, formatSignedPercent } from "@/lib/utils";
+import { financialStatus, toFundFactsDisplay, toMetricDisplay } from "./fund-research";
 import type { ChartSeriesDisplay, MetricDisplay, OutcomeDisplay } from "./types";
 
 export function toComparisonPerformanceDisplay(
@@ -43,36 +43,26 @@ export function toComparisonMetricDisplay(
   ] as const;
   return rows.map(([label, key]) => ({
     label,
-    values: funds.map((fund) => ({
-      label: fund.scheme.schemeName,
-      valueText: formatPercent(fund.metrics[key].value),
-      status: financialStatus(fund.metrics[key].value),
-    })),
+    values: funds.map((fund) => {
+      const metric = toMetricDisplay(fund, key, label);
+      return {
+        label: fund.scheme.schemeName,
+        valueText: metric.valueText,
+        status: metric.status,
+      };
+    }),
   }));
 }
 
 export function toComparisonFactsDisplay(funds: FundPair<FundResearch>) {
-  const rows = [
-    [
-      "AUM",
-      (fund: FundResearch) =>
-        fund.facts.aum === null ? "—" : `₹${fund.facts.aum.toLocaleString("en-IN")} Cr`,
-    ],
-    [
-      "Expense ratio",
-      (fund: FundResearch) =>
-        formatPercent(fund.facts.expenseRatio === null ? null : fund.facts.expenseRatio / 100),
-    ],
-    [
-      "Portfolio turnover",
-      (fund: FundResearch) =>
-        formatPercent(
-          fund.facts.portfolioTurnover === null ? null : fund.facts.portfolioTurnover / 100,
-        ),
-    ],
-    ["Risk", (fund: FundResearch) => fund.facts.riskLabel ?? "—"],
-  ] as const;
-  return rows.map(([label, value]) => ({ label, values: funds.map(value) }));
+  const labels = ["AUM", "Expense ratio", "Portfolio turnover", "Risk"] as const;
+  const factsByFund = funds.map(
+    (fund) => new Map(toFundFactsDisplay(fund).map((fact) => [fact.label, fact.valueText])),
+  );
+  return labels.map((label) => ({
+    label,
+    values: factsByFund.map((facts) => facts.get(label) ?? "—"),
+  }));
 }
 
 export function toComparisonAllocationDisplay(
@@ -86,4 +76,11 @@ export function toComparisonAllocationDisplay(
     leftText: formatPercent(leftByName.get(name) ?? null),
     rightText: formatPercent(rightByName.get(name) ?? null),
   }));
+}
+
+export function toComparisonPortfolioReportDate(funds: FundPair<FundResearch>): string {
+  const [left, right] = funds;
+  return left.portfolio?.asOf && right.portfolio?.asOf
+    ? `Reported as of ${formatFullDate(left.portfolio.asOf)} and ${formatFullDate(right.portfolio.asOf)}.`
+    : "Portfolio report date unavailable for one or both funds.";
 }

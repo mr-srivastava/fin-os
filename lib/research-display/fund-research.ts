@@ -4,7 +4,7 @@ import {
   relativeReturnSeries,
   type PerformanceRange,
 } from "@/lib/analytics";
-import type { FundResearch, WeightedItem } from "@/lib/fund-types";
+import type { FundResearch, MetricKey, WeightedItem } from "@/lib/fund-types";
 import { PERFORMANCE_RANGES } from "@/lib/research-route-state";
 import {
   formatFullDate,
@@ -19,8 +19,12 @@ import type {
   DisplayStatus,
   FactDisplay,
   FundHeaderDisplay,
+  CurrentNavDisplay,
   OutcomeDisplay,
   PerformanceDisplay,
+  MetricGroupDisplay,
+  PortfolioDisplay,
+  SectorDisplay,
 } from "./types";
 
 export function financialStatus(value: number | null): DisplayStatus {
@@ -55,6 +59,13 @@ export function toFundHeaderDisplay(fund: FundResearch): FundHeaderDisplay {
   return {
     title: fund.scheme.schemeName,
     subtitle: `${fund.scheme.amc} · ${fund.scheme.category} · ${fund.scheme.plan} ${fund.scheme.option}`,
+  };
+}
+
+export function toCurrentNavDisplay(fund: FundResearch): CurrentNavDisplay {
+  return {
+    valueText: formatRupees(fund.currentNav?.nav ?? null),
+    dateText: fund.currentNav?.date ? formatFullDate(fund.currentNav.date) : "—",
   };
 }
 
@@ -95,8 +106,6 @@ export function toPerformanceDisplay(
   return {
     range,
     periodLabel: PERFORMANCE_RANGES.find((item) => item.value === range)?.label ?? range,
-    latestNavText: formatRupees(fund.currentNav?.nav ?? null),
-    latestNavDateText: fund.currentNav?.date ? formatFullDate(fund.currentNav.date) : "—",
     outcomes,
     series,
   };
@@ -127,4 +136,89 @@ export function toFundFactsDisplay(fund: FundResearch): readonly FactDisplay[] {
       ? [{ label: "Fund managers", valueText: facts.managers.join(", ") }]
       : []),
   ];
+}
+
+const metricDisplayOptions: Record<
+  MetricKey,
+  { signed: boolean; status: "financial" | "neutral" }
+> = {
+  oneYear: { signed: true, status: "financial" },
+  threeYear: { signed: true, status: "financial" },
+  fiveYear: { signed: true, status: "financial" },
+  volatility: { signed: false, status: "neutral" },
+  maxDrawdown: { signed: true, status: "neutral" },
+};
+
+export function toMetricDisplay(
+  fund: FundResearch,
+  key: MetricKey,
+  label: string,
+): MetricGroupDisplay["metrics"][number] {
+  const value = fund.metrics[key].value;
+  const options = metricDisplayOptions[key];
+  return {
+    label,
+    valueText: options.signed ? formatSignedPercent(value) : formatPercent(value),
+    status: options.status === "financial" ? financialStatus(value) : "neutral",
+  };
+}
+
+export function toFundMetricGroups(fund: FundResearch): readonly MetricGroupDisplay[] {
+  return [
+    {
+      title: "Annualised returns",
+      metrics: [
+        toMetricDisplay(fund, "oneYear", "1Y return"),
+        toMetricDisplay(fund, "threeYear", "3Y annualised"),
+        toMetricDisplay(fund, "fiveYear", "5Y annualised"),
+      ],
+    },
+    {
+      title: "Risk",
+      metrics: [
+        toMetricDisplay(fund, "volatility", "Volatility"),
+        toMetricDisplay(fund, "maxDrawdown", "Max drawdown"),
+      ],
+    },
+  ];
+}
+
+export function toPortfolioDisplay(fund: FundResearch): PortfolioDisplay | null {
+  const portfolio = fund.portfolio;
+  if (!portfolio) return null;
+  const holdingsBySector = new Map<string, typeof portfolio.holdings>();
+  for (const holding of portfolio.holdings) {
+    const name = holding.sector?.trim() || "Unclassified";
+    holdingsBySector.set(name, [...(holdingsBySector.get(name) ?? []), holding]);
+  }
+  const known = new Set(portfolio.sectors.map((sector) => sector.name));
+  const sectorWeights = [
+    ...portfolio.sectors,
+    ...[...holdingsBySector.entries()]
+      .filter(([name]) => !known.has(name))
+      .map(([name, holdings]) => ({
+        name,
+        weight: holdings.reduce((total, holding) => total + holding.weight, 0),
+      })),
+  ];
+  const sectors: SectorDisplay[] = sectorWeights.map((sector) => ({
+    name: sector.name,
+    weightText: formatPercent(sector.weight),
+    holdings: (holdingsBySector.get(sector.name) ?? []).map((holding) => ({
+      name: holding.name,
+      weightText: formatPercent(holding.weight),
+    })),
+  }));
+  return {
+    reportDateText: portfolio.asOf
+      ? `Portfolio as of ${formatFullDate(portfolio.asOf)}`
+      : "Portfolio report date unavailable.",
+    sectors,
+    assetAllocation: toAllocationDisplay(portfolio.assetAllocation),
+    marketCapAllocation: toAllocationDisplay(portfolio.marketCapAllocation),
+    concentrationText:
+      portfolio.topTenConcentration === null
+        ? null
+        : toPercentagePointsText(portfolio.topTenConcentration),
+  };
 }

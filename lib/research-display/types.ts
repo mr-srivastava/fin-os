@@ -45,8 +45,83 @@ export interface FundHeaderDisplay {
 export interface PerformanceDisplay {
   range: PerformanceRange;
   periodLabel: string;
-  latestNavText: string;
-  latestNavDateText: string;
   outcomes: readonly OutcomeDisplay[];
   series: readonly ChartSeriesDisplay[];
+}
+
+export interface CurrentNavDisplay {
+  valueText: string;
+  dateText: string;
+}
+
+export interface MetricGroupDisplay {
+  title: string;
+  metrics: readonly MetricDisplay[];
+}
+
+export interface HoldingDisplay {
+  name: string;
+  weightText: string;
+}
+
+export interface SectorDisplay {
+  name: string;
+  weightText: string;
+  holdings: readonly HoldingDisplay[];
+}
+
+export interface PortfolioDisplay {
+  reportDateText: string;
+  sectors: readonly SectorDisplay[];
+  assetAllocation: readonly AllocationDisplay[];
+  marketCapAllocation: readonly AllocationDisplay[];
+  concentrationText: string | null;
+}
+
+export interface FundResearchReadyModel {
+  schemeCode: string;
+  header: FundHeaderDisplay;
+  currentNav: CurrentNavDisplay;
+  benchmarkName: string | null;
+  performance: AsyncView<PerformanceDisplay>;
+  metricGroups: readonly MetricGroupDisplay[];
+  facts: readonly FactDisplay[];
+  portfolio: AsyncView<PortfolioDisplay>;
+}
+
+export type FundResearchScreenModel =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; data: FundResearchReadyModel };
+
+export interface ComparisonSelectionDisplay {
+  schemeCode: string | null;
+  title: string;
+  subtitle: string | null;
+  navText: string;
+  status: "empty" | "loading" | "error" | "ready";
+}
+
+export interface ComparisonReadyDisplay {
+  fundNames: readonly [string, string];
+  performance: AsyncView<{
+    range: PerformanceRange;
+    outcomes: readonly OutcomeDisplay[];
+    series: readonly ChartSeriesDisplay[];
+  }>;
+  characteristics: AsyncView<readonly { label: string; values: readonly MetricDisplay[] }[]>;
+  facts: readonly { label: string; values: readonly string[] }[];
+  portfolio: AsyncView<{
+    reportDateText: string;
+    sectorAllocation: readonly { name: string; leftText: string; rightText: string }[];
+    assetAllocation: readonly { name: string; leftText: string; rightText: string }[];
+    marketCapAllocation: readonly { name: string; leftText: string; rightText: string }[];
+    concentration: readonly [string | null, string | null];
+  }>;
+}
+
+export interface ComparisonScreenModel {
+  selections: readonly [ComparisonSelectionDisplay, ComparisonSelectionDisplay];
+  requestError: string | null;
+  comparison: AsyncView<ComparisonReadyDisplay>;
 }

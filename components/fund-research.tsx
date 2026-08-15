@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircleIcon,
   ArrowLeftIcon,
@@ -13,7 +12,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { SchemeAnalysisChart } from "@/components/scheme-analysis-chart";
-import { MetricCardGroup, type MetricCardValue } from "@/components/research/metric-card-group";
+import { MetricCardGroup } from "@/components/research/metric-card-group";
 import { FundFactsGrid } from "@/components/research/fund-facts";
 import { OutcomeSummary } from "@/components/research/outcome-summary";
 import { PortfolioConcentrationCard } from "@/components/research/portfolio-concentration";
@@ -46,17 +45,13 @@ import {
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { type PerformanceRange } from "@/lib/analytics";
-import { fundQueryOptions } from "@/lib/fund-queries";
-import type { AllocationItem, FundResearch, PortfolioItem } from "@/lib/fund-types";
-import type { AllocationDisplay } from "@/lib/research-display/types";
+import type {
+  AllocationDisplay,
+  FundResearchReadyModel,
+  SectorDisplay,
+} from "@/lib/research-display/types";
+import { useFundResearchScreenModel } from "@/lib/research-display/use-screen-models";
 import { type FundResearchRouteState, toFundResearchHref } from "@/lib/research-route-state";
-import { formatFullDate, formatPercent, formatSignedPercent } from "@/lib/utils";
-import {
-  toAllocationDisplay,
-  toFundFactsDisplay,
-  toPercentagePointsText,
-  toPerformanceDisplay,
-} from "@/lib/research-display/fund-research";
 
 interface AllocationBarProps {
   title: string;
@@ -65,8 +60,7 @@ interface AllocationBarProps {
 }
 
 interface SectorHoldingsProps {
-  holdings: readonly PortfolioItem[];
-  sectors: readonly AllocationItem[];
+  sectors: readonly SectorDisplay[];
 }
 
 interface FundResearchViewProps {
@@ -124,27 +118,8 @@ function AllocationBar({ title, description, items }: AllocationBarProps) {
   );
 }
 
-function SectorHoldings({ holdings, sectors }: SectorHoldingsProps) {
-  const holdingsBySector = new Map<string, PortfolioItem[]>();
-  for (const holding of holdings) {
-    const sector = holding.sector?.trim() || "Unclassified";
-    const sectorHoldings = holdingsBySector.get(sector) ?? [];
-    sectorHoldings.push(holding);
-    holdingsBySector.set(sector, sectorHoldings);
-  }
-
-  const sectorsByName = new Map(sectors.map((sector) => [sector.name, sector]));
-  const displayedSectors = [
-    ...sectors,
-    ...[...holdingsBySector.entries()]
-      .filter(([name]) => !sectorsByName.has(name))
-      .map(([name, sectorHoldings]) => ({
-        name,
-        weight: sectorHoldings.reduce((total, holding) => total + holding.weight, 0),
-      })),
-  ];
-
-  if (!displayedSectors.length) return null;
+function SectorHoldings({ sectors }: SectorHoldingsProps) {
+  if (!sectors.length) return null;
 
   return (
     <Card>
@@ -156,8 +131,7 @@ function SectorHoldings({ holdings, sectors }: SectorHoldingsProps) {
       </CardHeader>
       <CardContent>
         <Accordion className="border-t" multiple>
-          {displayedSectors.map((sector) => {
-            const sectorHoldings = holdingsBySector.get(sector.name) ?? [];
+          {sectors.map((sector) => {
             return (
               <AccordionItem
                 key={sector.name}
@@ -166,12 +140,10 @@ function SectorHoldings({ holdings, sectors }: SectorHoldingsProps) {
               >
                 <AccordionTrigger className="items-center gap-3 py-3 hover:no-underline">
                   <span className="min-w-0 flex-1">{sector.name}</span>
-                  <span className="font-mono text-muted-foreground">
-                    {formatPercent(sector.weight)}
-                  </span>
+                  <span className="font-mono text-muted-foreground">{sector.weightText}</span>
                 </AccordionTrigger>
                 <AccordionContent className="pb-3">
-                  {sectorHoldings.length ? (
+                  {sector.holdings.length ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -180,11 +152,11 @@ function SectorHoldings({ holdings, sectors }: SectorHoldingsProps) {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {sectorHoldings.map((holding) => (
-                          <TableRow key={`${sector.name}-${holding.name}-${holding.weight}`}>
+                        {sector.holdings.map((holding) => (
+                          <TableRow key={`${sector.name}-${holding.name}-${holding.weightText}`}>
                             <TableCell className="font-medium">{holding.name}</TableCell>
                             <TableCell className="text-right font-mono">
-                              {formatPercent(holding.weight)}
+                              {holding.weightText}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -222,7 +194,6 @@ function FundLoading() {
 
 export function FundResearchDataProvider({ schemeCode, routeState }: FundResearchViewProps) {
   const router = useRouter();
-  const fundQuery = useQuery(fundQueryOptions(schemeCode));
   const [performanceRange, setPerformanceRange] = useState<PerformanceRange>(routeState.range);
   const [showBenchmark, setShowBenchmark] = useState(routeState.showBenchmark);
 
@@ -240,7 +211,12 @@ export function FundResearchDataProvider({ schemeCode, routeState }: FundResearc
     );
   }
 
-  if (fundQuery.isError && !fundQuery.data)
+  const screenModel = useFundResearchScreenModel({
+    schemeCode,
+    range: performanceRange,
+    showBenchmark,
+  });
+  if (screenModel.status === "error")
     return (
       <main className="mx-auto grid min-h-screen max-w-5xl place-items-center px-4 sm:px-6">
         <Empty className="max-w-lg">
@@ -249,7 +225,7 @@ export function FundResearchDataProvider({ schemeCode, routeState }: FundResearc
               <AlertCircleIcon />
             </EmptyMedia>
             <EmptyTitle>Fund unavailable</EmptyTitle>
-            <EmptyDescription>{fundQuery.error.message}</EmptyDescription>
+            <EmptyDescription>{screenModel.message}</EmptyDescription>
           </EmptyHeader>
           <Link href="/" className={buttonVariants({ variant: "outline" })}>
             Search another fund
@@ -257,11 +233,11 @@ export function FundResearchDataProvider({ schemeCode, routeState }: FundResearc
         </Empty>
       </main>
     );
-  if (!fundQuery.data) return <FundLoading />;
+  if (screenModel.status === "loading") return <FundLoading />;
   return (
     <FundResearchScreen
       schemeCode={schemeCode}
-      fund={fundQuery.data}
+      model={screenModel.data}
       performanceRange={performanceRange}
       showBenchmark={showBenchmark}
       onChartState={updateChartState}
@@ -273,68 +249,18 @@ export const FundResearchView = FundResearchDataProvider;
 
 function FundResearchScreen({
   schemeCode,
-  fund,
+  model,
   performanceRange,
   showBenchmark,
   onChartState,
 }: {
   schemeCode: string;
-  fund: FundResearch;
+  model: FundResearchReadyModel;
   performanceRange: PerformanceRange;
   showBenchmark: boolean;
   onChartState: (range: PerformanceRange, showBenchmark: boolean) => void;
 }) {
-  const performance = toPerformanceDisplay(fund, performanceRange, showBenchmark);
-  const returns = [
-    {
-      label: "1Y return",
-      valueText: formatSignedPercent(fund.metrics.oneYear.value),
-      status:
-        fund.metrics.oneYear.value === null
-          ? "neutral"
-          : fund.metrics.oneYear.value > 0
-            ? "gain"
-            : fund.metrics.oneYear.value < 0
-              ? "loss"
-              : "neutral",
-    },
-    {
-      label: "3Y annualised",
-      valueText: formatSignedPercent(fund.metrics.threeYear.value),
-      status:
-        fund.metrics.threeYear.value === null
-          ? "neutral"
-          : fund.metrics.threeYear.value > 0
-            ? "gain"
-            : fund.metrics.threeYear.value < 0
-              ? "loss"
-              : "neutral",
-    },
-    {
-      label: "5Y annualised",
-      valueText: formatSignedPercent(fund.metrics.fiveYear.value),
-      status:
-        fund.metrics.fiveYear.value === null
-          ? "neutral"
-          : fund.metrics.fiveYear.value > 0
-            ? "gain"
-            : fund.metrics.fiveYear.value < 0
-              ? "loss"
-              : "neutral",
-    },
-  ] satisfies readonly MetricCardValue[];
-  const risks = [
-    {
-      label: "Volatility",
-      valueText: formatPercent(fund.metrics.volatility.value),
-      status: "neutral",
-    },
-    {
-      label: "Max drawdown",
-      valueText: formatSignedPercent(fund.metrics.maxDrawdown.value),
-      status: "neutral",
-    },
-  ] satisfies readonly MetricCardValue[];
+  const performance = model.performance.status === "ready" ? model.performance.data : null;
   return (
     <main id="main-content" className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
       <Link href="/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
@@ -344,11 +270,9 @@ function FundResearchScreen({
       <header className="mt-10 max-w-4xl">
         <Badge variant="secondary">Fund research</Badge>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl">
-          {fund.scheme.schemeName}
+          {model.header.title}
         </h1>
-        <p className="mt-4 text-sm text-muted-foreground">
-          {fund.scheme.amc} · {fund.scheme.category} · {fund.scheme.plan} {fund.scheme.option}
-        </p>
+        <p className="mt-4 text-sm text-muted-foreground">{model.header.subtitle}</p>
       </header>
       <Card className="mt-8">
         <CardHeader className="gap-6">
@@ -376,23 +300,23 @@ function FundResearchScreen({
               </div>
               <CardDescription>If you had invested at the start of this period</CardDescription>
               <p className="mt-2 text-xs font-medium text-muted-foreground">
-                Selected period: {performance.periodLabel}
+                Selected period: {performance?.periodLabel ?? performanceRange}
                 {" total return"}
               </p>
             </div>
             <div className="sm:text-right">
               <p className="text-xs font-medium text-muted-foreground">Latest NAV</p>
               <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
-                {performance.latestNavText}
+                {model.currentNav.valueText}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                As of {performance.latestNavDateText}
+                As of {model.currentNav.dateText}
               </p>
             </div>
           </div>
           <div
             className={`grid gap-3 rounded-lg border bg-muted/20 p-3 sm:items-end ${
-              showBenchmark && fund.benchmark
+              showBenchmark && model.benchmarkName
                 ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
                 : "sm:grid-cols-[minmax(0,1fr)_auto]"
             }`}
@@ -400,23 +324,23 @@ function FundResearchScreen({
             <OutcomeSummary
               name="This fund"
               colorClassName="bg-(--chart-1)"
-              returnText={performance.outcomes[0]?.returnText ?? "—"}
-              valueText={performance.outcomes[0]?.valueText ?? "—"}
-              status={performance.outcomes[0]?.status ?? "neutral"}
+              returnText={performance?.outcomes[0]?.returnText ?? "—"}
+              valueText={performance?.outcomes[0]?.valueText ?? "—"}
+              status={performance?.outcomes[0]?.status ?? "neutral"}
             />
-            {showBenchmark && fund.benchmark ? (
+            {showBenchmark && model.benchmarkName ? (
               <div className="border-t pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
                 <OutcomeSummary
-                  name={fund.benchmark.name}
+                  name={model.benchmarkName}
                   colorClassName="bg-(--chart-3)"
-                  returnText={performance.outcomes[1]?.returnText ?? "—"}
-                  valueText={performance.outcomes[1]?.valueText ?? "—"}
-                  status={performance.outcomes[1]?.status ?? "neutral"}
+                  returnText={performance?.outcomes[1]?.returnText ?? "—"}
+                  valueText={performance?.outcomes[1]?.valueText ?? "—"}
+                  status={performance?.outcomes[1]?.status ?? "neutral"}
                 />
               </div>
             ) : null}
             <div className="flex flex-wrap items-center gap-3">
-              {fund.benchmark ? (
+              {model.benchmarkName ? (
                 <div className="flex items-center gap-2">
                   <Switch
                     id={`show-benchmark-${schemeCode}`}
@@ -441,9 +365,9 @@ function FundResearchScreen({
           </div>
         </CardHeader>
         <CardContent>
-          {fund.availability.navHistory.available ? (
+          {model.performance.status === "ready" ? (
             <SchemeAnalysisChart
-              series={performance.series}
+              series={model.performance.data.series}
               range={performanceRange}
               onRangeChange={(range) => onChartState(range, showBenchmark)}
             />
@@ -452,51 +376,47 @@ function FundResearchScreen({
               <DatabaseIcon />
               <AlertTitle>NAV history unavailable</AlertTitle>
               <AlertDescription>
-                {fund.availability.navHistory.reason ??
-                  "Historical NAV data is unavailable right now."}
+                {model.performance.status === "unavailable"
+                  ? model.performance.message
+                  : "Historical NAV data is unavailable right now."}
               </AlertDescription>
             </Alert>
           )}
         </CardContent>
       </Card>
       <section className="mt-4 grid gap-4 lg:grid-cols-[3fr_2fr]">
-        <MetricCardGroup title="Annualised returns" metrics={returns} />
-        <MetricCardGroup title="Risk" metrics={risks} />
+        {model.metricGroups.map((group) => (
+          <MetricCardGroup key={group.title} title={group.title} metrics={group.metrics} />
+        ))}
       </section>
       <div className="mt-6">
-        <FundFactsGrid facts={toFundFactsDisplay(fund)} />
+        <FundFactsGrid facts={model.facts} />
       </div>
       <section className="mt-6">
         <div className="mb-4 flex items-center gap-2">
           <PieChartIcon />
           <h2 className="text-xl font-semibold tracking-tight">Latest reported portfolio</h2>
         </div>
-        {fund.portfolio ? (
+        {model.portfolio.status === "ready" ? (
           <>
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <Badge variant="outline">Reported portfolio</Badge>
-              <p className="text-sm text-muted-foreground">
-                {fund.portfolio.asOf
-                  ? `Portfolio as of ${formatFullDate(fund.portfolio.asOf)}`
-                  : "Portfolio report date unavailable."}
-              </p>
+              <p className="text-sm text-muted-foreground">{model.portfolio.data.reportDateText}</p>
             </div>
-            <SectorHoldings holdings={fund.portfolio.holdings} sectors={fund.portfolio.sectors} />
+            <SectorHoldings sectors={model.portfolio.data.sectors} />
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <AllocationBar
                 title="Asset allocation"
                 description="How the reported portfolio is divided among equity, debt, cash, and other assets."
-                items={toAllocationDisplay(fund.portfolio.assetAllocation)}
+                items={model.portfolio.data.assetAllocation}
               />
               <AllocationBar
                 title="Market-cap allocation"
                 description="How the reported equity allocation is spread across large-, mid-, and small-cap companies."
-                items={toAllocationDisplay(fund.portfolio.marketCapAllocation)}
+                items={model.portfolio.data.marketCapAllocation}
               />
-              {fund.portfolio.topTenConcentration !== null && (
-                <PortfolioConcentrationCard
-                  valueText={toPercentagePointsText(fund.portfolio.topTenConcentration)}
-                />
+              {model.portfolio.data.concentrationText !== null && (
+                <PortfolioConcentrationCard valueText={model.portfolio.data.concentrationText} />
               )}
             </div>
           </>
@@ -505,8 +425,8 @@ function FundResearchScreen({
             <PieChartIcon />
             <AlertTitle>Latest portfolio unavailable</AlertTitle>
             <AlertDescription>
-              {!fund.availability.portfolio.available
-                ? fund.availability.portfolio.reason
+              {model.portfolio.status === "unavailable"
+                ? model.portfolio.message
                 : "Portfolio data is unavailable right now."}
             </AlertDescription>
           </Alert>

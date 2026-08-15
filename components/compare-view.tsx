@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useQueries } from "@tanstack/react-query";
 import { ArrowLeftIcon, CircleAlertIcon, GitCompareArrowsIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FundSearch } from "@/components/fund-search";
@@ -22,18 +21,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { fundQueryOptions } from "@/lib/fund-queries";
-import type { FundPair, FundResearch, Scheme } from "@/lib/fund-types";
-import { isFundPair } from "@/lib/fund-types";
+import type { Scheme } from "@/lib/fund-types";
 import { type PerformanceRange } from "@/lib/analytics";
-import {
-  toComparisonFactsDisplay,
-  toComparisonAllocationDisplay,
-  toComparisonMetricDisplay,
-  toComparisonPerformanceDisplay,
-} from "@/lib/research-display/comparison";
+import { useComparisonScreenModel } from "@/lib/research-display/use-screen-models";
+import type { ComparisonScreenModel } from "@/lib/research-display/types";
 import { type ComparisonRouteState, toComparisonHref } from "@/lib/research-route-state";
-import { formatFullDate, formatPercent, formatRupees } from "@/lib/utils";
 
 interface AllocationComparisonProps {
   title: string;
@@ -126,64 +118,24 @@ function PortfolioMetricComparison({
   );
 }
 
-export function ComparisonDataProvider({ routeState }: CompareViewProps) {
-  const router = useRouter();
-  const [performanceRange, setPerformanceRange] = useState<PerformanceRange>(routeState.range);
-  useEffect(() => setPerformanceRange(routeState.range), [routeState]);
+function ComparisonScreen({
+  routeState,
+  performanceRange,
+  screenModel,
+  onChoose,
+  onRemove,
+  onRangeChange,
+}: {
+  routeState: ComparisonRouteState;
+  performanceRange: PerformanceRange;
+  screenModel: ComparisonScreenModel;
+  onChoose: (scheme: Scheme) => void;
+  onRemove: (index: number) => void;
+  onRangeChange: (range: PerformanceRange) => void;
+}) {
   const selectedCodes = routeState.schemeCodes;
-  const comparisonQueries = useQueries({
-    queries: selectedCodes.map((schemeCode) => ({
-      ...fundQueryOptions(schemeCode),
-      enabled: true,
-    })),
-  });
 
-  const comparisonError = comparisonQueries.find((query) => query.isError && !query.data)?.error;
-  const message = comparisonError instanceof Error ? comparisonError.message : "";
-  const funds = comparisonQueries.flatMap((query) => (query.data ? [query.data] : []));
-
-  function updateSelection(nextCodes: readonly string[], nextRange = performanceRange) {
-    router.push(toComparisonHref({ schemeCodes: nextCodes, range: nextRange }));
-  }
-
-  function choose(scheme: Scheme) {
-    if (selectedCodes.includes(scheme.schemeCode) || selectedCodes.length === 2) return;
-    updateSelection([...selectedCodes, scheme.schemeCode]);
-  }
-
-  function remove(index: number) {
-    updateSelection(selectedCodes.filter((_, selectedIndex) => selectedIndex !== index));
-  }
-
-  function updatePerformanceRange(nextRange: PerformanceRange) {
-    setPerformanceRange(nextRange);
-    updateSelection(selectedCodes, nextRange);
-  }
-
-  const selectedFunds = selectedCodes.map((schemeCode) =>
-    funds.find((item) => item.scheme.schemeCode === schemeCode),
-  );
-  const selected = selectedFunds.flatMap((fund) => (fund ? [fund.scheme] : []));
-  const displayedFunds: FundPair<FundResearch> | null =
-    funds.length === 2 &&
-    selectedCodes.length === 2 &&
-    funds.every((fund, index) => fund.scheme.schemeCode === selectedCodes[index]) &&
-    isFundPair(funds)
-      ? funds
-      : null;
-  const comparisonPerformance = displayedFunds
-    ? toComparisonPerformanceDisplay(displayedFunds, performanceRange)
-    : null;
-  const rows = displayedFunds ? toComparisonMetricDisplay(displayedFunds) : [];
-  const leftPortfolio = displayedFunds?.[0].portfolio;
-  const rightPortfolio = displayedFunds?.[1].portfolio;
-  const portfolios =
-    leftPortfolio && rightPortfolio ? { left: leftPortfolio, right: rightPortfolio } : null;
-  const historyReady =
-    displayedFunds?.every((fund) => fund.availability.navHistory.available) ?? false;
-  const unavailableNavFunds = (displayedFunds ?? [])
-    .filter((fund) => !fund.availability.navHistory.available)
-    .map((fund) => fund.scheme.schemeName);
+  const comparison = screenModel.comparison.status === "ready" ? screenModel.comparison.data : null;
   return (
     <main id="main-content" className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
       <Link href="/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
@@ -201,56 +153,46 @@ export function ComparisonDataProvider({ routeState }: CompareViewProps) {
         </p>
       </header>
       <section className="mt-8 grid gap-4 md:grid-cols-2" aria-live="polite">
-        {[0, 1].map((index) => (
+        {([0, 1] as const).map((index) => (
           <Card key={index}>
             <CardHeader>
               <CardDescription>Fund {index + 1}</CardDescription>
-              <CardTitle>
-                {selectedFunds[index]?.scheme.schemeName ??
-                  (selectedCodes[index] ? "Loading selected fund…" : "Choose a fund")}
-              </CardTitle>
-              {selectedFunds[index] ? (
+              <CardTitle>{screenModel.selections[index].title}</CardTitle>
+              {screenModel.selections[index].subtitle ? (
                 <p className="text-sm text-muted-foreground">
-                  {selectedFunds[index].scheme.amc} · {selectedFunds[index].scheme.category} ·{" "}
-                  {selectedFunds[index].scheme.plan} {selectedFunds[index].scheme.option}
+                  {screenModel.selections[index].subtitle}
                 </p>
               ) : null}
             </CardHeader>
             <CardContent>
               {selectedCodes[index] ? (
                 <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
-                  <p>
-                    {comparisonQueries[index]?.isError
-                      ? "This fund could not be loaded."
-                      : selectedFunds[index]?.currentNav
-                        ? `Latest NAV ${formatRupees(selectedFunds[index].currentNav.nav)} · ${formatFullDate(selectedFunds[index].currentNav.date)}`
-                        : "Latest NAV unavailable."}
-                  </p>
+                  <p>{screenModel.selections[index].navText}</p>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     className="ml-auto"
-                    onClick={() => remove(index)}
+                    onClick={() => onRemove(index)}
                   >
                     <XIcon data-icon="inline-start" /> Change
                   </Button>
                 </div>
               ) : (
-                <FundSearch compact onSelect={choose} />
+                <FundSearch compact onSelect={onChoose} />
               )}
             </CardContent>
           </Card>
         ))}
       </section>
-      {message && (
+      {screenModel.requestError && (
         <Alert variant="destructive" className="mt-6">
           <CircleAlertIcon />
           <AlertTitle>Comparison unavailable</AlertTitle>
-          <AlertDescription>{message}</AlertDescription>
+          <AlertDescription>{screenModel.requestError}</AlertDescription>
         </Alert>
       )}
-      {selected.length === 2 && !displayedFunds && !message && (
+      {screenModel.comparison.status === "loading" && (
         <Card className="mt-6">
           <CardContent className="flex flex-col gap-3 pt-0">
             <Skeleton className="h-5 w-48" />
@@ -258,7 +200,7 @@ export function ComparisonDataProvider({ routeState }: CompareViewProps) {
           </CardContent>
         </Card>
       )}
-      {displayedFunds && (
+      {comparison && (
         <>
           <Card className="mt-6">
             <CardHeader>
@@ -268,10 +210,10 @@ export function ComparisonDataProvider({ routeState }: CompareViewProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {historyReady ? (
+              {comparison.performance.status === "ready" ? (
                 <>
                   <div className="mb-6 grid gap-3 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2">
-                    {comparisonPerformance?.outcomes.map((outcome, index) => (
+                    {comparison.performance.data.outcomes.map((outcome, index) => (
                       <OutcomeSummary
                         key={outcome.name}
                         name={outcome.name}
@@ -283,9 +225,9 @@ export function ComparisonDataProvider({ routeState }: CompareViewProps) {
                     ))}
                   </div>
                   <SchemeAnalysisChart
-                    series={comparisonPerformance?.series ?? []}
+                    series={comparison.performance.data.series}
                     range={performanceRange}
-                    onRangeChange={updatePerformanceRange}
+                    onRangeChange={onRangeChange}
                   />
                 </>
               ) : (
@@ -293,8 +235,9 @@ export function ComparisonDataProvider({ routeState }: CompareViewProps) {
                   <CircleAlertIcon />
                   <AlertTitle>NAV comparison unavailable</AlertTitle>
                   <AlertDescription>
-                    Historical NAV data is unavailable for {unavailableNavFunds.join(" and ")}, so
-                    performance comparison cannot be shown.
+                    {comparison.performance.status === "unavailable"
+                      ? comparison.performance.message
+                      : "Performance comparison is unavailable."}
                   </AlertDescription>
                 </Alert>
               )}
@@ -308,18 +251,18 @@ export function ComparisonDataProvider({ routeState }: CompareViewProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {historyReady ? (
+              {comparison.characteristics.status === "ready" ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Metric</TableHead>
-                      {displayedFunds.map((fund) => (
-                        <TableHead key={fund.scheme.schemeCode}>{fund.scheme.schemeName}</TableHead>
+                      {comparison.fundNames.map((fundName) => (
+                        <TableHead key={fundName}>{fundName}</TableHead>
                       ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {rows.map((row) => (
+                    {comparison.characteristics.data.map((row) => (
                       <TableRow key={row.label}>
                         <TableCell className="font-medium">{row.label}</TableCell>
                         {row.values.map((value) => (
@@ -336,73 +279,52 @@ export function ComparisonDataProvider({ routeState }: CompareViewProps) {
                   <CircleAlertIcon />
                   <AlertTitle>Performance metrics unavailable</AlertTitle>
                   <AlertDescription>
-                    Historical NAV data is unavailable for {unavailableNavFunds.join(" and ")}, so
-                    return and risk measures cannot be compared.
+                    {comparison.characteristics.status === "unavailable"
+                      ? comparison.characteristics.message
+                      : "Performance metrics are unavailable."}
                   </AlertDescription>
                 </Alert>
               )}
             </CardContent>
           </Card>
-          <FundFactsComparisonTable
-            fundNames={displayedFunds.map((fund) => fund.scheme.schemeName)}
-            rows={toComparisonFactsDisplay(displayedFunds)}
-          />
-          {portfolios ? (
+          <FundFactsComparisonTable fundNames={comparison.fundNames} rows={comparison.facts} />
+          {comparison.portfolio.status === "ready" ? (
             <section className="mt-6">
               <div className="mb-4">
                 <h2 className="text-xl font-semibold tracking-tight">
                   Latest reported portfolio comparison
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {portfolios.left.asOf && portfolios.right.asOf
-                    ? `Reported as of ${formatFullDate(portfolios.left.asOf)} and ${formatFullDate(portfolios.right.asOf)}.`
-                    : "Portfolio report date unavailable for one or both funds."}
+                  {comparison.portfolio.data.reportDateText}
                 </p>
               </div>
               <div className="grid gap-4 lg:grid-cols-2">
                 <AllocationComparison
                   title="Sector allocation"
                   description="How each reported portfolio is distributed across sectors."
-                  rows={toComparisonAllocationDisplay(
-                    portfolios.left.sectors,
-                    portfolios.right.sectors,
-                  )}
-                  leftFundName={displayedFunds[0].scheme.schemeName}
-                  rightFundName={displayedFunds[1].scheme.schemeName}
+                  rows={comparison.portfolio.data.sectorAllocation}
+                  leftFundName={comparison.fundNames[0]}
+                  rightFundName={comparison.fundNames[1]}
                 />
                 <PortfolioMetricComparison
-                  leftFundName={displayedFunds[0].scheme.schemeName}
-                  rightFundName={displayedFunds[1].scheme.schemeName}
-                  leftValueText={
-                    portfolios.left.topTenConcentration === null
-                      ? null
-                      : formatPercent(portfolios.left.topTenConcentration / 100)
-                  }
-                  rightValueText={
-                    portfolios.right.topTenConcentration === null
-                      ? null
-                      : formatPercent(portfolios.right.topTenConcentration / 100)
-                  }
+                  leftFundName={comparison.fundNames[0]}
+                  rightFundName={comparison.fundNames[1]}
+                  leftValueText={comparison.portfolio.data.concentration[0]}
+                  rightValueText={comparison.portfolio.data.concentration[1]}
                 />
                 <AllocationComparison
                   title="Asset allocation"
                   description="How each reported portfolio is divided among equity, debt, cash, and other assets."
-                  rows={toComparisonAllocationDisplay(
-                    portfolios.left.assetAllocation,
-                    portfolios.right.assetAllocation,
-                  )}
-                  leftFundName={displayedFunds[0].scheme.schemeName}
-                  rightFundName={displayedFunds[1].scheme.schemeName}
+                  rows={comparison.portfolio.data.assetAllocation}
+                  leftFundName={comparison.fundNames[0]}
+                  rightFundName={comparison.fundNames[1]}
                 />
                 <AllocationComparison
                   title="Market-cap allocation"
                   description="How each reported equity allocation is spread across large-, mid-, and small-cap companies."
-                  rows={toComparisonAllocationDisplay(
-                    portfolios.left.marketCapAllocation,
-                    portfolios.right.marketCapAllocation,
-                  )}
-                  leftFundName={displayedFunds[0].scheme.schemeName}
-                  rightFundName={displayedFunds[1].scheme.schemeName}
+                  rows={comparison.portfolio.data.marketCapAllocation}
+                  leftFundName={comparison.fundNames[0]}
+                  rightFundName={comparison.fundNames[1]}
                 />
               </div>
             </section>
@@ -411,8 +333,9 @@ export function ComparisonDataProvider({ routeState }: CompareViewProps) {
               <CircleAlertIcon />
               <AlertTitle>Portfolio comparison unavailable</AlertTitle>
               <AlertDescription>
-                A reported portfolio is not available for both funds, so portfolio comparison cannot
-                be shown.
+                {comparison.portfolio.status === "unavailable"
+                  ? comparison.portfolio.message
+                  : "Portfolio comparison is unavailable."}
               </AlertDescription>
             </Alert>
           )}
@@ -427,6 +350,40 @@ export function ComparisonDataProvider({ routeState }: CompareViewProps) {
         </>
       )}
     </main>
+  );
+}
+
+export function ComparisonDataProvider({ routeState }: CompareViewProps) {
+  const router = useRouter();
+  const [performanceRange, setPerformanceRange] = useState<PerformanceRange>(routeState.range);
+  useEffect(() => setPerformanceRange(routeState.range), [routeState]);
+  const screenModel = useComparisonScreenModel({
+    schemeCodes: routeState.schemeCodes,
+    range: performanceRange,
+  });
+  function navigate(schemeCodes: readonly string[], range = performanceRange) {
+    router.push(toComparisonHref({ schemeCodes, range }));
+  }
+  return (
+    <ComparisonScreen
+      routeState={routeState}
+      performanceRange={performanceRange}
+      screenModel={screenModel}
+      onChoose={(scheme) => {
+        if (
+          !routeState.schemeCodes.includes(scheme.schemeCode) &&
+          routeState.schemeCodes.length < 2
+        )
+          navigate([...routeState.schemeCodes, scheme.schemeCode]);
+      }}
+      onRemove={(index) =>
+        navigate(routeState.schemeCodes.filter((_, itemIndex) => itemIndex !== index))
+      }
+      onRangeChange={(range) => {
+        setPerformanceRange(range);
+        navigate(routeState.schemeCodes, range);
+      }}
+    />
   );
 }
 
