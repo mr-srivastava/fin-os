@@ -33,6 +33,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -474,12 +475,29 @@ export function FundResearchView({
                 </div>
               </div>
             ) : null}
-            <Link
-              href={`/compare?fund=${schemeCode}`}
-              className={buttonVariants({ variant: "outline", size: "default" })}
-            >
-              Compare this fund <ArrowRightIcon data-icon="inline-end" />
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              {fund.benchmark ? (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id={`show-benchmark-${schemeCode}`}
+                    checked={showBenchmark}
+                    onCheckedChange={(checked) => updateChartState(performanceRange, checked)}
+                  />
+                  <label
+                    htmlFor={`show-benchmark-${schemeCode}`}
+                    className="text-sm font-medium leading-none"
+                  >
+                    Show benchmark
+                  </label>
+                </div>
+              ) : null}
+              <Link
+                href={`/compare?fund=${schemeCode}`}
+                className={buttonVariants({ variant: "outline", size: "default" })}
+              >
+                Compare this fund <ArrowRightIcon data-icon="inline-end" />
+              </Link>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -487,7 +505,7 @@ export function FundResearchView({
             <SchemeAnalysisChart
               series={[
                 { name: "This fund", color: "chart-1", points: fund.nav },
-                ...(fund.benchmark
+                ...(showBenchmark && fund.benchmark
                   ? [
                       {
                         name: fund.benchmark.name,
@@ -499,16 +517,6 @@ export function FundResearchView({
               ]}
               initialRange={performanceRange}
               onRangeChange={(range) => updateChartState(range, showBenchmark)}
-              {...(fund.benchmark
-                ? {
-                    comparisonToggle: {
-                      initialPressed: showBenchmark,
-                      label: "benchmark",
-                      onPressedChange: (pressed: boolean) =>
-                        updateChartState(performanceRange, pressed),
-                    },
-                  }
-                : {})}
             />
           ) : (
             <Alert>
