@@ -24,6 +24,12 @@ export function FundSearch({ compact = false, onSelect }: FundSearchProps) {
   const [validationMessage, setValidationMessage] = useState("");
   const searchQuery = useQuery(schemeSearchQueryOptions(submittedQuery));
   const schemes = searchQuery.data?.schemes ?? [];
+  const resultStatus =
+    submittedQuery && searchQuery.isSuccess
+      ? schemes.length
+        ? `${schemes.length} eligible ${schemes.length === 1 ? "scheme" : "schemes"} available.`
+        : "No eligible schemes available."
+      : "";
   const message =
     validationMessage ||
     (searchQuery.isError
@@ -75,6 +81,9 @@ export function FundSearch({ compact = false, onSelect }: FundSearchProps) {
           {message && <FieldError>{message}</FieldError>}
         </FieldGroup>
       </form>
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {resultStatus}
+      </p>
       {schemes.length > 0 && (
         <div className="mt-3 flex flex-col gap-1 rounded-lg border p-1">
           {schemes.map((scheme) =>

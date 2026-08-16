@@ -335,7 +335,7 @@ function FundResearchScreen({
             <GitCompareArrowsIcon className="size-5" />
           </div>
           {isComparing ? (
-            <div className="rounded-lg border border-chart-3/30 bg-chart-3/5 p-3">
+            <div className="rounded-lg border bg-muted/20 p-3">
               <p className="text-xs font-medium text-muted-foreground">Comparison fund</p>
               <p className="mt-1 truncate font-medium">{comparisonModel.selections[1].title}</p>
               <div className="mt-2 flex items-center justify-between gap-2">
@@ -348,12 +348,12 @@ function FundResearchScreen({
                   className="shrink-0"
                   onClick={() => onComparisonChange(null)}
                 >
-                  Change
+                  Remove
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed bg-muted/10 p-3">
+            <div className="rounded-lg border border-dashed bg-muted/20 p-3">
               <p className="text-xs font-medium text-muted-foreground">Comparison fund</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Search eligible Direct Growth schemes to compare their return path and reported
