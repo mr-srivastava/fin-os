@@ -418,7 +418,7 @@ function FundResearchScreen({
             </div>
             <div
               className={`grid gap-3 rounded-lg border bg-muted/20 p-3 sm:items-end ${
-                showBenchmark && model.benchmarkName
+                showBenchmark && model.benchmark
                   ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
                   : "sm:grid-cols-[minmax(0,1fr)_auto]"
               }`}
@@ -430,10 +430,10 @@ function FundResearchScreen({
                 valueText={performance?.outcomes[0]?.valueText ?? "—"}
                 status={performance?.outcomes[0]?.status ?? "neutral"}
               />
-              {showBenchmark && model.benchmarkName ? (
+              {showBenchmark && model.benchmark ? (
                 <div className="border-t pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
                   <OutcomeSummary
-                    name={model.benchmarkName}
+                    name={model.benchmark.name}
                     colorClassName="bg-(--chart-3)"
                     returnText={performance?.outcomes[1]?.returnText ?? "—"}
                     valueText={performance?.outcomes[1]?.valueText ?? "—"}
@@ -442,7 +442,7 @@ function FundResearchScreen({
                 </div>
               ) : null}
               <div className="flex flex-wrap items-center gap-3">
-                {model.benchmarkName ? (
+                {model.benchmark ? (
                   <div className="flex items-center gap-2">
                     <Switch
                       id={`show-benchmark-${schemeCode}`}
@@ -453,7 +453,7 @@ function FundResearchScreen({
                       htmlFor={`show-benchmark-${schemeCode}`}
                       className="text-sm font-medium leading-none"
                     >
-                      Show benchmark
+                      Show total-return benchmark
                     </label>
                   </div>
                 ) : null}

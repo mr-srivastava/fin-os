@@ -33,8 +33,9 @@ export default function DataAndLimitationsPage() {
         <section>
           <h2 className="text-xl font-semibold tracking-tight text-foreground">Data sources</h2>
           <p className="mt-3">
-            NAV history and the Nifty 500 benchmark are provided by TigZig. Scheme discovery, fund
-            details, and reported portfolio data are provided by FinAPI.
+            NAV history and verified total-return benchmark histories are provided by TigZig when
+            available. Scheme discovery, declared benchmark names, fund details, and reported
+            portfolio data are provided by FinAPI.
           </p>
           <p className="mt-3">
             <a
@@ -64,6 +65,11 @@ export default function DataAndLimitationsPage() {
             Returns, volatility, and drawdown are calculated from available NAV history. The growth
             illustration is based on NAV movement over the selected period and excludes taxes and
             transaction costs. Past performance does not predict future outcomes.
+          </p>
+          <p className="mt-3">
+            A benchmark chart appears only when navnote has a verified total-return history for the
+            fund&apos;s declared benchmark. If that history is unavailable, the declared benchmark
+            can still appear in Fund Facts, but it is not plotted.
           </p>
           <p className="mt-3">
             Portfolio data is a reported snapshot, not a live view of holdings. When a report date

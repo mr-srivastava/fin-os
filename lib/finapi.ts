@@ -19,7 +19,8 @@ import {
   providerText,
   type ProviderRecord,
 } from "./provider-input.ts";
-import { getTigzigNav, getTigzigNifty500 } from "./tigzig-nav.ts";
+import { resolveBenchmark } from "./benchmark-catalog.ts";
+import { getTigzigMarketSeries, getTigzigNav } from "./tigzig-nav.ts";
 
 export { ProviderError, toNav } from "./provider.ts";
 
@@ -263,7 +264,7 @@ export async function searchSchemes(query: string) {
 
 async function loadFundResearch(
   schemeCode: string,
-  benchmark: Promise<PromiseSettledResult<NavPoint[]>>,
+  benchmarkRequests: Map<string, Promise<PromiseSettledResult<NavPoint[]>>>,
 ): Promise<FundResearch | null> {
   const [fundResult, navResult] = await Promise.allSettled([
     request(`/scheme-code/${schemeCode}`),
@@ -285,23 +286,30 @@ async function loadFundResearch(
     return normalized;
   }
   applyNavHistory(normalized, navResult.value);
+  const definition = resolveBenchmark(normalized.facts.benchmark);
+  if (!definition) return normalized;
+  const benchmark =
+    benchmarkRequests.get(definition.tigzigId) ??
+    Promise.allSettled([getTigzigMarketSeries(definition.tigzigId)]).then(([result]) => result!);
+  benchmarkRequests.set(definition.tigzigId, benchmark);
   const benchmarkResult = await benchmark;
   if (benchmarkResult.status === "fulfilled" && benchmarkResult.value.length > 1) {
     normalized.benchmark = {
-      name: "Nifty 500 (price index)",
+      name: definition.displayName,
+      returnBasis: definition.returnBasis,
       nav: sampleSeries(benchmarkResult.value),
     };
   }
   return normalized;
 }
 
-/** Loads one or more funds while sharing the benchmark request across the batch. */
+/** Loads one or more funds while sharing matching benchmark requests across the batch. */
 export async function getFundResearchBatch(
   schemeCodes: readonly string[],
 ): Promise<PromiseSettledResult<FundResearch | null>[]> {
-  const benchmark = Promise.allSettled([getTigzigNifty500()]).then(([result]) => result!);
+  const benchmarkRequests = new Map<string, Promise<PromiseSettledResult<NavPoint[]>>>();
   return Promise.allSettled(
-    schemeCodes.map((schemeCode) => loadFundResearch(schemeCode, benchmark)),
+    schemeCodes.map((schemeCode) => loadFundResearch(schemeCode, benchmarkRequests)),
   );
 }
 

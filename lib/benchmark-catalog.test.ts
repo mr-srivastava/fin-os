@@ -1,0 +1,37 @@
+import { expect, test } from "vitest";
+import {
+  normalizeBenchmarkName,
+  resolveBenchmark,
+  validateBenchmarkCatalog,
+} from "./benchmark-catalog.ts";
+
+test("normalizes declared benchmark names before lookup", () => {
+  expect(normalizeBenchmarkName("  Nifty  500 TR INR ")).toBe("NIFTY 500 TR INR");
+  expect(resolveBenchmark("Nifty 500 TR INR")).toBeNull();
+});
+
+test("rejects price-return identifiers from the TRI catalog", () => {
+  expect(() =>
+    validateBenchmarkCatalog([
+      {
+        declaredNames: ["Nifty 500 TR INR"],
+        displayName: "Nifty 500 TRI",
+        tigzigId: "^CRSLDX",
+        returnBasis: "total_return",
+      },
+    ]),
+  ).toThrow("known price-return");
+});
+
+test("rejects catalog entries that are not total-return series", () => {
+  expect(() =>
+    validateBenchmarkCatalog([
+      {
+        declaredNames: ["Nifty 500 PR INR"],
+        displayName: "Nifty 500 price index",
+        tigzigId: "^OTHER",
+        returnBasis: "price_return" as never,
+      },
+    ]),
+  ).toThrow("Only total-return");
+});

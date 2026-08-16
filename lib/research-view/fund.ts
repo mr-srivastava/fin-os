@@ -39,7 +39,9 @@ export function toFundResearchView(fund: FundResearch): FundResearchView {
   return {
     scheme: fund.scheme,
     currentNav: fund.currentNav,
-    benchmarkName: fund.benchmark?.name ?? null,
+    benchmark: fund.benchmark
+      ? { name: fund.benchmark.name, returnBasis: fund.benchmark.returnBasis }
+      : null,
     performance: fund.availability.navHistory.available
       ? { status: "ready", data: ranges }
       : { status: "unavailable", message: fund.availability.navHistory.reason },

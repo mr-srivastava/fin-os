@@ -82,7 +82,7 @@ export interface FundResearchReadyModel {
   schemeCode: string;
   header: FundHeaderDisplay;
   currentNav: CurrentNavDisplay;
-  benchmarkName: string | null;
+  benchmark: { name: string; returnBasis: "total_return" } | null;
   performance: AsyncView<PerformanceDisplay>;
   metricGroups: readonly MetricGroupDisplay[];
   facts: readonly FactDisplay[];

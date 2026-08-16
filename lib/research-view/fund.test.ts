@@ -56,3 +56,48 @@ test("precomputes every range and synthesizes sectors from holdings", () => {
     data: { sectors: [{ name: "Technology", weight: 0.2 }] },
   });
 });
+
+test("exposes only the verified total-return benchmark metadata", () => {
+  const fund = {
+    scheme: {
+      schemeCode: "1234",
+      schemeName: "Example",
+      amc: "AMC",
+      category: "Flexi Cap",
+      plan: "Direct",
+      option: "Growth",
+    },
+    nav: [],
+    benchmark: {
+      name: "Nifty 500 TRI",
+      returnBasis: "total_return",
+      nav: [{ date: "2026-01-01", nav: 100 }],
+    },
+    currentNav: null,
+    facts: {
+      aum: null,
+      expenseRatio: null,
+      portfolioTurnover: null,
+      benchmark: "Nifty 500 TR INR",
+      riskLabel: null,
+      managers: [],
+    },
+    portfolio: null,
+    availability: {
+      navHistory: { available: true, source: "TigZig" },
+      facts: { available: true },
+      portfolio: { available: false, reason: "Unavailable" },
+    },
+    metrics: {
+      oneYear: { label: "", value: null },
+      threeYear: { label: "", value: null },
+      fiveYear: { label: "", value: null },
+      volatility: { label: "", value: null },
+      maxDrawdown: { label: "", value: null },
+    },
+  } satisfies FundResearch;
+  expect(toFundResearchView(fund).benchmark).toEqual({
+    name: "Nifty 500 TRI",
+    returnBasis: "total_return",
+  });
+});

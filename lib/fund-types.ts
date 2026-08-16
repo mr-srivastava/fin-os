@@ -6,8 +6,11 @@ export interface NavPoint {
 
 export interface BenchmarkSeries {
   name: string;
+  returnBasis: BenchmarkReturnBasis;
   nav: NavPoint[];
 }
+
+export type BenchmarkReturnBasis = "total_return";
 
 export interface Scheme {
   schemeCode: string;

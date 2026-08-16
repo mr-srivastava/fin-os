@@ -64,6 +64,7 @@ const PortfolioSchema = v.object({
 
 const BenchmarkSchema = v.object({
   name: v.string(),
+  returnBasis: v.literal("total_return"),
   nav: v.array(NavPointSchema),
 });
 
@@ -153,7 +154,7 @@ const FundPortfolioViewSchema = v.object({
 export const FundResearchViewSchema = v.object({
   scheme: SchemeSchema,
   currentNav: v.nullable(NavPointSchema),
-  benchmarkName: v.nullable(v.string()),
+  benchmark: v.nullable(v.object({ name: v.string(), returnBasis: v.literal("total_return") })),
   performance: SectionSchema(PerformanceRangesSchema),
   metricGroups: v.array(
     v.object({

@@ -55,12 +55,14 @@ navnote deliberately limits its V0 search results to schemes that are active,
 Direct, Growth, and within the supported equity categories. The app combines:
 
 - FinAPI for scheme discovery, fund facts, and reported portfolio data.
-- TigZig for up to five years of NAV history and the Nifty 500 price-index
-  benchmark.
+- TigZig for up to five years of NAV history and verified total-return
+  benchmark histories when available.
 
 Server-side requests time out after 10 seconds and are revalidated every five
 minutes. If TigZig data is unavailable, fund facts can still render, but
-NAV-derived charts and metrics are unavailable. You can set
+NAV-derived charts and metrics are unavailable. A fund's declared benchmark
+remains visible in its facts, but the benchmark chart is hidden unless a
+verified total-return history is available. You can set
 `FINAPI_PORTFOLIO_ENABLED=false` to hide portfolio data while retaining the
 rest of the research experience.
 

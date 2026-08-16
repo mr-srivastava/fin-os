@@ -18,7 +18,7 @@ export interface PerformanceRangeView {
 export interface FundResearchView {
   scheme: Scheme;
   currentNav: { nav: number; date: string } | null;
-  benchmarkName: string | null;
+  benchmark: { name: string; returnBasis: "total_return" } | null;
   performance: Section<Record<PerformanceRange, PerformanceRangeView>>;
   metricGroups: readonly {
     id: "returns" | "risk";

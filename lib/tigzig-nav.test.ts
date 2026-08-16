@@ -1,9 +1,10 @@
 import { assert, expect, test } from "vitest";
 import { ProviderError } from "./provider.ts";
 import {
+  getTigzigMarketSeries,
   getTigzigNav,
+  normalizeTigzigMarketSeriesPayload,
   normalizeTigzigNavPayload,
-  normalizeTigzigNifty500Payload,
 } from "./tigzig-nav.ts";
 
 test("normalizes TigZig's flat single-scheme NAV response", () => {
@@ -25,20 +26,44 @@ test("treats a documented empty NAV window as an empty series", () => {
   assert.equal(normalizeTigzigNavPayload({ scheme_code: "122639" }), null);
 });
 
-test("normalizes Nifty 500 market series data", () => {
+test("normalizes a market series using its requested identifier", () => {
   assert.deepEqual(
-    normalizeTigzigNifty500Payload({
-      data: [
-        { date: "2026-08-13", "^CRSLDX": 21_234.56 },
-        { date: "invalid", "^CRSLDX": 21_300 },
-        { date: "2026-08-14", "^CRSLDX": "21,400" },
-      ],
-    }),
+    normalizeTigzigMarketSeriesPayload(
+      {
+        data: [
+          { date: "2026-08-13", "^VERIFIED_TRI": 21_234.56 },
+          { date: "invalid", "^VERIFIED_TRI": 21_300 },
+          { date: "2026-08-14", "^VERIFIED_TRI": "21,400" },
+        ],
+      },
+      "^VERIFIED_TRI",
+    ),
     [
       { date: "2026-08-13", nav: 21_234.56 },
       { date: "2026-08-14", nav: 21_400 },
     ],
   );
+});
+
+test("requests a market series with its verified identifier", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestedUrl = "";
+  let options: RequestInit | undefined;
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    requestedUrl = String(input);
+    options = init;
+    return new Response(JSON.stringify({ data: [{ date: "2026-08-14", "^VERIFIED_TRI": 100 }] }));
+  }) as typeof fetch;
+  try {
+    await getTigzigMarketSeries("^VERIFIED_TRI");
+    assert.match(
+      requestedUrl,
+      /^https:\/\/api\.tigzig\.com\/v1\/series\?ids=%5EVERIFIED_TRI&from=\d{4}-\d{2}-\d{2}&format=json$/,
+    );
+    assert.equal(options?.next?.revalidate, 300);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("requests a bounded five-year window from TigZig", async () => {

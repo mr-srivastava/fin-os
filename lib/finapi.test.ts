@@ -128,6 +128,8 @@ test("uses TigZig NAV without calling FinAPI's historical NAV endpoint", async (
     assert.equal(fund.currentNav?.date, "2026-08-14");
     assert.equal(fund.availability.navHistory.source, "TigZig");
     assert.notEqual(fund.metrics.fiveYear.value, null);
+    assert.equal(fund.benchmark, null);
+    assert.equal(fund.facts.benchmark, "Nifty 500 TR INR");
     assert.equal(
       requests.some((url) => url.includes("finapi.upvaly.com") && url.includes("/nav?")),
       false,
@@ -170,7 +172,7 @@ test("keeps TigZig-only data from creating a research page when FinAPI fails", a
   }
 });
 
-test("shares one benchmark request when loading a comparison batch", async () => {
+test("does not request an unverified benchmark for a comparison batch", async () => {
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
   globalThis.fetch = (async (input: string | URL | Request) => {
@@ -183,7 +185,7 @@ test("shares one benchmark request when loading a comparison batch", async () =>
   try {
     const results = await getFundResearchBatch(["122639", "122640"]);
     expect(results.every((result) => result.status === "fulfilled")).toBe(true);
-    expect(requests.filter((url) => url.includes("/series?ids=")).length).toBe(1);
+    expect(requests.filter((url) => url.includes("/series?ids=")).length).toBe(0);
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -98,7 +98,7 @@ function fundModel(view: FundResearchView, range: PerformanceRange, benchmark: b
       valueText: formatRupees(view.currentNav?.nav ?? null),
       dateText: view.currentNav ? formatFullDate(view.currentNav.date) : "—",
     },
-    benchmarkName: view.benchmarkName,
+    benchmark: view.benchmark,
     performance,
     metricGroups: view.metricGroups.map((group) => ({
       title: group.id === "returns" ? "Annualised returns" : "Risk",

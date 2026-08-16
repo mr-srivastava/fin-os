@@ -16,10 +16,10 @@ Browser
   -> /api/funds/:schemeCode
        -> FinAPI fund facts and portfolio
        -> TigZig NAV history
-       -> TigZig Nifty 500 benchmark
+       -> verified TigZig total-return benchmark, when mapped
        -> semantic single-fund research view
   -> /api/compare?fund=...&against=...
-       -> concurrent two-fund research with one shared Nifty 500 request
+       -> concurrent two-fund research without benchmark requests
        -> semantic comparison view, including partial availability
 ```
 
@@ -34,8 +34,10 @@ availability in its body even when one selected fund cannot be loaded.
 ## Provider boundaries
 
 `lib/finapi.ts` owns FinAPI requests and normalizes the provider's variable
-payload into internal types. It also starts the concurrent TigZig NAV and
-benchmark requests for a fund detail response. `lib/tigzig-nav.ts` owns the
+payload into internal types. It starts the concurrent TigZig NAV request and,
+when the fund's declared benchmark has a verified total-return mapping, a
+TigZig benchmark request. `lib/benchmark-catalog.ts` is server-only and
+contains only verified total-return identifiers. `lib/tigzig-nav.ts` owns the
 TigZig request and payload parsing. Both provider adapters use a 10-second
 timeout and Next.js revalidation of 300 seconds.
 

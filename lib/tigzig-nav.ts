@@ -5,7 +5,6 @@ import { ProviderError, toNav } from "./provider.ts";
 
 const BASE_URL = "https://api.tigzig.com/mf/v1";
 const MARKET_BASE_URL = "https://api.tigzig.com/v1";
-const NIFTY_500_ID = "^CRSLDX";
 const REQUEST_TIMEOUT_MS = 10_000;
 
 export function normalizeTigzigNavPayload(payload: unknown): NavPoint[] | null {
@@ -47,25 +46,28 @@ export async function getTigzigNav(schemeCode: string): Promise<NavPoint[]> {
   return nav;
 }
 
-export function normalizeTigzigNifty500Payload(payload: unknown): NavPoint[] | null {
+export function normalizeTigzigMarketSeriesPayload(
+  payload: unknown,
+  indicatorId: string,
+): NavPoint[] | null {
   const envelope = providerRecord(payload);
   const rows = envelope && providerList(envelope.data);
   if (!rows) return null;
   return rows.flatMap((row) => {
     const point = providerRecord(row);
     const date = point && providerIsoDate(point.date);
-    const nav = point && providerNumber(point[NIFTY_500_ID]);
+    const nav = point && providerNumber(point[indicatorId]);
     return date && nav !== null && nav > 0 ? [{ date, nav }] : [];
   });
 }
 
-export async function getTigzigNifty500(): Promise<NavPoint[]> {
+export async function getTigzigMarketSeries(indicatorId: string): Promise<NavPoint[]> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let response: Response;
   try {
     response = await fetch(
-      `${MARKET_BASE_URL}/series?ids=${encodeURIComponent(NIFTY_500_ID)}&from=${navStartDate()}&format=json`,
+      `${MARKET_BASE_URL}/series?ids=${encodeURIComponent(indicatorId)}&from=${navStartDate()}&format=json`,
       { next: { revalidate: 300 }, signal: controller.signal },
     );
   } catch {
@@ -84,7 +86,7 @@ export async function getTigzigNifty500(): Promise<NavPoint[]> {
   } catch {
     throw new ProviderError("Benchmark data could not be read right now.", 502);
   }
-  const nav = normalizeTigzigNifty500Payload(payload);
+  const nav = normalizeTigzigMarketSeriesPayload(payload, indicatorId);
   if (nav === null) throw new ProviderError("Benchmark data could not be read right now.", 502);
   return nav;
 }
