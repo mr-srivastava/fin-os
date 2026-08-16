@@ -21,7 +21,7 @@ export default function DataAndLimitationsPage() {
           investment advice or recommendations.
         </p>
       </header>
-      <div className="mt-10 space-y-10 text-sm leading-6 text-muted-foreground">
+      <div className="mt-10 flex flex-col gap-10 text-sm leading-6 text-muted-foreground">
         <section>
           <h2 className="text-xl font-semibold tracking-tight text-foreground">What is included</h2>
           <p className="mt-3">

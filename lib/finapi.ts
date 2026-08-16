@@ -92,6 +92,14 @@ function isEligible(source: ProviderRecord, scheme: Scheme) {
   );
 }
 
+function eligibleSchemesFromResults(results: unknown[]): Scheme[] {
+  return results.flatMap((item) => {
+    const source = providerRecord(item);
+    const scheme = source && toScheme(source);
+    return source && scheme && isEligible(source, scheme) ? [scheme] : [];
+  });
+}
+
 function normalizeRelatedFunds(source: ProviderRecord, scheme: Scheme) {
   const related = (value: unknown, requireCategory: boolean) =>
     (providerList(value) ?? [])
@@ -350,13 +358,7 @@ export async function resolveIsin(isin: string): Promise<string | null> {
 export async function searchSchemes(query: string) {
   const payload = await request(`/search?schemeName=${encodeURIComponent(query)}`);
   const results = providerList(payload.data) ?? [];
-  return results
-    .flatMap((item) => {
-      const source = providerRecord(item);
-      const scheme = source && toScheme(source);
-      return source && scheme && isEligible(source, scheme) ? [scheme] : [];
-    })
-    .slice(0, 12);
+  return eligibleSchemesFromResults(results).slice(0, 12);
 }
 
 /** Lists the supported eligible schemes in one category for the browse experience. */
@@ -364,17 +366,8 @@ export async function listSchemesByCategory(category: EquityCategory) {
   const payload = await request(`/search?schemeName=${encodeURIComponent(category)}`);
   const categoryName = category.toLowerCase();
   const results = providerList(payload.data) ?? [];
-  return results
-    .flatMap((item) => {
-      const source = providerRecord(item);
-      const scheme = source && toScheme(source);
-      return source &&
-        scheme &&
-        isEligible(source, scheme) &&
-        scheme.category.toLowerCase().includes(categoryName)
-        ? [scheme]
-        : [];
-    })
+  return eligibleSchemesFromResults(results)
+    .filter((scheme) => scheme.category.toLowerCase().includes(categoryName))
     .filter(
       (scheme, index, schemes) =>
         schemes.findIndex((candidate) => candidate.schemeCode === scheme.schemeCode) === index,

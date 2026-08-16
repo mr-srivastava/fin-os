@@ -171,7 +171,7 @@ export function FundComparison({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-8">
+          <div className="flex flex-col gap-8">
             {comparison.characteristics.status === "ready" ? (
               <ComparisonTable
                 title="Path risk"

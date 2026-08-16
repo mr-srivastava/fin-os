@@ -7,6 +7,8 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { EQUITY_CATEGORIES } from "@/lib/fund-categories";
 import { categoryFundsQueryOptions } from "@/lib/fund-queries";
@@ -48,52 +50,63 @@ export function CategoryExplorer() {
           );
         })}
       </div>
-      <div className="mt-8 border-t pt-6" aria-live="polite" aria-busy={categoryQuery.isLoading}>
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h3 className="text-lg font-semibold tracking-tight">{selectedCategory} schemes</h3>
-          {categoryQuery.data ? (
-            <p className="text-sm text-muted-foreground">
-              {categoryQuery.data.schemes.length} shown · alphabetical
-            </p>
-          ) : null}
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Active Direct Growth schemes with currently available provider data.
-        </p>
-        {categoryQuery.isLoading ? (
-          <div className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
-            <Spinner aria-label={`Loading ${selectedCategory} schemes`} /> Loading schemes…
+      <div className="mt-8" aria-live="polite" aria-busy={categoryQuery.isLoading}>
+        <Separator />
+        <div className="pt-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h3 className="text-lg font-semibold tracking-tight">{selectedCategory} schemes</h3>
+            {categoryQuery.data ? (
+              <p className="text-sm text-muted-foreground">
+                {categoryQuery.data.schemes.length} shown · alphabetical
+              </p>
+            ) : null}
           </div>
-        ) : categoryQuery.isError ? (
-          <p className="mt-5 text-sm text-destructive">{categoryQuery.error.message}</p>
-        ) : categoryQuery.data?.schemes.length ? (
-          <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {categoryQuery.data.schemes.map((scheme) => (
-              <li key={scheme.schemeCode}>
-                <Link
-                  href={`/fund/${scheme.schemeCode}`}
-                  className="group block h-full rounded-xl focus-visible:outline-2 focus-visible:outline-ring"
-                >
-                  <Card size="sm" className="h-full py-3 transition-colors group-hover:bg-muted/50">
-                    <CardContent className="flex h-full flex-col">
-                      <span className="font-medium underline-offset-4 group-hover:underline">
-                        {scheme.schemeName}
-                      </span>
-                      <p className="mt-2 text-xs leading-5 text-muted-foreground">{scheme.amc}</p>
-                      <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-foreground">
-                        Open research <ArrowRightIcon className="size-3" aria-hidden="true" />
-                      </span>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-5 text-sm text-muted-foreground">
-            No eligible schemes are available for this category right now.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Active Direct Growth schemes with currently available provider data.
           </p>
-        )}
+          {categoryQuery.isLoading ? (
+            <div className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
+              <Spinner aria-label={`Loading ${selectedCategory} schemes`} /> Loading schemes…
+            </div>
+          ) : categoryQuery.isError ? (
+            <p className="mt-5 text-sm text-destructive">{categoryQuery.error.message}</p>
+          ) : categoryQuery.data?.schemes.length ? (
+            <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {categoryQuery.data.schemes.map((scheme) => (
+                <li key={scheme.schemeCode}>
+                  <Link
+                    href={`/fund/${scheme.schemeCode}`}
+                    className="group block h-full rounded-xl focus-visible:outline-2 focus-visible:outline-ring"
+                  >
+                    <Card
+                      size="sm"
+                      className="h-full py-3 transition-colors group-hover:bg-muted/50"
+                    >
+                      <CardContent className="flex h-full flex-col">
+                        <span className="font-medium underline-offset-4 group-hover:underline">
+                          {scheme.schemeName}
+                        </span>
+                        <p className="mt-2 text-xs leading-5 text-muted-foreground">{scheme.amc}</p>
+                        <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-foreground">
+                          Open research <ArrowRightIcon className="size-3" aria-hidden="true" />
+                        </span>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Empty className="mt-5 min-h-32">
+              <EmptyHeader>
+                <EmptyTitle>No schemes available</EmptyTitle>
+                <EmptyDescription>
+                  No eligible schemes are available for this category right now.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )}
+        </div>
       </div>
     </section>
   );

@@ -28,6 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Empty,
   EmptyDescription,
@@ -36,6 +37,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -135,7 +137,8 @@ function SectorHoldings({ sectors }: SectorHoldingsProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Accordion className="border-t" multiple>
+        <Separator />
+        <Accordion multiple>
           {sectors.map((sector) => {
             return (
               <AccordionItem
@@ -304,27 +307,25 @@ function FundResearchScreen({
         </h1>
         <p className="mt-4 text-sm text-muted-foreground">{model.header.subtitle}</p>
       </header>
-      <section
-        id="comparison-controls"
-        className="mt-8 rounded-xl border bg-card p-4 shadow-sm sm:p-5"
-        aria-live="polite"
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              Comparison set
-            </p>
-            <h2 className="mt-1 text-lg font-semibold tracking-tight">
-              {isComparing ? "Two funds, one research view" : "Add context to this fund"}
-            </h2>
+      <Card id="comparison-controls" className="mt-8" aria-live="polite">
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                Comparison set
+              </p>
+              <h2 className="mt-1 text-lg font-semibold tracking-tight">
+                {isComparing ? "Two funds, one research view" : "Add context to this fund"}
+              </h2>
+            </div>
+            {isComparing ? (
+              <Button variant="ghost" size="sm" onClick={() => onComparisonChange(null)}>
+                <XIcon data-icon="inline-start" /> Remove
+              </Button>
+            ) : null}
           </div>
-          {isComparing ? (
-            <Button variant="ghost" size="sm" onClick={() => onComparisonChange(null)}>
-              <XIcon data-icon="inline-start" /> Remove
-            </Button>
-          ) : null}
-        </div>
-        <div className="mt-4 grid items-stretch gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        </CardHeader>
+        <CardContent className="grid items-stretch gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <div className="rounded-lg border bg-muted/20 p-3">
             <p className="text-xs font-medium text-muted-foreground">Primary fund</p>
             <p className="mt-1 truncate font-medium">{model.header.title}</p>
@@ -368,8 +369,8 @@ function FundResearchScreen({
               </div>
             </div>
           )}
-        </div>
-      </section>
+        </CardContent>
+      </Card>
       {!isComparing && (
         <Card className="mt-6">
           <CardHeader className="gap-6">
@@ -442,19 +443,16 @@ function FundResearchScreen({
               ) : null}
               <div className="flex flex-wrap items-center gap-3">
                 {model.benchmark ? (
-                  <div className="flex items-center gap-2">
+                  <Field orientation="horizontal" className="w-auto">
                     <Switch
                       id={`show-benchmark-${schemeCode}`}
                       checked={showBenchmark}
                       onCheckedChange={(checked) => onChartState(performanceRange, checked)}
                     />
-                    <label
-                      htmlFor={`show-benchmark-${schemeCode}`}
-                      className="text-sm font-medium leading-none"
-                    >
+                    <FieldLabel htmlFor={`show-benchmark-${schemeCode}`}>
                       Show total-return benchmark
-                    </label>
-                  </div>
+                    </FieldLabel>
+                  </Field>
                 ) : null}
               </div>
             </div>
@@ -568,29 +566,32 @@ function FundResearchScreen({
             )}
           </section>
           {model.relatedFunds.peers.length || model.relatedFunds.fromAmc.length ? (
-            <section className="mt-8 border-t pt-6">
-              <div>
-                <h2 className="text-lg font-semibold tracking-tight">Explore related funds</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Eligible Direct Growth equity schemes supplied by FinAPI. These links are for
-                  research, not recommendations.
-                </p>
-              </div>
-              <div className="mt-5 grid gap-6 sm:grid-cols-2">
-                {model.relatedFunds.peers.length ? (
-                  <RelatedFundLinks
-                    title="Similar funds"
-                    funds={model.relatedFunds.peers}
-                    primarySchemeCode={schemeCode}
-                  />
-                ) : null}
-                {model.relatedFunds.fromAmc.length ? (
-                  <RelatedFundLinks
-                    title="More from this AMC"
-                    funds={model.relatedFunds.fromAmc}
-                    primarySchemeCode={schemeCode}
-                  />
-                ) : null}
+            <section className="mt-8">
+              <Separator />
+              <div className="pt-6">
+                <div>
+                  <h2 className="text-lg font-semibold tracking-tight">Explore related funds</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Eligible Direct Growth equity schemes supplied by FinAPI. These links are for
+                    research, not recommendations.
+                  </p>
+                </div>
+                <div className="mt-5 grid gap-6 sm:grid-cols-2">
+                  {model.relatedFunds.peers.length ? (
+                    <RelatedFundLinks
+                      title="Similar funds"
+                      funds={model.relatedFunds.peers}
+                      primarySchemeCode={schemeCode}
+                    />
+                  ) : null}
+                  {model.relatedFunds.fromAmc.length ? (
+                    <RelatedFundLinks
+                      title="More from this AMC"
+                      funds={model.relatedFunds.fromAmc}
+                      primarySchemeCode={schemeCode}
+                    />
+                  ) : null}
+                </div>
               </div>
             </section>
           ) : null}
@@ -667,7 +668,7 @@ function RelatedFundLinks({
   return (
     <section aria-label={title}>
       <h2 className="text-sm font-semibold">{title}</h2>
-      <ul className="mt-3 space-y-3">
+      <ul className="mt-3 flex flex-col gap-3">
         {funds.map((fund) => (
           <li key={fund.schemeCode} className="rounded-lg border bg-muted/20 p-3">
             <Link

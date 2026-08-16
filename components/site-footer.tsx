@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t px-4 py-6 sm:px-6">
-      <div className="mx-auto flex max-w-6xl flex-col gap-2 text-xs leading-5 text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+    <footer>
+      <Separator />
+      <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-xs leading-5 text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div>
           <p>For research only. Not investment advice.</p>
         </div>

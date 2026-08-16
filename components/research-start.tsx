@@ -1,16 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { CategoryExplorer } from "@/components/category-explorer";
 import { FundSearch } from "@/components/fund-search";
+import { Separator } from "@/components/ui/separator";
 
 export function ResearchStart() {
-  const router = useRouter();
-
-  function chooseScheme(scheme: { schemeCode: string }) {
-    router.push(`/fund/${scheme.schemeCode}`);
-  }
-
   return (
     <main id="main-content" className="mx-auto max-w-6xl px-4 sm:px-6">
       <section className="max-w-3xl py-14 sm:py-20">
@@ -24,7 +18,7 @@ export function ResearchStart() {
 
         <div className="mt-8">
           <h2 className="text-sm font-medium">Search a specific fund</h2>
-          <FundSearch onSelect={chooseScheme} />
+          <FundSearch />
         </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -34,7 +28,8 @@ export function ResearchStart() {
           ))}
         </div>
       </section>
-      <section id="explore" className="scroll-mt-6 border-t py-12 sm:py-16">
+      <Separator />
+      <section id="explore" className="scroll-mt-6 py-12 sm:py-16">
         <CategoryExplorer />
       </section>
     </main>
