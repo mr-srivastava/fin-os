@@ -33,18 +33,23 @@ function AllocationTable({
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
+        <Table className="table-fixed">
+          <colgroup>
+            <col className="w-1/5" />
+            <col className="w-2/5" />
+            <col className="w-2/5" />
+          </colgroup>
           <TableHeader>
             <TableRow>
-              <TableHead>Allocation</TableHead>
-              <TableHead>{fundNames[0]}</TableHead>
-              <TableHead>{fundNames[1]}</TableHead>
+              <TableHead className="whitespace-normal">Allocation</TableHead>
+              <TableHead className="whitespace-normal break-words">{fundNames[0]}</TableHead>
+              <TableHead className="whitespace-normal break-words">{fundNames[1]}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((row) => (
               <TableRow key={row.name}>
-                <TableCell className="font-medium">{row.name}</TableCell>
+                <TableCell className="font-medium whitespace-normal">{row.name}</TableCell>
                 <TableCell className="font-mono">{row.leftText}</TableCell>
                 <TableCell className="font-mono">{row.rightText}</TableCell>
               </TableRow>
@@ -116,19 +121,26 @@ export function FundComparison({
         </CardHeader>
         <CardContent>
           {comparison.characteristics.status === "ready" ? (
-            <Table>
+            <Table className="table-fixed">
+              <colgroup>
+                <col className="w-1/5" />
+                <col className="w-2/5" />
+                <col className="w-2/5" />
+              </colgroup>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Metric</TableHead>
+                  <TableHead className="whitespace-normal">Metric</TableHead>
                   {comparison.fundNames.map((name) => (
-                    <TableHead key={name}>{name}</TableHead>
+                    <TableHead key={name} className="whitespace-normal break-words">
+                      {name}
+                    </TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {comparison.characteristics.data.map((row) => (
                   <TableRow key={row.label}>
-                    <TableCell className="font-medium">{row.label}</TableCell>
+                    <TableCell className="font-medium whitespace-normal">{row.label}</TableCell>
                     {row.values.map((value) => (
                       <TableCell key={value.label} className="font-mono">
                         {value.valueText}

@@ -64,21 +64,30 @@ export function FundFactsComparisonTable({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
+        <Table className="table-fixed">
+          <colgroup>
+            <col className="w-1/5" />
+            <col className="w-2/5" />
+            <col className="w-2/5" />
+          </colgroup>
           <TableHeader>
             <TableRow>
-              <TableHead>Metric</TableHead>
+              <TableHead className="whitespace-normal">Metric</TableHead>
               {fundNames.map((name) => (
-                <TableHead key={name}>{name}</TableHead>
+                <TableHead key={name} className="whitespace-normal break-words">
+                  {name}
+                </TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((row) => (
               <TableRow key={row.label}>
-                <TableCell className="font-medium">{row.label}</TableCell>
+                <TableCell className="font-medium whitespace-normal">{row.label}</TableCell>
                 {row.values.map((value, index) => (
-                  <TableCell key={`${row.label}-${fundNames[index]}`}>{value}</TableCell>
+                  <TableCell key={`${row.label}-${fundNames[index]}`} className="whitespace-normal">
+                    {value}
+                  </TableCell>
                 ))}
               </TableRow>
             ))}

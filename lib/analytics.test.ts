@@ -4,6 +4,7 @@ import {
   annualizedVolatility,
   filterSeriesByRange,
   investmentOutcome,
+  investmentValueFromReturn,
   maxDrawdown,
   normalizeSeries,
   relativeReturnSeries,
@@ -99,6 +100,12 @@ test("calculates a hypothetical investment outcome", () => {
       returnPercent: 0.25,
     },
   );
+});
+
+test("converts a return into the current value of the initial investment", () => {
+  assert.equal(investmentValueFromReturn(0), 10_000);
+  assert.equal(investmentValueFromReturn(0.25), 12_500);
+  assert.equal(investmentValueFromReturn(-0.1), 9_000);
 });
 
 test("requires a meaningful daily return sample for volatility", () => {

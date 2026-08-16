@@ -14,8 +14,15 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { investmentValueFromReturn } from "@/lib/analytics";
 import { alignSeriesByMonth } from "@/lib/chart-data";
-import { formatCompactDate, formatFullDate, formatNumber, formatPercent } from "@/lib/utils";
+import {
+  formatCompactDate,
+  formatFullDate,
+  formatNumber,
+  formatPercent,
+  formatRupees,
+} from "@/lib/utils";
 
 export type ChartColor = "foreground" | "chart-1" | "chart-3";
 export interface ChartPoint {
@@ -117,7 +124,7 @@ export function LineChart({ series, valueMode = "indexed" }: LineChartProps) {
                   <span className="text-muted-foreground">{String(name)}</span>
                   <span className="font-mono font-medium tabular-nums">
                     {valueMode === "return"
-                      ? formatPercent(Number(value) / 100)
+                      ? formatRupees(investmentValueFromReturn(Number(value) / 100))
                       : formatNumber(Number(value))}
                   </span>
                 </div>

@@ -2,6 +2,7 @@ import type { NavPoint } from "@/lib/fund-types";
 import { parseIsoDate } from "@/lib/date";
 
 const DAYS_IN_YEAR = 365.25;
+export const DEFAULT_INITIAL_INVESTMENT = 10_000;
 
 export type PerformanceRange = "6m" | "1y" | "3y" | "5y" | "max";
 
@@ -95,7 +96,10 @@ export function filterSeriesByRange(points: NavPoint[], range: PerformanceRange)
   return series.filter((point) => point.date >= startDate);
 }
 
-export function investmentOutcome(points: NavPoint[], initialInvestment = 10_000) {
+export function investmentOutcome(
+  points: NavPoint[],
+  initialInvestment = DEFAULT_INITIAL_INVESTMENT,
+) {
   const series = sorted(points);
   const first = series[0];
   const last = series.at(-1);
@@ -103,6 +107,13 @@ export function investmentOutcome(points: NavPoint[], initialInvestment = 10_000
 
   const multiple = last.nav / first.nav;
   return { value: initialInvestment * multiple, returnPercent: multiple - 1 };
+}
+
+export function investmentValueFromReturn(
+  returnPercent: number,
+  initialInvestment = DEFAULT_INITIAL_INVESTMENT,
+) {
+  return initialInvestment * (1 + returnPercent);
 }
 
 export function sampleSeries(points: NavPoint[], maximum = 90) {

@@ -8,7 +8,6 @@ test("searches for a fund and opens its research route", async ({ page }) => {
 
   await page.goto("/");
   await page.getByLabel("Search mutual funds").fill("Parag Parikh");
-  await page.getByRole("button", { name: "Search" }).click();
 
   const fundResult = page.getByRole("button", {
     name: "Parag Parikh Flexi Cap Fund - Direct Plan - Growth",
