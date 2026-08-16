@@ -111,6 +111,59 @@ function fundModel(view: FundResearchView, range: PerformanceRange, benchmark: b
         status: metric.tone,
       })),
     })),
+    returnConsistency: view.returnConsistency
+      ? {
+          timeframe: view.returnConsistency.timeframe,
+          rows: [
+            {
+              label: "Average rolling return",
+              valueText: `${formatNumber(view.returnConsistency.averageReturn)}%`,
+            },
+            {
+              label: "Median rolling return",
+              valueText: `${formatNumber(view.returnConsistency.medianReturn)}%`,
+            },
+            {
+              label: "Lowest rolling return",
+              valueText: `${formatNumber(view.returnConsistency.minReturn)}%`,
+            },
+            {
+              label: "Highest rolling return",
+              valueText: `${formatNumber(view.returnConsistency.maxReturn)}%`,
+            },
+            {
+              label: "Positive periods",
+              valueText: `${formatNumber(view.returnConsistency.positiveRatio)}%`,
+            },
+            {
+              label: "Negative periods",
+              valueText: `${formatNumber(view.returnConsistency.negativeRatio)}%`,
+            },
+            ...(view.returnConsistency.consistencyScore === null
+              ? []
+              : [
+                  {
+                    label: "Provider consistency score",
+                    valueText: formatNumber(view.returnConsistency.consistencyScore),
+                  },
+                ]),
+          ],
+        }
+      : null,
+    relatedFunds: {
+      peers: view.relatedFunds.peers.map(({ schemeCode, schemeName, amc, category }) => ({
+        schemeCode,
+        schemeName,
+        amc,
+        category,
+      })),
+      fromAmc: view.relatedFunds.fromAmc.map(({ schemeCode, schemeName, amc, category }) => ({
+        schemeCode,
+        schemeName,
+        amc,
+        category,
+      })),
+    },
     facts: [
       {
         label: "AUM",

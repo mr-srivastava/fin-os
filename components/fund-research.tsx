@@ -15,7 +15,6 @@ import { useEffect, useState } from "react";
 import { SchemeAnalysisChart } from "@/components/scheme-analysis-chart";
 import { FundComparison } from "@/components/fund-comparison";
 import { FundSearch } from "@/components/fund-search";
-import { MetricCardGroup } from "@/components/research/metric-card-group";
 import { FundFactsGrid } from "@/components/research/fund-facts";
 import { OutcomeSummary } from "@/components/research/outcome-summary";
 import { PortfolioConcentrationCard } from "@/components/research/portfolio-concentration";
@@ -517,11 +516,10 @@ function FundResearchScreen({
       ) : null}
       {!comparison && (
         <>
-          <section className="mt-4 grid gap-4 lg:grid-cols-[3fr_2fr]">
-            {model.metricGroups.map((group) => (
-              <MetricCardGroup key={group.title} title={group.title} metrics={group.metrics} />
-            ))}
-          </section>
+          <RiskAndReturnConsistency
+            riskMetrics={model.metricGroups.find((group) => group.title === "Risk")?.metrics ?? []}
+            consistency={model.returnConsistency}
+          />
           <div className="mt-6">
             <FundFactsGrid facts={model.facts} />
           </div>
@@ -569,8 +567,132 @@ function FundResearchScreen({
               </Alert>
             )}
           </section>
+          {model.relatedFunds.peers.length || model.relatedFunds.fromAmc.length ? (
+            <section className="mt-8 border-t pt-6">
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight">Explore related funds</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Eligible Direct Growth equity schemes supplied by FinAPI. These links are for
+                  research, not recommendations.
+                </p>
+              </div>
+              <div className="mt-5 grid gap-6 sm:grid-cols-2">
+                {model.relatedFunds.peers.length ? (
+                  <RelatedFundLinks
+                    title="Similar funds"
+                    funds={model.relatedFunds.peers}
+                    primarySchemeCode={schemeCode}
+                  />
+                ) : null}
+                {model.relatedFunds.fromAmc.length ? (
+                  <RelatedFundLinks
+                    title="More from this AMC"
+                    funds={model.relatedFunds.fromAmc}
+                    primarySchemeCode={schemeCode}
+                  />
+                ) : null}
+              </div>
+            </section>
+          ) : null}
         </>
       )}
     </main>
+  );
+}
+
+function RiskAndReturnConsistency({
+  riskMetrics,
+  consistency,
+}: {
+  riskMetrics: readonly { label: string; valueText: string; status: "gain" | "loss" | "neutral" }[];
+  consistency: FundResearchReadyModel["returnConsistency"];
+}) {
+  if (!riskMetrics.length && !consistency) return null;
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle>Risk &amp; return consistency</CardTitle>
+        <CardDescription>
+          Path risk is calculated from available NAV history. Rolling-return figures are reported by
+          FinAPI and describe historical outcomes, not recommendations.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        {riskMetrics.length ? (
+          <section aria-labelledby="path-risk-title">
+            <h2 id="path-risk-title" className="text-sm font-semibold">
+              Path risk
+            </h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {riskMetrics.map((metric) => (
+                <div key={metric.label} className="rounded-lg bg-muted/20 px-3 py-3">
+                  <p className="text-xs text-muted-foreground">{metric.label}</p>
+                  <p className="mt-1 font-mono text-xl font-semibold tabular-nums">
+                    {metric.valueText}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+        {consistency ? (
+          <section aria-labelledby="return-consistency-title" className="lg:border-l lg:pl-6">
+            <h2 id="return-consistency-title" className="text-sm font-semibold">
+              {consistency.timeframe} rolling returns
+            </h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {consistency.rows.map((row) => (
+                <div key={row.label}>
+                  <p className="text-xs text-muted-foreground">{row.label}</p>
+                  <p className="mt-1 font-mono text-sm font-medium tabular-nums">{row.valueText}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function RelatedFundLinks({
+  title,
+  funds,
+  primarySchemeCode,
+}: {
+  title: string;
+  funds: readonly { schemeCode: string; schemeName: string; amc: string; category: string }[];
+  primarySchemeCode: string;
+}) {
+  return (
+    <section aria-label={title}>
+      <h2 className="text-sm font-semibold">{title}</h2>
+      <ul className="mt-3 space-y-3">
+        {funds.map((fund) => (
+          <li key={fund.schemeCode} className="rounded-lg border bg-muted/20 p-3">
+            <Link
+              className="text-sm font-medium underline-offset-4 hover:underline"
+              href={`/fund/${fund.schemeCode}`}
+            >
+              {fund.schemeName}
+            </Link>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {fund.amc} · {fund.category}
+            </p>
+            <Link
+              className={buttonVariants({ variant: "outline", size: "sm", className: "mt-3" })}
+              href={toFundResearchHref(primarySchemeCode, {
+                range: "3y",
+                showBenchmark: false,
+                against: fund.schemeCode,
+              })}
+            >
+              <GitCompareArrowsIcon data-icon="inline-start" />
+              Compare
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

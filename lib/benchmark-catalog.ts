@@ -3,18 +3,24 @@ import type { BenchmarkReturnBasis } from "./fund-types.ts";
 export interface BenchmarkDefinition {
   declaredNames: readonly string[];
   displayName: string;
-  tigzigId: string;
+  finapiIndexName: string;
   returnBasis: BenchmarkReturnBasis;
 }
 
-const KNOWN_PRICE_RETURN_IDENTIFIERS = new Set(["^CRSLDX"]);
+const KNOWN_PRICE_RETURN_FIELDS = new Set(["closePrice", "ntrValue"]);
 
 /**
- * Only add an entry after confirming that TigZig serves this exact identifier
- * as a total-return index. The current TigZig catalog exposes Nifty 500 only
- * as the price index ^CRSLDX, so it must not be registered here.
+ * Entries are registered only when FinAPI exposes an explicit TRI field for
+ * the exact declared benchmark.
  */
-const TOTAL_RETURN_BENCHMARKS: readonly BenchmarkDefinition[] = [];
+const TOTAL_RETURN_BENCHMARKS: readonly BenchmarkDefinition[] = [
+  {
+    declaredNames: ["Nifty 500 TR INR"],
+    displayName: "Nifty 500 TRI",
+    finapiIndexName: "NIFTY 500",
+    returnBasis: "total_return",
+  },
+];
 
 export function normalizeBenchmarkName(name: string) {
   return name.trim().replace(/\s+/g, " ").toUpperCase();
@@ -24,9 +30,9 @@ export function validateBenchmarkCatalog(entries: readonly BenchmarkDefinition[]
   for (const entry of entries) {
     if (entry.returnBasis !== "total_return")
       throw new Error("Only total-return benchmarks can be registered.");
-    if (KNOWN_PRICE_RETURN_IDENTIFIERS.has(entry.tigzigId))
-      throw new Error(`${entry.tigzigId} is a known price-return identifier.`);
-    if (!entry.declaredNames.length || !entry.displayName || !entry.tigzigId)
+    if (KNOWN_PRICE_RETURN_FIELDS.has(entry.finapiIndexName))
+      throw new Error(`${entry.finapiIndexName} is a known price-return field.`);
+    if (!entry.declaredNames.length || !entry.displayName || !entry.finapiIndexName)
       throw new Error(
         "A benchmark definition must include names, a display name, and an identifier.",
       );

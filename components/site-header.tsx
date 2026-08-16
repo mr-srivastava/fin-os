@@ -10,6 +10,12 @@ export function SiteHeader() {
         <Link href="/" className="text-lg font-semibold tracking-tight">
           navnote
         </Link>
+        <Link
+          href="/#explore"
+          className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Explore funds
+        </Link>
       </nav>
     </header>
   );

@@ -35,9 +35,6 @@ export function toComparisonMetricDisplay(
   funds: FundPair<FundResearch>,
 ): readonly { label: string; values: readonly MetricDisplay[] }[] {
   const rows = [
-    ["1Y return", "oneYear"],
-    ["3Y annualized", "threeYear"],
-    ["5Y annualized", "fiveYear"],
     ["1Y volatility", "volatility"],
     ["Max drawdown", "maxDrawdown"],
   ] as const;

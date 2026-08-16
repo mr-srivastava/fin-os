@@ -8,7 +8,7 @@ import {
   NavPointSchema,
   SchemeSearchSchema,
 } from "./fund-schemas.ts";
-import { isSchemeCode, isSearchQuery } from "./fund-input.ts";
+import { isIsin, isSchemeCode, isSearchQuery } from "./fund-input.ts";
 import type { ApiErrorCode } from "./fund-types.ts";
 
 test("accepts a valid scheme search response", () => {
@@ -55,6 +55,7 @@ test("requires the complete API error contract", () => {
   const errorCodes: readonly ApiErrorCode[] = [
     "invalid_query",
     "invalid_scheme_code",
+    "invalid_isin",
     "invalid_comparison",
     "not_found",
     "provider_error",
@@ -74,6 +75,8 @@ test("shares API request input constraints", () => {
   assert.equal(isSchemeCode("123"), false);
   assert.equal(isSchemeCode("12345678"), false);
   assert.equal(isSchemeCode("code"), false);
+  assert.equal(isIsin("INF879O01027"), true);
+  assert.equal(isIsin("not-an-isin"), false);
   assert.equal(isSearchQuery("ab"), true);
   assert.equal(isSearchQuery("a"), false);
   assert.equal(isSearchQuery("a".repeat(81)), false);

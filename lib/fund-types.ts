@@ -10,6 +10,17 @@ export interface BenchmarkSeries {
   nav: NavPoint[];
 }
 
+export interface ReturnConsistency {
+  timeframe: string;
+  averageReturn: number;
+  medianReturn: number;
+  minReturn: number;
+  maxReturn: number;
+  positiveRatio: number;
+  negativeRatio: number;
+  consistencyScore: number | null;
+}
+
 export type BenchmarkReturnBasis = "total_return";
 
 export interface Scheme {
@@ -93,11 +104,17 @@ export interface FundResearch {
   portfolio: PortfolioSnapshot | null;
   availability: FundAvailability;
   metrics: FundMetrics;
+  returnConsistency: ReturnConsistency | null;
+  relatedFunds: {
+    peers: Scheme[];
+    fromAmc: Scheme[];
+  };
 }
 
 export type ApiErrorCode =
   | "invalid_query"
   | "invalid_scheme_code"
+  | "invalid_isin"
   | "invalid_comparison"
   | "not_found"
   | "provider_error";

@@ -87,6 +87,19 @@ export const FundResearchSchema: v.GenericSchema<FundResearch> = v.object({
     facts: DataAvailabilitySchema,
     portfolio: DataAvailabilitySchema,
   }),
+  returnConsistency: v.nullable(
+    v.object({
+      timeframe: v.string(),
+      averageReturn: FiniteNumberSchema,
+      medianReturn: FiniteNumberSchema,
+      minReturn: FiniteNumberSchema,
+      maxReturn: FiniteNumberSchema,
+      positiveRatio: FiniteNumberSchema,
+      negativeRatio: FiniteNumberSchema,
+      consistencyScore: NullableFiniteNumberSchema,
+    }),
+  ),
+  relatedFunds: v.object({ peers: v.array(SchemeSchema), fromAmc: v.array(SchemeSchema) }),
   metrics: v.object({
     oneYear: MetricSchema,
     threeYear: MetricSchema,
@@ -97,10 +110,15 @@ export const FundResearchSchema: v.GenericSchema<FundResearch> = v.object({
 });
 
 export const SchemeSearchSchema = v.object({ schemes: v.array(SchemeSchema) });
+export const CategorySchemeListSchema = v.object({
+  category: v.string(),
+  schemes: v.array(SchemeSchema),
+});
 export const ApiErrorSchema: v.GenericSchema<ApiError> = v.object({
   error: v.picklist([
     "invalid_query",
     "invalid_scheme_code",
+    "invalid_isin",
     "invalid_comparison",
     "not_found",
     "provider_error",
@@ -164,6 +182,19 @@ export const FundResearchViewSchema = v.object({
       ),
     }),
   ),
+  returnConsistency: v.nullable(
+    v.object({
+      timeframe: v.string(),
+      averageReturn: FiniteNumberSchema,
+      medianReturn: FiniteNumberSchema,
+      minReturn: FiniteNumberSchema,
+      maxReturn: FiniteNumberSchema,
+      positiveRatio: FiniteNumberSchema,
+      negativeRatio: FiniteNumberSchema,
+      consistencyScore: NullableFiniteNumberSchema,
+    }),
+  ),
+  relatedFunds: v.object({ peers: v.array(SchemeSchema), fromAmc: v.array(SchemeSchema) }),
   facts: v.object({
     aum: NullableFiniteNumberSchema,
     expenseRatio: NullableFiniteNumberSchema,

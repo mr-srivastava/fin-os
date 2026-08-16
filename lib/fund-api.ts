@@ -1,6 +1,7 @@
 import * as v from "valibot";
 import {
   ApiErrorSchema,
+  CategorySchemeListSchema,
   ComparisonViewSchema,
   FundResearchViewSchema,
   SchemeSearchSchema,
@@ -47,6 +48,14 @@ export function searchFunds(query: string, signal?: AbortSignal) {
   return request<{ schemes: Scheme[] }>(
     `/api/schemes?q=${encodeURIComponent(query)}`,
     SchemeSearchSchema,
+    signal,
+  );
+}
+
+export function loadCategoryFunds(category: string, signal?: AbortSignal) {
+  return request<{ category: string; schemes: Scheme[] }>(
+    `/api/explore?category=${encodeURIComponent(category)}`,
+    CategorySchemeListSchema,
     signal,
   );
 }

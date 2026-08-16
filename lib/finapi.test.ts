@@ -21,6 +21,25 @@ const payload = {
     benchmarkIndex: "Nifty 500 TR INR",
     schemeRisk: "Very High Risk",
     schemeFundManagers: "Raj Mehta, Rajeev Thakkar",
+    rollingReturns: [
+      {
+        timeframe: "3Y",
+        averageReturn: 12,
+        medianReturn: 11,
+        minReturn: -2,
+        maxReturn: 22,
+        positiveRatio: 88,
+        negativeRatio: 12,
+        consistencyScore: 44,
+      },
+    ],
+    peers: [
+      {
+        schemeCode: "122640",
+        schemeName: "Example Flexi Cap Direct Growth",
+        schemeCategory: "Flexi Cap",
+      },
+    ],
     navHistory: [
       { date: "2025-08-13", nav: "89.00" },
       { date: "2026-08-14", nav: "91.6834" },
@@ -59,6 +78,11 @@ test("normalizes FinAPI numeric strings and marks an undated portfolio as provid
   assert.ok(fund.portfolio);
   assert.equal(fund.portfolio.asOf, null);
   assert.equal(fund.availability.portfolio.available, true);
+  assert.equal(fund.returnConsistency?.averageReturn, 12);
+  assert.deepEqual(
+    fund.relatedFunds.peers.map((fund) => fund.schemeCode),
+    ["122640"],
+  );
 });
 
 test("accepts a dated portfolio snapshot and ignores provider change fields", () => {
@@ -117,7 +141,17 @@ test("uses TigZig NAV without calling FinAPI's historical NAV endpoint", async (
   globalThis.fetch = (async (input: string | URL | Request) => {
     const url = String(input);
     requests.push(url);
-    return new Response(JSON.stringify(url.includes("api.tigzig.com") ? tigzigPayload : payload), {
+    const body = url.includes("api.tigzig.com")
+      ? tigzigPayload
+      : url.includes("nifty-indices")
+        ? {
+            data: [
+              { priceDate: "2026-08-13", triValue: 30000 },
+              { priceDate: "2026-08-14", triValue: 30100 },
+            ],
+          }
+        : payload;
+    return new Response(JSON.stringify(body), {
       status: 200,
     });
   }) as typeof fetch;
@@ -128,7 +162,7 @@ test("uses TigZig NAV without calling FinAPI's historical NAV endpoint", async (
     assert.equal(fund.currentNav?.date, "2026-08-14");
     assert.equal(fund.availability.navHistory.source, "TigZig");
     assert.notEqual(fund.metrics.fiveYear.value, null);
-    assert.equal(fund.benchmark, null);
+    assert.equal(fund.benchmark?.name, "Nifty 500 TRI");
     assert.equal(fund.facts.benchmark, "Nifty 500 TR INR");
     assert.equal(
       requests.some((url) => url.includes("finapi.upvaly.com") && url.includes("/nav?")),
@@ -172,20 +206,30 @@ test("keeps TigZig-only data from creating a research page when FinAPI fails", a
   }
 });
 
-test("does not request an unverified benchmark for a comparison batch", async () => {
+test("deduplicates a verified benchmark request for a comparison batch", async () => {
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
   globalThis.fetch = (async (input: string | URL | Request) => {
     const url = String(input);
     requests.push(url);
-    return new Response(JSON.stringify(url.includes("api.tigzig.com") ? tigzigPayload : payload), {
+    const body = url.includes("api.tigzig.com")
+      ? tigzigPayload
+      : url.includes("nifty-indices")
+        ? {
+            data: [
+              { priceDate: "2026-08-13", triValue: 30000 },
+              { priceDate: "2026-08-14", triValue: 30100 },
+            ],
+          }
+        : payload;
+    return new Response(JSON.stringify(body), {
       status: 200,
     });
   }) as typeof fetch;
   try {
     const results = await getFundResearchBatch(["122639", "122640"]);
     expect(results.every((result) => result.status === "fulfilled")).toBe(true);
-    expect(requests.filter((url) => url.includes("/series?ids=")).length).toBe(0);
+    expect(requests.filter((url) => url.includes("nifty-indices")).length).toBe(1);
   } finally {
     globalThis.fetch = originalFetch;
   }

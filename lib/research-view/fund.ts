@@ -1,5 +1,5 @@
 import type { FundResearch, WeightedItem } from "@/lib/fund-types";
-import { financialTone, performanceRanges } from "./performance";
+import { performanceRanges } from "./performance";
 import type { FundResearchView } from "./types";
 
 function allocation(items: readonly WeightedItem[]) {
@@ -47,14 +47,6 @@ export function toFundResearchView(fund: FundResearch): FundResearchView {
       : { status: "unavailable", message: fund.availability.navHistory.reason },
     metricGroups: [
       {
-        id: "returns",
-        metrics: ["oneYear", "threeYear", "fiveYear"].map((id) => ({
-          id,
-          value: fund.metrics[id as keyof typeof fund.metrics].value,
-          tone: financialTone(fund.metrics[id as keyof typeof fund.metrics].value),
-        })),
-      },
-      {
         id: "risk",
         metrics: ["volatility", "maxDrawdown"].map((id) => ({
           id,
@@ -63,6 +55,8 @@ export function toFundResearchView(fund: FundResearch): FundResearchView {
         })),
       },
     ],
+    returnConsistency: fund.returnConsistency,
+    relatedFunds: fund.relatedFunds,
     facts: fund.facts,
     portfolio: portfolio
       ? {

@@ -24,6 +24,20 @@ export interface FundResearchView {
     id: "returns" | "risk";
     metrics: readonly { id: string; value: number | null; tone: Tone }[];
   }[];
+  returnConsistency: {
+    timeframe: string;
+    averageReturn: number;
+    medianReturn: number;
+    minReturn: number;
+    maxReturn: number;
+    positiveRatio: number;
+    negativeRatio: number;
+    consistencyScore: number | null;
+  } | null;
+  relatedFunds: {
+    peers: readonly Scheme[];
+    fromAmc: readonly Scheme[];
+  };
   facts: {
     aum: number | null;
     expenseRatio: number | null;

@@ -33,9 +33,9 @@ export default function DataAndLimitationsPage() {
         <section>
           <h2 className="text-xl font-semibold tracking-tight text-foreground">Data sources</h2>
           <p className="mt-3">
-            NAV history and verified total-return benchmark histories are provided by TigZig when
-            available. Scheme discovery, declared benchmark names, fund details, and reported
-            portfolio data are provided by FinAPI.
+            NAV history is provided by TigZig when available. Verified Nifty total-return benchmark
+            histories, scheme discovery, declared benchmark names, fund details, rolling-return
+            summaries, and reported portfolio data are provided by FinAPI.
           </p>
           <p className="mt-3">
             <a

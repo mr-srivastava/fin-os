@@ -40,9 +40,7 @@ describe("comparison display mapping", () => {
     const pair = [fund, fund] as const satisfies FundPair<FundResearch>;
     expect(toComparisonFactsDisplay(pair)[0]?.values).toEqual(["₹1,234.56 Cr", "₹1,234.56 Cr"]);
     expect(
-      toComparisonMetricDisplay(pair)
-        .slice(-2)
-        .flatMap((row) => row.values.map((value) => value.status)),
+      toComparisonMetricDisplay(pair).flatMap((row) => row.values.map((value) => value.status)),
     ).toEqual(["neutral", "neutral", "neutral", "neutral"]);
   });
 });

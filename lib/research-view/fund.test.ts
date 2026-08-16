@@ -46,6 +46,8 @@ test("precomputes every range and synthesizes sectors from holdings", () => {
       volatility: { label: "", value: null },
       maxDrawdown: { label: "", value: null },
     },
+    returnConsistency: null,
+    relatedFunds: { peers: [], fromAmc: [] },
   } satisfies FundResearch;
   const view = toFundResearchView(fund);
   expect(view.performance.status).toBe("ready");
@@ -95,6 +97,8 @@ test("exposes only the verified total-return benchmark metadata", () => {
       volatility: { label: "", value: null },
       maxDrawdown: { label: "", value: null },
     },
+    returnConsistency: null,
+    relatedFunds: { peers: [], fromAmc: [] },
   } satisfies FundResearch;
   expect(toFundResearchView(fund).benchmark).toEqual({
     name: "Nifty 500 TRI",

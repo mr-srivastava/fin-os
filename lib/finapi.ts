@@ -7,6 +7,7 @@ import type {
   PortfolioItem,
   PortfolioSnapshot,
   Scheme,
+  ReturnConsistency,
 } from "./fund-types.ts";
 import { ProviderError, toNav } from "./provider.ts";
 import { metricsFor, unavailableMetrics } from "./fund-metrics.ts";
@@ -20,7 +21,9 @@ import {
   type ProviderRecord,
 } from "./provider-input.ts";
 import { resolveBenchmark } from "./benchmark-catalog.ts";
-import { getTigzigMarketSeries, getTigzigNav } from "./tigzig-nav.ts";
+import { getFinapiTri } from "./finapi-index.ts";
+import { getTigzigNav } from "./tigzig-nav.ts";
+import type { EquityCategory } from "./fund-categories.ts";
 
 export { ProviderError, toNav } from "./provider.ts";
 
@@ -59,6 +62,22 @@ function toScheme(source: ProviderRecord): Scheme | null {
   };
 }
 
+function toRelatedScheme(source: ProviderRecord, fallback: Scheme): Scheme | null {
+  const schemeCode = providerText(valueAt(source, ["schemeCode", "scheme_code"]));
+  const schemeName = providerText(valueAt(source, ["schemeName", "scheme_name"]));
+  if (!schemeCode || !isSchemeCode(schemeCode) || !schemeName) return null;
+  const lowerName = schemeName.toLowerCase();
+  if (!lowerName.includes("direct") || !lowerName.includes("growth")) return null;
+  return {
+    schemeCode,
+    schemeName,
+    amc: providerText(valueAt(source, ["fundHouse", "companyName", "amc"])) ?? fallback.amc,
+    category: providerText(valueAt(source, ["schemeCategory", "category"])) ?? fallback.category,
+    plan: providerText(valueAt(source, ["planName", "plan"])) ?? "Direct",
+    option: providerText(valueAt(source, ["optionName", "option"])) ?? "Growth",
+  };
+}
+
 function isEligible(source: ProviderRecord, scheme: Scheme) {
   const category = scheme.category.toLowerCase();
   const plan = scheme.plan.toLowerCase();
@@ -71,6 +90,61 @@ function isEligible(source: ProviderRecord, scheme: Scheme) {
     option.includes("growth") &&
     EQUITY_CATEGORIES.some((value) => category.includes(value))
   );
+}
+
+function normalizeRelatedFunds(source: ProviderRecord, scheme: Scheme) {
+  const related = (value: unknown, requireCategory: boolean) =>
+    (providerList(value) ?? [])
+      .flatMap((item) => {
+        const candidate = providerRecord(item);
+        const relatedScheme = candidate && toRelatedScheme(candidate, scheme);
+        return relatedScheme &&
+          (!requireCategory || providerText(valueAt(candidate!, ["schemeCategory", "category"]))) &&
+          isEligible(candidate!, relatedScheme)
+          ? [relatedScheme]
+          : [];
+      })
+      .filter(
+        (candidate, index, items) =>
+          candidate.schemeCode !== scheme.schemeCode &&
+          items.findIndex((item) => item.schemeCode === candidate.schemeCode) === index,
+      )
+      .slice(0, 6);
+  const fromAmc = providerRecord(source.moreFundsFromAmc);
+  return { peers: related(source.peers, false), fromAmc: related(fromAmc?.schemeList, true) };
+}
+
+function normalizeReturnConsistency(value: unknown, timeframe = "3Y"): ReturnConsistency | null {
+  const rows = providerList(value) ?? [];
+  const row = rows
+    .map(providerRecord)
+    .find((item) => providerText(item?.timeframe)?.toUpperCase() === timeframe);
+  if (!row) return null;
+  const averageReturn = providerNumber(row.averageReturn);
+  const medianReturn = providerNumber(row.medianReturn);
+  const minReturn = providerNumber(row.minReturn);
+  const maxReturn = providerNumber(row.maxReturn);
+  const positiveRatio = providerNumber(row.positiveRatio);
+  const negativeRatio = providerNumber(row.negativeRatio);
+  if (
+    averageReturn === null ||
+    medianReturn === null ||
+    minReturn === null ||
+    maxReturn === null ||
+    positiveRatio === null ||
+    negativeRatio === null
+  )
+    return null;
+  return {
+    timeframe: providerText(row.timeframe) ?? timeframe,
+    averageReturn,
+    medianReturn,
+    minReturn,
+    maxReturn,
+    positiveRatio,
+    negativeRatio,
+    consistencyScore: providerNumber(row.consistencyScore),
+  };
 }
 
 function toAllocation(value: unknown): AllocationItem[] {
@@ -196,6 +270,8 @@ export function normalizeFundPayload(payload: unknown): FundResearch | null {
             },
     },
     metrics: metricsFor(nav),
+    returnConsistency: normalizeReturnConsistency(data.rollingReturns),
+    relatedFunds: normalizeRelatedFunds(data, scheme),
   };
 }
 
@@ -250,6 +326,27 @@ async function request(path: string): Promise<ProviderRecord> {
   return envelope;
 }
 
+async function getRollingSummary(
+  schemeCode: string,
+  timeframe: "1Y" | "3Y" | "5Y",
+): Promise<ReturnConsistency | null> {
+  const payload = await request(
+    `/scheme-code/${schemeCode}/rolling-summary?period=${timeframe.toLowerCase()}`,
+  );
+  return normalizeReturnConsistency(payload.data, timeframe);
+}
+
+export async function resolveIsin(isin: string): Promise<string | null> {
+  const payload = await request(`/isin/${encodeURIComponent(isin)}`);
+  const rows = providerList(payload.data) ?? [payload.data];
+  for (const row of rows) {
+    const source = providerRecord(row);
+    const scheme = source && toScheme(source);
+    if (source && scheme && isEligible(source, scheme)) return scheme.schemeCode;
+  }
+  return null;
+}
+
 export async function searchSchemes(query: string) {
   const payload = await request(`/search?schemeName=${encodeURIComponent(query)}`);
   const results = providerList(payload.data) ?? [];
@@ -260,6 +357,30 @@ export async function searchSchemes(query: string) {
       return source && scheme && isEligible(source, scheme) ? [scheme] : [];
     })
     .slice(0, 12);
+}
+
+/** Lists the supported eligible schemes in one category for the browse experience. */
+export async function listSchemesByCategory(category: EquityCategory) {
+  const payload = await request(`/search?schemeName=${encodeURIComponent(category)}`);
+  const categoryName = category.toLowerCase();
+  const results = providerList(payload.data) ?? [];
+  return results
+    .flatMap((item) => {
+      const source = providerRecord(item);
+      const scheme = source && toScheme(source);
+      return source &&
+        scheme &&
+        isEligible(source, scheme) &&
+        scheme.category.toLowerCase().includes(categoryName)
+        ? [scheme]
+        : [];
+    })
+    .filter(
+      (scheme, index, schemes) =>
+        schemes.findIndex((candidate) => candidate.schemeCode === scheme.schemeCode) === index,
+    )
+    .sort((left, right) => left.schemeName.localeCompare(right.schemeName))
+    .slice(0, 24);
 }
 
 async function loadFundResearch(
@@ -286,12 +407,18 @@ async function loadFundResearch(
     return normalized;
   }
   applyNavHistory(normalized, navResult.value);
+  const rollingResults = await Promise.allSettled(
+    (["1Y", "3Y", "5Y"] as const).map((timeframe) => getRollingSummary(schemeCode, timeframe)),
+  );
+  const preferredRolling = rollingResults[1];
+  if (preferredRolling?.status === "fulfilled" && preferredRolling.value)
+    normalized.returnConsistency = preferredRolling.value;
   const definition = resolveBenchmark(normalized.facts.benchmark);
   if (!definition) return normalized;
   const benchmark =
-    benchmarkRequests.get(definition.tigzigId) ??
-    Promise.allSettled([getTigzigMarketSeries(definition.tigzigId)]).then(([result]) => result!);
-  benchmarkRequests.set(definition.tigzigId, benchmark);
+    benchmarkRequests.get(definition.finapiIndexName) ??
+    Promise.allSettled([getFinapiTri(definition.finapiIndexName)]).then(([result]) => result!);
+  benchmarkRequests.set(definition.finapiIndexName, benchmark);
   const benchmarkResult = await benchmark;
   if (benchmarkResult.status === "fulfilled" && benchmarkResult.value.length > 1) {
     normalized.benchmark = {

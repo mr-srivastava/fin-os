@@ -2,7 +2,6 @@
 
 import { CircleAlertIcon } from "lucide-react";
 import { OutcomeSummary } from "@/components/research/outcome-summary";
-import { FundFactsComparisonTable } from "@/components/research/fund-facts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SchemeAnalysisChart } from "@/components/scheme-analysis-chart";
@@ -61,6 +60,57 @@ function AllocationTable({
   );
 }
 
+function ComparisonTable({
+  title,
+  description,
+  rows,
+  fundNames,
+}: {
+  title: string;
+  description: string;
+  rows: readonly { label: string; values: readonly string[] }[];
+  fundNames: readonly [string, string];
+}) {
+  if (!rows.length) return null;
+  return (
+    <section>
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      <div className="mt-3 overflow-x-auto">
+        <Table className="min-w-[36rem] table-fixed">
+          <colgroup>
+            <col className="w-1/5" />
+            <col className="w-2/5" />
+            <col className="w-2/5" />
+          </colgroup>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="whitespace-normal">Measure</TableHead>
+              {fundNames.map((name) => (
+                <TableHead key={name} className="whitespace-normal break-words">
+                  {name}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.label}>
+                <TableCell className="font-medium whitespace-normal">{row.label}</TableCell>
+                {row.values.map((value, index) => (
+                  <TableCell key={`${row.label}-${fundNames[index]}`} className="font-mono">
+                    {value}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </section>
+  );
+}
+
 export function FundComparison({
   comparison,
   range,
@@ -74,7 +124,7 @@ export function FundComparison({
     <>
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>Relative performance</CardTitle>
+          <CardTitle>Performance comparison</CardTitle>
           <CardDescription>
             Each fund’s return from the start of the selected period.
           </CardDescription>
@@ -114,55 +164,43 @@ export function FundComparison({
       </Card>
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Performance characteristics</CardTitle>
+          <CardTitle>How they differ</CardTitle>
           <CardDescription>
-            Return and risk measures calculated from available NAV history.
+            Compare risk, costs, scale, and stated scheme characteristics after reviewing the return
+            path.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {comparison.characteristics.status === "ready" ? (
-            <Table className="table-fixed">
-              <colgroup>
-                <col className="w-1/5" />
-                <col className="w-2/5" />
-                <col className="w-2/5" />
-              </colgroup>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="whitespace-normal">Metric</TableHead>
-                  {comparison.fundNames.map((name) => (
-                    <TableHead key={name} className="whitespace-normal break-words">
-                      {name}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {comparison.characteristics.data.map((row) => (
-                  <TableRow key={row.label}>
-                    <TableCell className="font-medium whitespace-normal">{row.label}</TableCell>
-                    {row.values.map((value) => (
-                      <TableCell key={value.label} className="font-mono">
-                        {value.valueText}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <Unavailable
-              title="Performance metrics unavailable"
-              message={
-                comparison.characteristics.status === "unavailable"
-                  ? comparison.characteristics.message
-                  : "Performance metrics are unavailable."
-              }
+          <div className="space-y-8">
+            {comparison.characteristics.status === "ready" ? (
+              <ComparisonTable
+                title="Path risk"
+                description="Calculated from available NAV history."
+                rows={comparison.characteristics.data.map((row) => ({
+                  label: row.label,
+                  values: row.values.map((value) => value.valueText),
+                }))}
+                fundNames={comparison.fundNames}
+              />
+            ) : (
+              <Unavailable
+                title="Risk measures unavailable"
+                message={
+                  comparison.characteristics.status === "unavailable"
+                    ? comparison.characteristics.message
+                    : "Risk measures are unavailable."
+                }
+              />
+            )}
+            <ComparisonTable
+              title="Fund facts"
+              description="Provider-supplied scheme characteristics."
+              rows={comparison.facts}
+              fundNames={comparison.fundNames}
             />
-          )}
+          </div>
         </CardContent>
       </Card>
-      <FundFactsComparisonTable fundNames={comparison.fundNames} rows={comparison.facts} />
       {comparison.portfolio.status === "ready" ? (
         <section className="mt-6">
           <div className="mb-4">

@@ -7,7 +7,10 @@ import {
 
 test("normalizes declared benchmark names before lookup", () => {
   expect(normalizeBenchmarkName("  Nifty  500 TR INR ")).toBe("NIFTY 500 TR INR");
-  expect(resolveBenchmark("Nifty 500 TR INR")).toBeNull();
+  expect(resolveBenchmark("Nifty 500 TR INR")).toMatchObject({
+    displayName: "Nifty 500 TRI",
+    finapiIndexName: "NIFTY 500",
+  });
 });
 
 test("rejects price-return identifiers from the TRI catalog", () => {
@@ -16,7 +19,7 @@ test("rejects price-return identifiers from the TRI catalog", () => {
       {
         declaredNames: ["Nifty 500 TR INR"],
         displayName: "Nifty 500 TRI",
-        tigzigId: "^CRSLDX",
+        finapiIndexName: "closePrice",
         returnBasis: "total_return",
       },
     ]),
@@ -29,7 +32,7 @@ test("rejects catalog entries that are not total-return series", () => {
       {
         declaredNames: ["Nifty 500 PR INR"],
         displayName: "Nifty 500 price index",
-        tigzigId: "^OTHER",
+        finapiIndexName: "NIFTY 500",
         returnBasis: "price_return" as never,
       },
     ]),

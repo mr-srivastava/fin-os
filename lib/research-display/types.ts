@@ -85,6 +85,14 @@ export interface FundResearchReadyModel {
   benchmark: { name: string; returnBasis: "total_return" } | null;
   performance: AsyncView<PerformanceDisplay>;
   metricGroups: readonly MetricGroupDisplay[];
+  returnConsistency: {
+    timeframe: string;
+    rows: readonly { label: string; valueText: string }[];
+  } | null;
+  relatedFunds: {
+    peers: readonly { schemeCode: string; schemeName: string; amc: string; category: string }[];
+    fromAmc: readonly { schemeCode: string; schemeName: string; amc: string; category: string }[];
+  };
   facts: readonly FactDisplay[];
   portfolio: AsyncView<PortfolioDisplay>;
 }

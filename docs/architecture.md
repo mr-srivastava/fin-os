@@ -16,7 +16,8 @@ Browser
   -> /api/funds/:schemeCode
        -> FinAPI fund facts and portfolio
        -> TigZig NAV history
-       -> verified TigZig total-return benchmark, when mapped
+       -> verified FinAPI total-return benchmark, when mapped
+       -> FinAPI rolling-return and related-fund enrichment, when available
        -> semantic single-fund research view
   -> /api/compare?fund=...&against=...
        -> concurrent two-fund research without benchmark requests
@@ -36,10 +37,11 @@ availability in its body even when one selected fund cannot be loaded.
 `lib/finapi.ts` owns FinAPI requests and normalizes the provider's variable
 payload into internal types. It starts the concurrent TigZig NAV request and,
 when the fund's declared benchmark has a verified total-return mapping, a
-TigZig benchmark request. `lib/benchmark-catalog.ts` is server-only and
-contains only verified total-return identifiers. `lib/tigzig-nav.ts` owns the
-TigZig request and payload parsing. Both provider adapters use a 10-second
-timeout and Next.js revalidation of 300 seconds.
+FinAPI TRI request. `lib/benchmark-catalog.ts` is server-only and contains only
+verified total-return mappings. `lib/finapi-index.ts` owns FinAPI index request
+and TRI payload parsing; `lib/tigzig-nav.ts` owns TigZig NAV parsing. Both
+provider adapters use a 10-second timeout and Next.js revalidation of 300
+seconds.
 
 If the FinAPI fund request fails, the detail endpoint returns an error. If
 TigZig history fails, the endpoint returns the available facts and portfolio

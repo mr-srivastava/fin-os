@@ -1,6 +1,6 @@
 import type { FundResearch, WeightedItem } from "@/lib/fund-types";
 import { toFundResearchView } from "./fund";
-import { financialTone, performanceRanges } from "./performance";
+import { performanceRanges } from "./performance";
 import type { ComparisonView } from "./types";
 
 function joined(left: readonly WeightedItem[], right: readonly WeightedItem[]) {
@@ -75,7 +75,7 @@ export function toComparisonView(
           message:
             "A reported portfolio is not available for both funds, so portfolio comparison cannot be shown.",
         };
-  const metricIds = ["oneYear", "threeYear", "fiveYear", "volatility", "maxDrawdown"] as const;
+  const metricIds = ["volatility", "maxDrawdown"] as const;
   return {
     selections,
     comparison: {
@@ -91,7 +91,7 @@ export function toComparisonView(
         metrics: unavailableNav.length
           ? {
               status: "unavailable",
-              message: `Historical NAV data is unavailable for ${unavailableNav.join(" and ")}, so return and risk measures cannot be compared.`,
+              message: `Historical NAV data is unavailable for ${unavailableNav.join(" and ")}, so risk measures cannot be compared.`,
             }
           : {
               status: "ready",
@@ -99,10 +99,7 @@ export function toComparisonView(
                 id,
                 values: pair.map((fund) => ({
                   value: fund.metrics[id].value,
-                  tone:
-                    id === "volatility" || id === "maxDrawdown"
-                      ? "neutral"
-                      : financialTone(fund.metrics[id].value),
+                  tone: "neutral" as const,
                 })),
               })),
             },
