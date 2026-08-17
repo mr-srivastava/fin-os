@@ -23,8 +23,13 @@ export function CategoryExplorer() {
     <section aria-labelledby="category-explorer-title">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">Research index</p>
-          <h2 id="category-explorer-title" className="mt-2 text-2xl font-semibold tracking-tight">
+          <p className="font-mono text-xs tracking-[0.18em] text-primary uppercase">
+            Research index
+          </p>
+          <h2
+            id="category-explorer-title"
+            className="mt-2 font-heading text-2xl font-medium tracking-tight"
+          >
             Browse the eligible equity universe.
           </h2>
         </div>
@@ -40,7 +45,7 @@ export function CategoryExplorer() {
           return (
             <Button
               key={category}
-              variant={isSelected ? "secondary" : "outline"}
+              variant={isSelected ? "default" : "outline"}
               className="h-9 px-3"
               aria-pressed={isSelected}
               onClick={() => setSelectedCategory(category)}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/components/query-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -8,6 +8,12 @@ import "./globals.css";
 
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  axes: ["opsz", "SOFT", "WONK"],
+  style: ["normal", "italic"],
+});
 
 export const metadata: Metadata = {
   title: "navnote — Indian mutual fund research",
@@ -16,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geist.variable} ${geistMono.variable} dark`}>
+    <html lang="en" className={`${geist.variable} ${geistMono.variable} ${fraunces.variable} dark`}>
       <body className="flex min-h-screen flex-col">
         <a
           href="#main-content"

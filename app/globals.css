@@ -5,38 +5,39 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --positive: oklch(0.74 0.15 160);
-  --negative: oklch(0.7 0.17 22);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.72 0.16 250);
-  --chart-2: oklch(0.7 0.15 160);
-  --chart-3: oklch(0.75 0.16 85);
-  --chart-4: oklch(0.68 0.18 25);
-  --chart-5: oklch(0.7 0.15 310);
-  --radius: 0.625rem;
+  /* Ledger — ink-paper dark ground, brass ink for accents, ledger green/brick for gains/losses. */
+  --background: oklch(0.175 0.014 152);
+  --foreground: oklch(0.94 0.021 89);
+  --card: oklch(0.213 0.015 152);
+  --card-foreground: oklch(0.94 0.021 89);
+  --popover: oklch(0.213 0.015 152);
+  --popover-foreground: oklch(0.94 0.021 89);
+  --primary: oklch(0.78 0.13 84);
+  --primary-foreground: oklch(0.19 0.02 84);
+  --secondary: oklch(0.28 0.017 150);
+  --secondary-foreground: oklch(0.94 0.021 89);
+  --muted: oklch(0.255 0.016 150);
+  --muted-foreground: oklch(0.68 0.026 90);
+  --accent: oklch(0.28 0.017 150);
+  --accent-foreground: oklch(0.94 0.021 89);
+  --destructive: oklch(0.63 0.19 25);
+  --positive: oklch(0.72 0.13 152);
+  --negative: oklch(0.66 0.18 27);
+  --border: oklch(0.94 0.021 89 / 12%);
+  --input: oklch(0.94 0.021 89 / 15%);
+  --ring: oklch(0.78 0.13 84 / 60%);
+  --chart-1: oklch(0.78 0.13 84);
+  --chart-2: oklch(0.72 0.13 152);
+  --chart-3: oklch(0.7 0.09 230);
+  --chart-4: oklch(0.66 0.18 27);
+  --chart-5: oklch(0.68 0.07 300);
+  --radius: 0.3rem;
 }
 
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-geist-sans);
+  --font-heading: var(--font-fraunces);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -72,5 +73,17 @@
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
+  }
+}
+
+@layer utilities {
+  .ledger-rule {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 35px,
+      var(--border) 35px,
+      var(--border) calc(35px + 1px)
+    );
   }
 }

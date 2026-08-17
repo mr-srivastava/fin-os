@@ -23,21 +23,12 @@ import {
 import { resolveBenchmark } from "./benchmark-catalog.ts";
 import { getFinapiTri } from "./finapi-index.ts";
 import { getTigzigNav } from "./tigzig-nav.ts";
-import type { EquityCategory } from "./fund-categories.ts";
+import { EQUITY_CATEGORIES, type EquityCategory } from "./fund-categories.ts";
 
 export { ProviderError, toNav } from "./provider.ts";
 
 const BASE_URL = "https://finapi.upvaly.com/api/mf";
-const EQUITY_CATEGORIES = [
-  "flexi cap",
-  "large cap",
-  "large & mid cap",
-  "mid cap",
-  "small cap",
-  "focused",
-  "value",
-  "contra",
-];
+const LOWERCASE_EQUITY_CATEGORIES = EQUITY_CATEGORIES.map((category) => category.toLowerCase());
 const REQUEST_TIMEOUT_MS = 10_000;
 
 function valueAt(source: ProviderRecord, keys: string[]) {
@@ -45,7 +36,7 @@ function valueAt(source: ProviderRecord, keys: string[]) {
   return undefined;
 }
 
-function toScheme(source: ProviderRecord): Scheme | null {
+export function toScheme(source: ProviderRecord): Scheme | null {
   const schemeCode = providerText(valueAt(source, ["schemeCode", "scheme_code"]));
   const schemeName = providerText(valueAt(source, ["schemeName", "scheme_name"]));
   if (!schemeCode || !isSchemeCode(schemeCode) || !schemeName) return null;
@@ -78,7 +69,7 @@ function toRelatedScheme(source: ProviderRecord, fallback: Scheme): Scheme | nul
   };
 }
 
-function isEligible(source: ProviderRecord, scheme: Scheme) {
+export function isEligible(source: ProviderRecord, scheme: Scheme) {
   const category = scheme.category.toLowerCase();
   const plan = scheme.plan.toLowerCase();
   const option = scheme.option.toLowerCase();
@@ -88,7 +79,7 @@ function isEligible(source: ProviderRecord, scheme: Scheme) {
     active !== "false" &&
     plan.includes("direct") &&
     option.includes("growth") &&
-    EQUITY_CATEGORIES.some((value) => category.includes(value))
+    LOWERCASE_EQUITY_CATEGORIES.some((value) => category.includes(value))
   );
 }
 
