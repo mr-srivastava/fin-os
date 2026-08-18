@@ -1,9 +1,10 @@
 # navnote
 
 navnote is a research interface for active, Direct Growth Indian equity mutual
-funds. You can search eligible schemes, examine their NAV history and calculated
-performance characteristics, review available fund facts and portfolio data, and
-compare two funds side by side.
+funds. You can search or browse eligible schemes, examine their NAV history and
+calculated performance characteristics, review available fund facts and
+portfolio data, compare two funds side by side, and save funds to a
+device-scoped watchlist.
 
 It is a research tool, not investment advice. Data can be incomplete, delayed,
 or temporarily unavailable. Verify information with the fund house before making
@@ -11,8 +12,9 @@ an investment decision.
 
 ## Run the project
 
-You need Node.js 24 and pnpm 11.18.0. The application does not require local
-credentials for its current public data providers.
+You need Node.js 24, pnpm 11.18.0, and a MongoDB instance for the scheme
+catalogue and watchlists. The application does not require local credentials
+for its current public data providers.
 
 1. Install dependencies:
 
@@ -20,13 +22,23 @@ credentials for its current public data providers.
    pnpm install
    ```
 
-2. Start the development server:
+2. Set `MONGODB_URI` and `MONGODB_DB` in `.env.local`, then populate the
+   catalogue:
+
+   ```bash
+   pnpm catalog:refresh
+   ```
+
+3. Start the development server:
 
    ```bash
    pnpm dev
    ```
 
-3. Open [http://localhost:3000](http://localhost:3000).
+4. Open [http://localhost:3000](http://localhost:3000).
+
+See [the development guide](docs/development.md#environment-configuration) for
+full environment setup, including a local MongoDB via Docker.
 
 ## Validate changes
 
@@ -54,9 +66,15 @@ with `pnpm exec playwright install chromium`.
 navnote deliberately limits its V0 search results to schemes that are active,
 Direct, Growth, and within the supported equity categories. The app combines:
 
-- FinAPI for scheme discovery, fund facts, and reported portfolio data.
+- A MongoDB-backed catalogue (refreshed from TigZig) for scheme search and
+  category browsing.
+- FinAPI for fund facts and reported portfolio data.
 - TigZig for up to five years of NAV history and verified total-return
   benchmark histories when available.
+
+Watchlists are stored in the same MongoDB instance, scoped to an anonymous
+per-browser device cookie. There is no account system, so a watchlist is only
+reachable from the browser that created it.
 
 Server-side requests time out after 10 seconds and are revalidated every five
 minutes. If TigZig data is unavailable, fund facts can still render, but
@@ -73,8 +91,10 @@ The project uses the Next.js App Router and TypeScript.
 - `app/` contains routes, pages, and server-side API endpoints.
 - `components/` contains the client-side research, search, comparison, and UI
   components.
-- `lib/` contains provider adapters, runtime schemas, data types, and analytics.
+- `lib/` contains provider adapters, the Mongo-backed catalogue and watchlist
+  services, runtime schemas, data types, and analytics.
 - `scripts/preflight-finapi.ts` probes the live provider integration.
+- `scripts/catalog-refresh.ts` rebuilds the scheme catalogue in MongoDB.
 
 For implementation details, see [the architecture guide](docs/architecture.md)
 and [the development guide](docs/development.md). Contributors and coding agents

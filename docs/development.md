@@ -5,8 +5,9 @@ with contributor-specific checks and data-provider expectations.
 
 ## Prerequisites
 
-Use Node.js 24 and pnpm 11.18.0, as declared in `package.json`. No environment
-variables are required for normal local development.
+Use Node.js 24 and pnpm 11.18.0, as declared in `package.json`. You need a
+MongoDB instance for the scheme catalogue and watchlists - see
+[Environment configuration](#environment-configuration).
 
 Install dependencies and run the application with:
 
@@ -61,15 +62,34 @@ possible integration regressions.
 
 ## Environment configuration
 
-The only current runtime setting is optional:
+Set these in `.env.local` (ignored by git; don't commit `.env` files):
 
 ```bash
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB=navnote
 FINAPI_PORTFOLIO_ENABLED=false
 ```
 
-Set it in your local environment before starting the server to temporarily hide
-portfolio holdings and allocation data. Keep this setting unset for the default
-experience. Don't commit `.env` files because they are ignored by design.
+`MONGODB_URI` and `MONGODB_DB` (`lib/mongo.ts`) are required for the scheme
+catalogue (`/api/schemes`, `/api/explore`) and watchlists
+(`/api/watchlists/**`) to work. Without them, routes that touch the catalogue
+or watchlists fail; fund research routes (`/api/funds/:schemeCode`,
+`/api/compare`), which call FinAPI and TigZig directly, are unaffected. Run a
+local MongoDB with Docker if you don't already have one:
+
+```bash
+docker run -d -p 27017:27017 --name navnote-mongo mongo:latest
+```
+
+Populate the catalogue once MongoDB is up:
+
+```bash
+pnpm catalog:refresh
+```
+
+`FINAPI_PORTFOLIO_ENABLED=false` is optional. Set it to temporarily hide
+portfolio holdings and allocation data. Keep it unset for the default
+experience.
 
 ## Change workflow
 

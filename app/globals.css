@@ -32,6 +32,12 @@
   --chart-4: oklch(0.66 0.18 27);
   --chart-5: oklch(0.68 0.07 300);
   --radius: 0.3rem;
+  --shadow-card:
+    0 1px 2px oklch(0.05 0 0 / 35%), 0 8px 20px -8px oklch(0.05 0 0 / 55%),
+    inset 0 1px 0 oklch(0.94 0.021 89 / 6%);
+  --shadow-raised:
+    0 2px 4px oklch(0.05 0 0 / 40%), 0 16px 32px -12px oklch(0.05 0 0 / 65%),
+    inset 0 1px 0 oklch(0.94 0.021 89 / 8%);
 }
 
 @theme inline {
@@ -62,6 +68,8 @@
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
+  --shadow-card: var(--shadow-card);
+  --shadow-raised: var(--shadow-raised);
 }
 
 @layer base {

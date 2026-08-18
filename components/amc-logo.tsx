@@ -14,7 +14,13 @@ export function AmcLogo({ amc, size = "sm", className }: AmcLogoProps) {
 
   return (
     <Avatar size={size} className={cn("bg-muted", className)}>
-      {logoPath ? <AvatarImage src={logoPath} alt={`${amc} logo`} /> : null}
+      {logoPath ? (
+        <AvatarImage
+          src={logoPath}
+          alt={`${amc} logo`}
+          className="grayscale-[85%] contrast-125 transition-[filter] duration-200 group-hover:grayscale-0"
+        />
+      ) : null}
       <AvatarFallback>{amcInitials(amc)}</AvatarFallback>
     </Avatar>
   );

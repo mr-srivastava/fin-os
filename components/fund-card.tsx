@@ -7,7 +7,7 @@ import { AmcLogo } from "@/components/amc-logo";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
+import { cn, statusColorClass } from "@/lib/utils";
 
 /**
  * The card-displayable shape a fund can be rendered from. Financial metrics are optional
@@ -58,8 +58,17 @@ export function FundCard({
   watchlistAction,
   className,
 }: FundCardProps) {
-  const returnText = formatPercent(fund.oneYearReturn ?? fund.threeYearReturn);
+  const returnValue = fund.oneYearReturn ?? fund.threeYearReturn;
+  const returnText = formatPercent(returnValue);
   const returnLabel = fund.oneYearReturn !== undefined && fund.oneYearReturn !== null ? "1Y" : "3Y";
+  const returnStatus =
+    returnValue === null || returnValue === undefined
+      ? "neutral"
+      : returnValue > 0
+        ? "gain"
+        : returnValue < 0
+          ? "loss"
+          : "neutral";
   const aumText = formatAum(fund.aum);
 
   return (
@@ -67,7 +76,7 @@ export function FundCard({
       size="sm"
       data-density={density}
       className={cn(
-        "relative h-full py-3 transition-colors hover:bg-muted/40",
+        "group relative h-full py-3 transition-[box-shadow,background-color] duration-200 hover:bg-muted/40 hover:shadow-raised",
         density === "comparison" && "min-w-[16rem]",
         className,
       )}
@@ -106,7 +115,14 @@ export function FundCard({
           <div className="flex items-center gap-4 text-sm">
             {returnText ? (
               <span>
-                <span className="font-mono font-semibold tabular-nums">{returnText}</span>{" "}
+                <span
+                  className={cn(
+                    "font-mono font-semibold tabular-nums",
+                    statusColorClass(returnStatus),
+                  )}
+                >
+                  {returnText}
+                </span>{" "}
                 <span className="text-xs text-muted-foreground">{returnLabel}</span>
               </span>
             ) : null}

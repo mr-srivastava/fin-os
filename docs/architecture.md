@@ -23,6 +23,8 @@ Browser
   -> /api/compare?fund=...&against=...
        -> concurrent two-fund research without benchmark requests
        -> semantic comparison view, including partial availability
+  -> /api/funds/isin/:isin      -> scheme-code lookup (Mongo)  -> redirect target
+  -> /api/watchlists[...]       -> device-scoped CRUD (Mongo)  -> watchlist data
 ```
 
 The search experience uses `GET /api/schemes?q=<query>`. It accepts a trimmed
@@ -89,6 +91,37 @@ exists only so route handlers never import `finapi-service.ts` directly.
 `/fund/isin/:isin` redirect page all call `fundService` rather than
 `finapiService`.
 
+`GET /api/funds/isin/:isin` resolves an ISIN to a scheme code via the
+catalogue (Mongo), not FinAPI. The `/fund/isin/:isin` page is a thin
+server-side redirect to `/fund/:schemeCode` once resolved, which lets external
+links reference a fund by ISIN even though every other route in the app keys
+on scheme code.
+
+## Watchlists
+
+Watchlists let a visitor save funds to a device-scoped list without an account.
+`lib/device-id.ts` issues an anonymous `nn_device_id` cookie (httpOnly,
+two-year expiry) on first use; every watchlist read and write is scoped to that
+id, and there is no authentication in front of it - a request for another
+device's watchlist id must behave exactly as if it does not exist.
+`lib/watchlist-service.ts` is Mongo-backed CRUD (collection `watchlists`,
+see `lib/watchlist-types.ts` for the document shape) exposed to routes under
+`app/api/watchlists/`:
+
+```text
+GET/POST     /api/watchlists                    -> list / create
+GET/PATCH/DELETE /api/watchlists/:id             -> read / rename / delete
+POST/DELETE  /api/watchlists/:id/items/:schemeCode -> add / remove a scheme
+```
+
+`lib/watchlist-schemas.ts` and `lib/watchlist-api.ts` mirror the
+research-facing validation pattern: routes return validated shapes, and the
+client validates responses before TanStack Query exposes them to
+`components/watchlist-*.tsx` and `components/watchlists-index.tsx`.
+Watchlists never call FinAPI or TigZig; they only store scheme codes, not fund
+data, so a watchlisted fund still goes through the normal research path when
+opened.
+
 ## Data contracts
 
 `lib/fund-types.ts` defines the internal `FundResearch` contract. Its
@@ -118,6 +151,11 @@ range-selection logic in components.
 Set `FINAPI_PORTFOLIO_ENABLED=false` to suppress portfolio data. The app still
 returns and displays scheme facts and, when available, NAV research. This is
 useful if the portfolio provider response is temporarily unsuitable for display.
+
+`MONGODB_URI` and `MONGODB_DB` (`lib/mongo.ts`) configure the database behind
+the scheme catalogue and watchlists. Both are required to run the catalogue
+and watchlist routes locally; see [the development guide](development.md) for
+setup.
 
 ## Next steps
 

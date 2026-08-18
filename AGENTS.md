@@ -14,8 +14,10 @@ availability states and user-facing error handling.
 
 - `app/` contains App Router pages and API route handlers.
 - `components/` contains client components and the local UI primitives.
-- `lib/` contains provider adapters, schemas, types, date helpers, and analytics.
+- `lib/` contains provider adapters, the Mongo-backed catalogue and watchlist
+  services, schemas, types, date helpers, and analytics.
 - `scripts/preflight-finapi.ts` validates representative live provider responses.
+- `scripts/catalog-refresh.ts` rebuilds the scheme catalogue in MongoDB.
 - `docs/` contains architecture and contributor guidance.
 
 Keep provider-specific parsing in `lib/`. Route handlers validate untrusted
@@ -25,14 +27,24 @@ instead of assuming API responses are valid.
 
 ## Data behavior
 
-FinAPI supplies scheme discovery, facts, and reported portfolio data. TigZig
+A MongoDB-backed catalogue (`lib/catalog-service.ts`, refreshed from TigZig via
+`pnpm catalog:refresh`) drives scheme search and category browsing. FinAPI
+supplies fund facts and reported portfolio data for a single scheme. TigZig
 supplies NAV history and the Nifty 500 benchmark. Requests are cached for five
 minutes and time out after 10 seconds. Provider behavior is not guaranteed, so
 add or update normalization tests whenever you change a provider payload.
 
 Only active Direct Growth schemes in the supported equity categories are
 eligible in V0. `FINAPI_PORTFOLIO_ENABLED=false` disables portfolio display for
-operational use without disabling facts or NAV research.
+operational use without disabling facts or NAV research. `MONGODB_URI` and
+`MONGODB_DB` must be set for the catalogue and watchlist routes to work; see
+[docs/development.md](docs/development.md#environment-configuration).
+
+Watchlists (`lib/watchlist-service.ts`) are Mongo-backed, device-scoped lists
+of scheme codes, identified by an anonymous cookie from `lib/device-id.ts`.
+There is no auth: every watchlist read and write must be scoped by
+`deviceId`, and a request for another device's watchlist must behave as if it
+does not exist.
 
 ## Working rules
 
