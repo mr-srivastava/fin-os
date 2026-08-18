@@ -1,4 +1,5 @@
-import { listSchemesByCategory, ProviderError } from "@/lib/finapi";
+import { catalogService } from "@/lib/catalog-service";
+import { ProviderError } from "@/lib/provider";
 import { isEquityCategory } from "@/lib/fund-categories";
 
 export async function GET(request: Request) {
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
     );
   }
   try {
-    return Response.json({ category, schemes: await listSchemesByCategory(category) });
+    return Response.json({ category, schemes: await catalogService.listByCategory(category) });
   } catch (error) {
     const provider =
       error instanceof ProviderError

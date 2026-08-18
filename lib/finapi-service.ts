@@ -1,3 +1,8 @@
+/**
+ * Wraps every FinAPI endpoint this app uses: fund research, ISIN resolution, and index
+ * TRI series. Fund research also starts the concurrent TigZig NAV request its result
+ * needs, so this module is the fund-research orchestrator, not a pure FinAPI client.
+ */
 import { sampleSeries } from "./analytics.ts";
 import type {
   AllocationItem,
@@ -21,14 +26,22 @@ import {
   type ProviderRecord,
 } from "./provider-input.ts";
 import { resolveBenchmark } from "./benchmark-catalog.ts";
-import { getFinapiTri } from "./finapi-index.ts";
-import { getTigzigNav } from "./tigzig-nav.ts";
-import { EQUITY_CATEGORIES, type EquityCategory } from "./fund-categories.ts";
+import { tigzigService } from "./tigzig-service.ts";
 
 export { ProviderError, toNav } from "./provider.ts";
 
-const BASE_URL = "https://finapi.upvaly.com/api/mf";
-const LOWERCASE_EQUITY_CATEGORIES = EQUITY_CATEGORIES.map((category) => category.toLowerCase());
+const FUND_BASE_URL = "https://finapi.upvaly.com/api/mf";
+const INDEX_BASE_URL = "https://finapi.upvaly.com/api";
+const LOWERCASE_EQUITY_CATEGORIES = [
+  "flexi cap",
+  "large cap",
+  "large & mid cap",
+  "mid cap",
+  "small cap",
+  "focused",
+  "value",
+  "contra",
+];
 const REQUEST_TIMEOUT_MS = 10_000;
 
 function valueAt(source: ProviderRecord, keys: string[]) {
@@ -81,14 +94,6 @@ export function isEligible(source: ProviderRecord, scheme: Scheme) {
     option.includes("growth") &&
     LOWERCASE_EQUITY_CATEGORIES.some((value) => category.includes(value))
   );
-}
-
-function eligibleSchemesFromResults(results: unknown[]): Scheme[] {
-  return results.flatMap((item) => {
-    const source = providerRecord(item);
-    const scheme = source && toScheme(source);
-    return source && scheme && isEligible(source, scheme) ? [scheme] : [];
-  });
 }
 
 function normalizeRelatedFunds(source: ProviderRecord, scheme: Scheme) {
@@ -300,7 +305,7 @@ async function request(path: string): Promise<ProviderRecord> {
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}${path}`, {
+    response = await fetch(`${FUND_BASE_URL}${path}`, {
       next: { revalidate: 300 },
       signal: controller.signal,
     });
@@ -346,34 +351,13 @@ export async function resolveIsin(isin: string): Promise<string | null> {
   return null;
 }
 
-export async function searchSchemes(query: string) {
-  const payload = await request(`/search?schemeName=${encodeURIComponent(query)}`);
-  const results = providerList(payload.data) ?? [];
-  return eligibleSchemesFromResults(results).slice(0, 12);
-}
-
-/** Lists the supported eligible schemes in one category for the browse experience. */
-export async function listSchemesByCategory(category: EquityCategory) {
-  const payload = await request(`/search?schemeName=${encodeURIComponent(category)}`);
-  const categoryName = category.toLowerCase();
-  const results = providerList(payload.data) ?? [];
-  return eligibleSchemesFromResults(results)
-    .filter((scheme) => scheme.category.toLowerCase().includes(categoryName))
-    .filter(
-      (scheme, index, schemes) =>
-        schemes.findIndex((candidate) => candidate.schemeCode === scheme.schemeCode) === index,
-    )
-    .sort((left, right) => left.schemeName.localeCompare(right.schemeName))
-    .slice(0, 24);
-}
-
 async function loadFundResearch(
   schemeCode: string,
   benchmarkRequests: Map<string, Promise<PromiseSettledResult<NavPoint[]>>>,
 ): Promise<FundResearch | null> {
   const [fundResult, navResult] = await Promise.allSettled([
     request(`/scheme-code/${schemeCode}`),
-    getTigzigNav(schemeCode),
+    tigzigService.getNav(schemeCode),
   ]);
   if (fundResult.status === "rejected") throw fundResult.reason;
   const normalized = normalizeFundPayload(fundResult.value);
@@ -457,3 +441,56 @@ function applyNavHistory(fund: FundResearch, nav: NavPoint[]) {
   fund.metrics = metricsFor(nav);
   fund.availability.navHistory = { available: true, source: "TigZig" };
 }
+
+// ---- Index TRI series ----
+
+export function normalizeFinapiTriPayload(payload: unknown): NavPoint[] | null {
+  const envelope = providerRecord(payload);
+  const rows = envelope && providerList(envelope.data);
+  if (!rows) return null;
+  return rows
+    .flatMap((row) => {
+      const source = providerRecord(row);
+      const date = source && providerIsoDate(source.priceDate);
+      const nav = source && providerNumber(source.triValue);
+      return date && nav !== null && nav > 0 ? [{ date, nav }] : [];
+    })
+    .sort((left, right) => left.date.localeCompare(right.date));
+}
+
+export async function getFinapiTri(indexName: string): Promise<NavPoint[]> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let response: Response;
+  try {
+    response = await fetch(
+      `${INDEX_BASE_URL}/nifty-indices?indexName=${encodeURIComponent(indexName)}`,
+      {
+        next: { revalidate: 300 },
+        signal: controller.signal,
+      },
+    );
+  } catch {
+    throw new ProviderError("Benchmark data is unavailable. Try again shortly.", 503);
+  } finally {
+    clearTimeout(timeout);
+  }
+  if (!response.ok) {
+    if (response.status === 429)
+      throw new ProviderError("Benchmark data is busy. Try again in a moment.", 429);
+    throw new ProviderError("We could not retrieve benchmark data right now.", 502);
+  }
+  try {
+    const nav = normalizeFinapiTriPayload(await response.json());
+    if (!nav) throw new Error("invalid payload");
+    return nav;
+  } catch {
+    throw new ProviderError("Benchmark data could not be read right now.", 502);
+  }
+}
+
+export const finapiService = {
+  getFundResearch,
+  getFundResearchBatch,
+  resolveIsin,
+};

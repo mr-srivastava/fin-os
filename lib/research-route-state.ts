@@ -53,8 +53,12 @@ export function toFundResearchHref(schemeCode: string, state: FundResearchRouteS
 }
 
 export function parseComparisonSearchParams(params: SearchParams): ComparisonRouteState {
-  const candidates = [first(params.fund), first(params.against)].filter(
-    (schemeCode): schemeCode is string => Boolean(schemeCode && isSchemeCode(schemeCode)),
+  const codesParam = first(params.codes);
+  const rawCandidates = codesParam
+    ? codesParam.split(",").map((code) => code.trim())
+    : [first(params.fund), first(params.against)];
+  const candidates = rawCandidates.filter((schemeCode): schemeCode is string =>
+    Boolean(schemeCode && isSchemeCode(schemeCode)),
   );
   const schemeCodes = candidates.filter(
     (schemeCode, index) => candidates.indexOf(schemeCode) === index,

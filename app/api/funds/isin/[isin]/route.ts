@@ -1,4 +1,5 @@
-import { ProviderError, resolveIsin } from "@/lib/finapi";
+import { fundService } from "@/lib/fund-service";
+import { ProviderError } from "@/lib/provider";
 import { isIsin } from "@/lib/fund-input";
 
 export async function GET(_request: Request, context: RouteContext<"/api/funds/isin/[isin]">) {
@@ -10,7 +11,7 @@ export async function GET(_request: Request, context: RouteContext<"/api/funds/i
       { status: 400 },
     );
   try {
-    const schemeCode = await resolveIsin(normalizedIsin);
+    const schemeCode = await fundService.resolveIsin(normalizedIsin);
     if (!schemeCode)
       return Response.json(
         {

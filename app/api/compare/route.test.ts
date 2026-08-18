@@ -1,12 +1,7 @@
 import { expect, test, vi } from "vitest";
 
 const getFundResearchBatch = vi.fn();
-vi.mock("@/lib/finapi", () => ({
-  getFundResearchBatch,
-  ProviderError: class ProviderError extends Error {
-    status = 503;
-  },
-}));
+vi.mock("@/lib/fund-service", () => ({ fundService: { getFundResearchBatch } }));
 const { GET } = await import("./route");
 
 test("rejects duplicate comparison codes without provider work", async () => {

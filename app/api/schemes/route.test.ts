@@ -1,9 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
 import { ProviderError } from "@/lib/provider";
 
-const searchSchemes = vi.fn();
+const search = vi.fn();
 
-vi.mock("@/lib/finapi", () => ({ searchSchemes, ProviderError }));
+vi.mock("@/lib/catalog-service", () => ({ catalogService: { search } }));
 
 const { GET } = await import("./route");
 
@@ -13,11 +13,11 @@ describe("GET /api/schemes", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({ error: "invalid_query" });
-    expect(searchSchemes).not.toHaveBeenCalled();
+    expect(search).not.toHaveBeenCalled();
   });
 
   test("returns eligible schemes from the provider", async () => {
-    searchSchemes.mockResolvedValueOnce([
+    search.mockResolvedValueOnce([
       {
         schemeCode: "122639",
         schemeName: "Parag Parikh Flexi Cap Fund - Direct Plan - Growth",
@@ -35,7 +35,7 @@ describe("GET /api/schemes", () => {
   });
 
   test("preserves the provider error status and safe message", async () => {
-    searchSchemes.mockRejectedValueOnce(new ProviderError("Rate limited", 429));
+    search.mockRejectedValueOnce(new ProviderError("Rate limited", 429));
 
     const response = await GET(new Request("http://localhost/api/schemes?q=Parag%20Parikh"));
 

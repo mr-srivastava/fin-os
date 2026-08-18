@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { resolveIsin } from "@/lib/finapi";
+import { fundService } from "@/lib/fund-service";
 import { isIsin } from "@/lib/fund-input";
 import { parseFundResearchSearchParams, toFundResearchHref } from "@/lib/research-route-state";
 
@@ -10,7 +10,7 @@ export default async function IsinFundPage({
   const { isin } = await params;
   const normalizedIsin = isin.toUpperCase();
   if (!isIsin(normalizedIsin)) notFound();
-  const schemeCode = await resolveIsin(normalizedIsin);
+  const schemeCode = await fundService.resolveIsin(normalizedIsin);
   if (!schemeCode) notFound();
   redirect(toFundResearchHref(schemeCode, parseFundResearchSearchParams(await searchParams)));
 }

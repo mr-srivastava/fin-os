@@ -35,3 +35,7 @@ export function providerIsoDate(value: unknown): string | null {
   const date = providerText(value);
   return date && isIsoDate(date) ? date : null;
 }
+
+export function providerBoolean(value: unknown): boolean | null {
+  return typeof value === "boolean" ? value : null;
+}

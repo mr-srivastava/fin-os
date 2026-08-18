@@ -58,9 +58,9 @@ export function FundSearch({ compact = false, onSelect }: FundSearchProps) {
   }
 
   return (
-    <div className={cn("w-full max-w-2xl", !compact && "mt-8")}>
+    <div className={cn("w-full", !compact && "mt-8")}>
       <FieldGroup>
-        <Field orientation="horizontal" data-invalid={Boolean(message)}>
+        <Field data-invalid={Boolean(message)}>
           <FieldLabel className="sr-only" htmlFor={inputId}>
             Search mutual funds
           </FieldLabel>
@@ -85,9 +85,9 @@ export function FundSearch({ compact = false, onSelect }: FundSearchProps) {
               spellCheck={false}
               aria-invalid={Boolean(message)}
               showTrigger={false}
-              className={cn("h-11", !compact && "text-base")}
+              className={cn("h-11", !compact && "h-14 rounded-full px-2 text-base shadow-sm")}
             >
-              <InputGroupAddon align="inline-start">
+              <InputGroupAddon align="inline-start" className={cn(!compact && "pl-3")}>
                 <SearchIcon aria-hidden="true" />
               </InputGroupAddon>
             </ComboboxInput>

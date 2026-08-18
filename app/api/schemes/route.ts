@@ -1,4 +1,5 @@
-import { ProviderError, searchSchemes } from "@/lib/finapi";
+import { catalogService } from "@/lib/catalog-service";
+import { ProviderError } from "@/lib/provider";
 import { isSearchQuery } from "@/lib/fund-input";
 
 export async function GET(request: Request) {
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
     );
   }
   try {
-    return Response.json({ schemes: await searchSchemes(query) });
+    return Response.json({ schemes: await catalogService.search(query) });
   } catch (error) {
     const provider =
       error instanceof ProviderError

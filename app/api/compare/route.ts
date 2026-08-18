@@ -1,4 +1,5 @@
-import { ProviderError, getFundResearchBatch } from "@/lib/finapi";
+import { fundService } from "@/lib/fund-service";
+import { ProviderError } from "@/lib/provider";
 import { isSchemeCode } from "@/lib/fund-input";
 import { toComparisonView } from "@/lib/research-view/comparison";
 
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     );
   try {
     return Response.json(
-      toComparisonView([fund, against], await getFundResearchBatch([fund, against])),
+      toComparisonView([fund, against], await fundService.getFundResearchBatch([fund, against])),
     );
   } catch (error) {
     const provider =

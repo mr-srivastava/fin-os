@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   AlertCircleIcon,
   ArrowLeftIcon,
+  BookmarkPlusIcon,
   CircleHelpIcon,
   DatabaseIcon,
   GitCompareArrowsIcon,
@@ -15,6 +16,7 @@ import { useEffect, useState } from "react";
 import { SchemeAnalysisChart } from "@/components/scheme-analysis-chart";
 import { FundComparison } from "@/components/fund-comparison";
 import { FundSearch } from "@/components/fund-search";
+import { WatchlistPicker } from "@/components/watchlist-picker";
 import { FundFactsGrid } from "@/components/research/fund-facts";
 import { OutcomeSummary } from "@/components/research/outcome-summary";
 import { PortfolioConcentrationCard } from "@/components/research/portfolio-concentration";
@@ -301,7 +303,15 @@ function FundResearchScreen({
         Back to research
       </Link>
       <header className="mt-10 max-w-4xl">
-        <Badge variant="secondary">{isComparing ? "Fund comparison" : "Fund research"}</Badge>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Badge variant="secondary">{isComparing ? "Fund comparison" : "Fund research"}</Badge>
+          <WatchlistPicker schemeCodes={[schemeCode]}>
+            <Button variant="outline" size="sm">
+              <BookmarkPlusIcon data-icon="inline-start" />
+              Add to watchlist
+            </Button>
+          </WatchlistPicker>
+        </div>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl">
           {model.header.title}
         </h1>

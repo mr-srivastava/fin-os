@@ -12,7 +12,8 @@ routes, which validate parameters and orchestrate provider requests.
 
 ```text
 Browser
-  -> /api/schemes?q=... -> FinAPI search -> eligible schemes
+  -> /api/schemes?q=...        -> catalogue search (Mongo)  -> eligible schemes
+  -> /api/explore?category=... -> catalogue browse (Mongo)  -> eligible schemes
   -> /api/funds/:schemeCode
        -> FinAPI fund facts and portfolio
        -> TigZig NAV history
@@ -25,28 +26,68 @@ Browser
 ```
 
 The search experience uses `GET /api/schemes?q=<query>`. It accepts a trimmed
-query of 2–80 characters and returns at most 12 eligible schemes. Fund research
-uses `GET /api/funds/<schemeCode>`, where the scheme code must contain 4–7
-digits. It returns the browser-facing research view rather than the internal
-provider-normalized resource. Comparisons use `GET /api/compare` with two
-different 4–7 digit scheme codes. A valid comparison request returns section
-availability in its body even when one selected fund cannot be loaded.
+query of 2–80 characters and returns at most 12 eligible schemes, read from the
+catalogue rather than FinAPI directly. `GET /api/explore?category=<category>`
+browses the catalogue by one supported equity category. Fund research uses
+`GET /api/funds/<schemeCode>`, where the scheme code must contain 4–7 digits.
+It returns the browser-facing research view rather than the internal
+provider-normalized resource - and still calls FinAPI and TigZig live, since
+the catalogue only covers discovery, not fund detail. Comparisons use
+`GET /api/compare` with two different 4–7 digit scheme codes. A valid
+comparison request returns section availability in its body even when one
+selected fund cannot be loaded.
 
 ## Provider boundaries
 
-`lib/finapi.ts` owns FinAPI requests and normalizes the provider's variable
-payload into internal types. It starts the concurrent TigZig NAV request and,
-when the fund's declared benchmark has a verified total-return mapping, a
-FinAPI TRI request. `lib/benchmark-catalog.ts` is server-only and contains only
-verified total-return mappings. `lib/finapi-index.ts` owns FinAPI index request
-and TRI payload parsing; `lib/tigzig-nav.ts` owns TigZig NAV parsing. Both
-provider adapters use a 10-second timeout and Next.js revalidation of 300
-seconds.
+`lib/finapi-service.ts` and `lib/tigzig-service.ts` wrap every endpoint the app
+uses on each provider - FinAPI's scheme search/browse, fund research, and
+index TRI series; TigZig's NAV history, market/TRI series, and scheme
+catalogue - and normalize each provider's variable payload into internal
+types. Fund research starts the concurrent TigZig NAV request and, when the
+fund's declared benchmark has a verified total-return mapping, a FinAPI TRI
+request. `lib/benchmark-catalog.ts` is server-only and contains only verified
+total-return mappings. Both provider services use a 10-second timeout and
+Next.js revalidation of 300 seconds.
+
+**Neither provider service, nor `lib/mongo.ts`, is imported from `app/`.**
+Route handlers and pages only ever import one of two UI-facing facades:
+`lib/catalog-service.ts` (discovery) or `lib/fund-service.ts` (live per-scheme
+lookup) - see the next two sections. This keeps the provider/DB layer free to
+change without touching UI code, and keeps each facade's responsibility
+legible from its name.
 
 If the FinAPI fund request fails, the detail endpoint returns an error. If
 TigZig history fails, the endpoint returns the available facts and portfolio
 data together with explicit NAV unavailability metadata. The UI must retain
 that degraded behavior.
+
+## Scheme catalogue
+
+`lib/catalog-service.ts` builds, persists, and serves the eligible-scheme
+catalogue in MongoDB (`lib/mongo.ts`). It is TigZig-primary:
+`tigzigService.fetchCatalogue()` supplies structural fields and liveness
+(`isActive`/`isStale`) for every Direct+Growth scheme in a supported equity
+category, exact-matched on TigZig's SEBI `category_sub` label. FinAPI is never
+a gate in the catalogue - a passive `finapiCrossCheck` field is reserved for a
+future drift-sample comparison, not an eligibility filter. A refresh
+(`pnpm catalog:refresh`, calling `catalogService.refresh()`) writes new
+documents under a fresh `catalogueVersion`, atomically flips the
+`catalogue_meta` "current" pointer, then removes prior-version documents - so
+a reader querying by the current version never observes a half-written
+catalogue. `/api/schemes` and `/api/explore` read the catalogue directly via
+`catalogService.search()`/`catalogService.listByCategory()`; neither calls
+FinAPI. See [lib/fund-catalog-types.ts](../lib/fund-catalog-types.ts) for the
+full record shape.
+
+## Fund service
+
+`lib/fund-service.ts` is the UI-facing facade for live, per-scheme lookups -
+fund research, batched fund research for comparisons, and ISIN resolution. It
+is a thin pass-through to `finapiService`; it holds no logic of its own and
+exists only so route handlers never import `finapi-service.ts` directly.
+`/api/funds/:schemeCode`, `/api/compare`, `/api/funds/isin/:isin`, and the
+`/fund/isin/:isin` redirect page all call `fundService` rather than
+`finapiService`.
 
 ## Data contracts
 

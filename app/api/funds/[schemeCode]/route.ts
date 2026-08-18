@@ -1,4 +1,5 @@
-import { ProviderError, getFundResearch } from "@/lib/finapi";
+import { fundService } from "@/lib/fund-service";
+import { ProviderError } from "@/lib/provider";
 import { isSchemeCode } from "@/lib/fund-input";
 import { toFundResearchView } from "@/lib/research-view/fund";
 
@@ -11,7 +12,7 @@ export async function GET(_request: Request, context: RouteContext<"/api/funds/[
     );
   }
   try {
-    const fund = await getFundResearch(schemeCode);
+    const fund = await fundService.getFundResearch(schemeCode);
     if (!fund)
       return Response.json(
         { error: "not_found", message: "This is not an active Direct Growth equity scheme in V0." },

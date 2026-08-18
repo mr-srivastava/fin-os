@@ -1,6 +1,6 @@
-import { normalizeFundPayload } from "../lib/finapi.ts";
+import { normalizeFundPayload } from "../lib/finapi-service.ts";
 import { annualizedReturn } from "../lib/analytics.ts";
-import { getTigzigNav } from "../lib/tigzig-nav.ts";
+import { getTigzigNav } from "../lib/tigzig-service.ts";
 
 const schemes = [
   ["PPFAS Flexi Cap", "122639"],
