@@ -1,3 +1,5 @@
+import { statusColorClass, type MetricStatus } from "@/lib/utils";
+
 export function OutcomeSummary({
   name,
   colorClassName,
@@ -9,7 +11,7 @@ export function OutcomeSummary({
   colorClassName: string;
   returnText: string;
   valueText: string;
-  status: "gain" | "loss" | "neutral";
+  status: MetricStatus;
 }) {
   return (
     <div className="min-w-0">
@@ -18,9 +20,7 @@ export function OutcomeSummary({
         {name}
       </p>
       <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <p
-          className={`font-mono text-xl font-semibold tabular-nums ${status === "loss" ? "text-negative" : status === "gain" ? "text-positive" : "text-foreground"}`}
-        >
+        <p className={`font-mono text-xl font-semibold tabular-nums ${statusColorClass(status)}`}>
           {returnText}
         </p>
         <p className="font-mono text-sm font-medium text-muted-foreground tabular-nums">

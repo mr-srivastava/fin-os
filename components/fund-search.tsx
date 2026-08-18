@@ -85,7 +85,7 @@ export function FundSearch({ compact = false, onSelect }: FundSearchProps) {
               spellCheck={false}
               aria-invalid={Boolean(message)}
               showTrigger={false}
-              className={cn("h-11", !compact && "h-14 rounded-full px-2 text-base shadow-sm")}
+              className={cn("h-11", !compact && "h-14 rounded-full px-2 text-base")}
             >
               <InputGroupAddon align="inline-start" className={cn(!compact && "pl-3")}>
                 <SearchIcon aria-hidden="true" />

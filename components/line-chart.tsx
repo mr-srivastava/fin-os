@@ -25,6 +25,10 @@ import {
 } from "@/lib/utils";
 
 export type ChartColor = "foreground" | "chart-1" | "chart-3";
+
+export function chartColorBgClass(color: ChartColor) {
+  return color === "foreground" ? "bg-foreground" : `bg-(--${color})`;
+}
 export interface ChartPoint {
   date: string;
   value: number;

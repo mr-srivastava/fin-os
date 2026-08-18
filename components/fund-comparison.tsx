@@ -4,6 +4,7 @@ import { CircleAlertIcon } from "lucide-react";
 import { OutcomeSummary } from "@/components/research/outcome-summary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { chartColorBgClass } from "@/components/line-chart";
 import { SchemeAnalysisChart } from "@/components/scheme-analysis-chart";
 import {
   Table,
@@ -32,29 +33,31 @@ function AllocationTable({
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table className="table-fixed">
-          <colgroup>
-            <col className="w-1/5" />
-            <col className="w-2/5" />
-            <col className="w-2/5" />
-          </colgroup>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="whitespace-normal">Allocation</TableHead>
-              <TableHead className="whitespace-normal break-words">{fundNames[0]}</TableHead>
-              <TableHead className="whitespace-normal break-words">{fundNames[1]}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.name}>
-                <TableCell className="font-medium whitespace-normal">{row.name}</TableCell>
-                <TableCell className="font-mono">{row.leftText}</TableCell>
-                <TableCell className="font-mono">{row.rightText}</TableCell>
+        <div className="overflow-x-auto">
+          <Table className="min-w-[28rem] table-fixed">
+            <colgroup>
+              <col className="w-1/5" />
+              <col className="w-2/5" />
+              <col className="w-2/5" />
+            </colgroup>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="whitespace-normal">Allocation</TableHead>
+                <TableHead className="whitespace-normal break-words">{fundNames[0]}</TableHead>
+                <TableHead className="whitespace-normal break-words">{fundNames[1]}</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => (
+                <TableRow key={row.name}>
+                  <TableCell className="font-medium whitespace-normal">{row.name}</TableCell>
+                  <TableCell className="font-mono">{row.leftText}</TableCell>
+                  <TableCell className="font-mono">{row.rightText}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );
@@ -137,7 +140,7 @@ export function FundComparison({
                   <OutcomeSummary
                     key={outcome.name}
                     name={outcome.name}
-                    colorClassName={index === 0 ? "bg-foreground" : "bg-(--chart-3)"}
+                    colorClassName={chartColorBgClass(index === 0 ? "foreground" : "chart-3")}
                     returnText={outcome.returnText}
                     valueText={outcome.valueText}
                     status={outcome.status}

@@ -4,6 +4,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { CheckIcon, ListIcon, PencilIcon, TrashIcon, XIcon } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogClose,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -40,6 +51,8 @@ export function WatchlistsIndex() {
     onSuccess: invalidate,
   });
 
+  const renameError = renameMutation.isError ? renameMutation.error.message : null;
+
   return (
     <main id="main-content" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <header>
@@ -60,6 +73,11 @@ export function WatchlistsIndex() {
       </div>
 
       <div className="mt-8">
+        {deleteMutation.isError ? (
+          <output className="mb-3 block text-sm text-destructive">
+            {deleteMutation.error.message}
+          </output>
+        ) : null}
         {query.isLoading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Spinner aria-label="Loading watchlists" /> Loading watchlists…
@@ -73,38 +91,45 @@ export function WatchlistsIndex() {
                 <Card size="sm" className="h-full py-3">
                   <CardContent className="flex h-full flex-col gap-3">
                     {editingId === watchlist.id ? (
-                      <form
-                        className="flex items-center gap-2"
-                        onSubmit={(event) => {
-                          event.preventDefault();
-                          const name = editingName.trim();
-                          if (name) renameMutation.mutate({ id: watchlist.id, name });
-                        }}
-                      >
-                        <Input
-                          value={editingName}
-                          onChange={(event) => setEditingName(event.target.value)}
-                          aria-label="Watchlist name"
-                          className="h-8"
-                        />
-                        <Button
-                          type="submit"
-                          size="icon-sm"
-                          variant="outline"
-                          aria-label="Save name"
+                      <div>
+                        <form
+                          className="flex items-center gap-2"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            const name = editingName.trim();
+                            if (name) renameMutation.mutate({ id: watchlist.id, name });
+                          }}
                         >
-                          <CheckIcon />
-                        </Button>
-                        <Button
-                          type="button"
-                          size="icon-sm"
-                          variant="ghost"
-                          aria-label="Cancel"
-                          onClick={() => setEditingId(null)}
-                        >
-                          <XIcon />
-                        </Button>
-                      </form>
+                          <Input
+                            value={editingName}
+                            onChange={(event) => setEditingName(event.target.value)}
+                            aria-label="Watchlist name"
+                            className="h-8"
+                          />
+                          <Button
+                            type="submit"
+                            size="icon-sm"
+                            variant="outline"
+                            aria-label="Save name"
+                          >
+                            <CheckIcon />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon-sm"
+                            variant="ghost"
+                            aria-label="Cancel"
+                            onClick={() => setEditingId(null)}
+                          >
+                            <XIcon />
+                          </Button>
+                        </form>
+                        {renameError && editingId === watchlist.id ? (
+                          <output className="mt-1.5 block text-xs text-destructive">
+                            {renameError}
+                          </output>
+                        ) : null}
+                      </div>
                     ) : (
                       <div className="flex items-start justify-between gap-2">
                         <Link
@@ -125,18 +150,36 @@ export function WatchlistsIndex() {
                           >
                             <PencilIcon />
                           </Button>
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            aria-label={`Delete ${watchlist.name}`}
-                            onClick={() => {
-                              if (window.confirm(`Delete "${watchlist.name}"?`)) {
-                                deleteMutation.mutate(watchlist.id);
+                          <AlertDialog>
+                            <AlertDialogTrigger
+                              render={
+                                <Button
+                                  size="icon-sm"
+                                  variant="ghost"
+                                  aria-label={`Delete ${watchlist.name}`}
+                                />
                               }
-                            }}
-                          >
-                            <TrashIcon />
-                          </Button>
+                            >
+                              <TrashIcon />
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete “{watchlist.name}”?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This removes the list and its fund selections. This can’t be
+                                  undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogClose>Cancel</AlertDialogClose>
+                                <AlertDialogAction
+                                  onClick={() => deleteMutation.mutate(watchlist.id)}
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     )}

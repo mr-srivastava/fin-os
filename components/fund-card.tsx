@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRightIcon } from "lucide-react";
+import { AmcLogo } from "@/components/amc-logo";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -66,16 +67,22 @@ export function FundCard({
       size="sm"
       data-density={density}
       className={cn(
-        "h-full py-3 transition-colors",
+        "relative h-full py-3 transition-colors hover:bg-muted/40",
         density === "comparison" && "min-w-[16rem]",
         className,
       )}
     >
-      <CardContent className="flex h-full flex-col gap-3">
+      <Link
+        href={`/fund/${fund.schemeCode}`}
+        className="absolute inset-0 z-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={fund.schemeName}
+      />
+      <CardContent className="pointer-events-none relative z-10 flex h-full flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
             {selectable ? (
               <Checkbox
+                className="pointer-events-auto"
                 aria-label={`Select ${fund.schemeName}`}
                 checked={selected}
                 onCheckedChange={(checked) => onSelectChange?.(checked === true)}
@@ -84,17 +91,15 @@ export function FundCard({
             <Badge variant="outline">{fund.category}</Badge>
             {fund.riskLabel ? <Badge variant="secondary">{fund.riskLabel}</Badge> : null}
           </div>
-          {watchlistAction}
+          {watchlistAction ? <span className="pointer-events-auto">{watchlistAction}</span> : null}
         </div>
 
-        <div className="min-w-0 flex-1">
-          <Link
-            href={`/fund/${fund.schemeCode}`}
-            className="font-medium underline-offset-4 hover:underline"
-          >
-            {fund.schemeName}
-          </Link>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">{fund.amc}</p>
+        <div className="flex min-w-0 flex-1 items-start gap-2">
+          <AmcLogo amc={fund.amc} size="sm" className="mt-0.5" />
+          <div className="min-w-0">
+            <p className="font-medium">{fund.schemeName}</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{fund.amc}</p>
+          </div>
         </div>
 
         {returnText || aumText ? (
@@ -109,12 +114,9 @@ export function FundCard({
           </div>
         ) : null}
 
-        <Link
-          href={`/fund/${fund.schemeCode}`}
-          className="mt-auto inline-flex items-center gap-1 text-xs font-medium text-foreground"
-        >
+        <span className="mt-auto inline-flex items-center gap-1 text-xs font-medium text-foreground">
           View details <ArrowRightIcon className="size-3" aria-hidden="true" />
-        </Link>
+        </span>
       </CardContent>
     </Card>
   );

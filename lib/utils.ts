@@ -6,6 +6,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export type MetricStatus = "gain" | "loss" | "neutral";
+
+export function statusColorClass(status: MetricStatus) {
+  if (status === "loss") return "text-negative";
+  if (status === "gain") return "text-positive";
+  return "text-foreground";
+}
+
 const indianNumber = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
 const indianPercent = new Intl.NumberFormat("en-IN", {
   style: "percent",

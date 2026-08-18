@@ -13,20 +13,19 @@ import {
   XIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { chartColorBgClass } from "@/components/line-chart";
 import { SchemeAnalysisChart } from "@/components/scheme-analysis-chart";
 import { FundComparison } from "@/components/fund-comparison";
 import { FundSearch } from "@/components/fund-search";
 import { WatchlistPicker } from "@/components/watchlist-picker";
+import { AllocationBar } from "@/components/research/allocation-bar";
 import { FundFactsGrid } from "@/components/research/fund-facts";
 import { OutcomeSummary } from "@/components/research/outcome-summary";
 import { PortfolioConcentrationCard } from "@/components/research/portfolio-concentration";
+import { RelatedFundLinks } from "@/components/research/related-fund-links";
+import { RiskAndReturnConsistency } from "@/components/research/risk-return-consistency";
+import { SectorHoldings } from "@/components/research/sector-holdings";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,150 +40,18 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { type PerformanceRange } from "@/lib/analytics";
-import type {
-  AllocationDisplay,
-  FundResearchReadyModel,
-  SectorDisplay,
-} from "@/lib/research-display/types";
+import type { FundResearchReadyModel } from "@/lib/research-display/types";
 import {
   useComparisonScreenModel,
   useFundResearchScreenModel,
 } from "@/lib/research-display/use-screen-models";
 import { type FundResearchRouteState, toFundResearchHref } from "@/lib/research-route-state";
 
-interface AllocationBarProps {
-  title: string;
-  description: string;
-  items: readonly AllocationDisplay[];
-}
-
-interface SectorHoldingsProps {
-  sectors: readonly SectorDisplay[];
-}
-
 interface FundResearchViewProps {
   schemeCode: string;
   routeState: FundResearchRouteState;
-}
-
-function AllocationBar({ title, description, items }: AllocationBarProps) {
-  if (!items.length) return null;
-  const visibleItems = items.filter((item) => item.weight > 0);
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div
-          className="flex h-3 overflow-hidden rounded-full bg-muted"
-          aria-label={`${title}: ${visibleItems.map((item) => `${item.name} ${item.weightText}`).join(", ")}`}
-        >
-          {visibleItems.map((item) => {
-            return (
-              <div
-                key={item.name}
-                className="min-w-px first:rounded-l-full last:rounded-r-full"
-                style={{
-                  backgroundColor: item.color,
-                  flex: item.weight,
-                }}
-              />
-            );
-          })}
-        </div>
-        <div className="mt-4 flex flex-col gap-2.5">
-          {items.map((item) => (
-            <div
-              key={item.name}
-              className="flex items-center justify-between gap-3 text-sm tabular-nums"
-            >
-              <span className="flex min-w-0 items-center gap-2">
-                <span
-                  aria-hidden="true"
-                  className="size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="truncate">{item.name}</span>
-              </span>
-              <span className="font-mono text-muted-foreground">{item.weightText}</span>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function SectorHoldings({ sectors }: SectorHoldingsProps) {
-  if (!sectors.length) return null;
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Sector allocation and holdings</CardTitle>
-        <CardDescription>
-          Largest reported sector exposures, with the holdings within each sector.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Separator />
-        <Accordion multiple>
-          {sectors.map((sector) => {
-            return (
-              <AccordionItem
-                key={sector.name}
-                value={sector.name}
-                className="border-b last:border-b-0"
-              >
-                <AccordionTrigger className="items-center gap-3 py-3 hover:no-underline">
-                  <span className="min-w-0 flex-1">{sector.name}</span>
-                  <span className="font-mono text-muted-foreground">{sector.weightText}</span>
-                </AccordionTrigger>
-                <AccordionContent className="pb-3">
-                  {sector.holdings.length ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Holding</TableHead>
-                          <TableHead className="text-right">Weight</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {sector.holdings.map((holding) => (
-                          <TableRow key={`${sector.name}-${holding.name}-${holding.weightText}`}>
-                            <TableCell className="font-medium">{holding.name}</TableCell>
-                            <TableCell className="text-right font-mono">
-                              {holding.weightText}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <p className="px-3 text-sm text-muted-foreground">
-                      No holdings were supplied for this sector.
-                    </p>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
-      </CardContent>
-    </Card>
-  );
 }
 
 function FundLoading() {
@@ -418,7 +285,7 @@ function FundResearchScreen({
               </div>
               <div className="sm:text-right">
                 <p className="text-xs font-medium text-muted-foreground">Latest NAV</p>
-                <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
+                <p className="mt-1 font-mono text-xl font-semibold tabular-nums">
                   {model.currentNav.valueText}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -435,7 +302,7 @@ function FundResearchScreen({
             >
               <OutcomeSummary
                 name="This fund"
-                colorClassName="bg-(--chart-1)"
+                colorClassName={chartColorBgClass("chart-1")}
                 returnText={performance?.outcomes[0]?.returnText ?? "—"}
                 valueText={performance?.outcomes[0]?.valueText ?? "—"}
                 status={performance?.outcomes[0]?.status ?? "neutral"}
@@ -444,7 +311,7 @@ function FundResearchScreen({
                 <div className="border-t pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
                   <OutcomeSummary
                     name={model.benchmark.name}
-                    colorClassName="bg-(--chart-3)"
+                    colorClassName={chartColorBgClass("chart-3")}
                     returnText={performance?.outcomes[1]?.returnText ?? "—"}
                     valueText={performance?.outcomes[1]?.valueText ?? "—"}
                     status={performance?.outcomes[1]?.status ?? "neutral"}
@@ -467,7 +334,7 @@ function FundResearchScreen({
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent aria-live="polite">
             {model.performance.status === "ready" ? (
               <SchemeAnalysisChart
                 series={model.performance.data.series}
@@ -488,33 +355,35 @@ function FundResearchScreen({
           </CardContent>
         </Card>
       )}
-      {comparisonModel.requestError ? (
-        <Alert className="mt-6" variant="destructive">
-          <AlertCircleIcon />
-          <AlertTitle>Comparison unavailable</AlertTitle>
-          <AlertDescription>{comparisonModel.requestError}</AlertDescription>
-        </Alert>
-      ) : null}
-      {isComparing && comparisonModel.comparison.status === "loading" ? (
-        <Card className="mt-6">
-          <CardHeader>
-            <Skeleton className="h-5 w-44" />
-            <Skeleton className="h-4 w-72 max-w-full" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-64 w-full" />
-          </CardContent>
-        </Card>
-      ) : null}
-      {isComparing &&
-      comparisonModel.comparison.status === "unavailable" &&
-      !comparisonModel.requestError ? (
-        <Alert className="mt-6">
-          <AlertCircleIcon />
-          <AlertTitle>Comparison unavailable</AlertTitle>
-          <AlertDescription>{comparisonModel.comparison.message}</AlertDescription>
-        </Alert>
-      ) : null}
+      <div aria-live="polite">
+        {comparisonModel.requestError ? (
+          <Alert className="mt-6" variant="destructive">
+            <AlertCircleIcon />
+            <AlertTitle>Comparison unavailable</AlertTitle>
+            <AlertDescription>{comparisonModel.requestError}</AlertDescription>
+          </Alert>
+        ) : null}
+        {isComparing && comparisonModel.comparison.status === "loading" ? (
+          <Card className="mt-6" aria-busy="true">
+            <CardHeader>
+              <Skeleton className="h-5 w-44" />
+              <Skeleton className="h-4 w-72 max-w-full" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-64 w-full" />
+            </CardContent>
+          </Card>
+        ) : null}
+        {isComparing &&
+        comparisonModel.comparison.status === "unavailable" &&
+        !comparisonModel.requestError ? (
+          <Alert className="mt-6">
+            <AlertCircleIcon />
+            <AlertTitle>Comparison unavailable</AlertTitle>
+            <AlertDescription>{comparisonModel.comparison.message}</AlertDescription>
+          </Alert>
+        ) : null}
+      </div>
       {comparison ? (
         <FundComparison
           comparison={comparison}
@@ -531,7 +400,7 @@ function FundResearchScreen({
           <div className="mt-6">
             <FundFactsGrid facts={model.facts} />
           </div>
-          <section className="mt-6">
+          <section className="mt-6" aria-live="polite">
             <div className="mb-4 flex items-center gap-2">
               <PieChartIcon />
               <h2 className="text-xl font-semibold tracking-tight">Latest reported portfolio</h2>
@@ -608,102 +477,5 @@ function FundResearchScreen({
         </>
       )}
     </main>
-  );
-}
-
-function RiskAndReturnConsistency({
-  riskMetrics,
-  consistency,
-}: {
-  riskMetrics: readonly { label: string; valueText: string; status: "gain" | "loss" | "neutral" }[];
-  consistency: FundResearchReadyModel["returnConsistency"];
-}) {
-  if (!riskMetrics.length && !consistency) return null;
-  return (
-    <Card className="mt-6">
-      <CardHeader>
-        <CardTitle>Risk &amp; return consistency</CardTitle>
-        <CardDescription>
-          Path risk is calculated from available NAV history. Rolling-return figures are reported by
-          FinAPI and describe historical outcomes, not recommendations.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        {riskMetrics.length ? (
-          <section aria-labelledby="path-risk-title">
-            <h2 id="path-risk-title" className="text-sm font-semibold">
-              Path risk
-            </h2>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {riskMetrics.map((metric) => (
-                <div key={metric.label} className="rounded-lg bg-muted/20 px-3 py-3">
-                  <p className="text-xs text-muted-foreground">{metric.label}</p>
-                  <p className="mt-1 font-mono text-xl font-semibold tabular-nums">
-                    {metric.valueText}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
-        {consistency ? (
-          <section aria-labelledby="return-consistency-title" className="lg:border-l lg:pl-6">
-            <h2 id="return-consistency-title" className="text-sm font-semibold">
-              {consistency.timeframe} rolling returns
-            </h2>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {consistency.rows.map((row) => (
-                <div key={row.label}>
-                  <p className="text-xs text-muted-foreground">{row.label}</p>
-                  <p className="mt-1 font-mono text-sm font-medium tabular-nums">{row.valueText}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
-      </CardContent>
-    </Card>
-  );
-}
-
-function RelatedFundLinks({
-  title,
-  funds,
-  primarySchemeCode,
-}: {
-  title: string;
-  funds: readonly { schemeCode: string; schemeName: string; amc: string; category: string }[];
-  primarySchemeCode: string;
-}) {
-  return (
-    <section aria-label={title}>
-      <h2 className="text-sm font-semibold">{title}</h2>
-      <ul className="mt-3 flex flex-col gap-3">
-        {funds.map((fund) => (
-          <li key={fund.schemeCode} className="rounded-lg border bg-muted/20 p-3">
-            <Link
-              className="text-sm font-medium underline-offset-4 hover:underline"
-              href={`/fund/${fund.schemeCode}`}
-            >
-              {fund.schemeName}
-            </Link>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {fund.amc} · {fund.category}
-            </p>
-            <Link
-              className={buttonVariants({ variant: "outline", size: "sm", className: "mt-3" })}
-              href={toFundResearchHref(primarySchemeCode, {
-                range: "3y",
-                showBenchmark: false,
-                against: fund.schemeCode,
-              })}
-            >
-              <GitCompareArrowsIcon data-icon="inline-start" />
-              Compare
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
   );
 }

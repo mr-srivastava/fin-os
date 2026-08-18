@@ -1,9 +1,11 @@
 import { TrendingDownIcon, TrendingUpIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { statusColorClass, type MetricStatus } from "@/lib/utils";
+
 export interface MetricCardValue {
   label: string;
   valueText: string;
-  status: "gain" | "loss" | "neutral";
+  status: MetricStatus;
 }
 
 export function MetricCardGroup({
@@ -23,10 +25,10 @@ export function MetricCardGroup({
       >
         {metrics.map((metric) => {
           return (
-            <div key={metric.label} className="min-w-0 rounded-lg bg-muted/20 px-3 py-3">
+            <div key={metric.label} className="min-w-0 rounded-lg border bg-muted/20 p-3">
               <p className="text-xs text-muted-foreground">{metric.label}</p>
               <p
-                className={`mt-1 flex items-center gap-1.5 font-mono text-xl font-semibold tabular-nums ${metric.status === "loss" ? "text-negative" : metric.status === "gain" ? "text-positive" : "text-foreground"}`}
+                className={`mt-1 flex items-center gap-1.5 font-mono text-xl font-semibold tabular-nums ${statusColorClass(metric.status)}`}
               >
                 {metric.status === "gain" ? (
                   <TrendingUpIcon className="size-4" aria-hidden="true" />

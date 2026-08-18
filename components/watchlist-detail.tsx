@@ -53,7 +53,7 @@ export function WatchlistDetail({ id }: { id: string }) {
           <Spinner aria-label="Loading watchlist" /> Loading watchlist…
         </div>
       ) : query.isError ? (
-        <Empty className="mt-8 min-h-40">
+        <Empty aria-live="polite" className="mt-8 min-h-40">
           <EmptyHeader>
             <EmptyTitle>Watchlist unavailable</EmptyTitle>
             <EmptyDescription>{query.error.message}</EmptyDescription>
@@ -71,6 +71,11 @@ export function WatchlistDetail({ id }: { id: string }) {
                 ? ` · ${query.data.unavailableSchemeCodes.length} temporarily unavailable`
                 : ""}
             </p>
+            {removeMutation.isError ? (
+              <output className="mt-2 block text-sm text-destructive">
+                {removeMutation.error.message}
+              </output>
+            ) : null}
           </header>
           <div className="mt-6">
             {query.data.funds.length ? (

@@ -14,7 +14,7 @@ import { watchlistsQueryOptions } from "@/lib/watchlist-queries";
 interface WatchlistPickerProps {
   /** One fund (card action) or several (selection-bar bulk add). */
   schemeCodes: readonly string[];
-  children: React.ReactNode;
+  children: React.ReactElement;
 }
 
 export function WatchlistPicker({ schemeCodes, children }: WatchlistPickerProps) {
@@ -65,15 +65,26 @@ export function WatchlistPicker({ schemeCodes, children }: WatchlistPickerProps)
     else removeMutation.mutate(watchlistId);
   }
 
+  const mutationError = addMutation.isError
+    ? addMutation.error.message
+    : removeMutation.isError
+      ? removeMutation.error.message
+      : createMutation.isError
+        ? createMutation.error.message
+        : null;
+
   return (
     <Popover>
-      <PopoverTrigger render={children as React.ReactElement} />
+      <PopoverTrigger render={children} />
       <PopoverContent className="w-80">
         <p className="text-sm font-medium">Add to watchlist</p>
         <p className="mt-1 text-xs text-muted-foreground">
           {schemeCodes.length > 1 ? `${schemeCodes.length} funds selected` : "This fund"} — for
           research triage, not investment recommendations.
         </p>
+        {mutationError ? (
+          <output className="mt-2 block text-xs text-destructive">{mutationError}</output>
+        ) : null}
         <div className="mt-3 flex max-h-56 flex-col gap-2 overflow-y-auto">
           {watchlistsQuery.isLoading ? (
             <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">

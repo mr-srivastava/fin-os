@@ -9,7 +9,7 @@ export function PortfolioConcentrationCard({ valueText }: { valueText: string })
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="font-mono text-2xl font-medium">{valueText}</p>
+        <p className="font-mono text-xl font-semibold tabular-nums">{valueText}</p>
       </CardContent>
     </Card>
   );

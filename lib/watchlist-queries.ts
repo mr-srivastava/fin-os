@@ -9,6 +9,7 @@ function dataOrThrow<T>(result: WatchlistApiResult<T>): T {
 export const watchlistsQueryOptions = queryOptions({
   queryKey: ["watchlists"] as const,
   queryFn: () => listWatchlists().then(dataOrThrow),
+  staleTime: 60_000,
 });
 
 export const watchlistDetailQueryOptions = (id: string) =>
