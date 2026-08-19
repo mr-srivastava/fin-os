@@ -46,7 +46,9 @@ function formatAum(value: number | null | undefined) {
  * {@link FundCard}'s `riskLabel` as `null` for the majority case, surfacing the badge only on
  * funds whose risk actually differs from their peers instead of repeating it on every card.
  */
-export function majorityRiskLabel(schemes: readonly { riskLabel?: string | null }[]): string | null {
+export function majorityRiskLabel(
+  schemes: readonly { riskLabel?: string | null }[],
+): string | null {
   const counts = new Map<string, number>();
   for (const scheme of schemes) {
     if (scheme.riskLabel) counts.set(scheme.riskLabel, (counts.get(scheme.riskLabel) ?? 0) + 1);
