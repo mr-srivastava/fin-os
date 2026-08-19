@@ -23,6 +23,7 @@ export function toComparisonPerformanceDisplay(
     return {
       name: fund.scheme.schemeName,
       color: index === 0 ? "comparison-a" : "comparison-b",
+      returnPercent: outcome?.returnPercent ?? null,
       returnText: outcome ? formatSignedPercent(outcome.returnPercent) : "—",
       valueText: outcome ? formatRupees(outcome.value) : "—",
       status: financialStatus(outcome?.returnPercent ?? null),

@@ -4,6 +4,7 @@ import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { PerformanceRange } from "@/lib/analytics";
 import { comparisonQueryOptions, fundQueryOptions } from "@/lib/fund-queries";
+import { allocationColors } from "./fund-research";
 import type { FundResearchView } from "@/lib/research-view/types";
 import {
   formatFullDate,
@@ -47,6 +48,7 @@ function fundModel(view: FundResearchView, range: PerformanceRange, benchmark: b
               outcomes: selected.outcomes.slice(0, count).map((outcome, index) => ({
                 name: outcome.name,
                 color: index ? ("benchmark" as const) : ("fund" as const),
+                returnPercent: outcome.returnPercent,
                 returnText: formatSignedPercent(outcome.returnPercent),
                 valueText: formatRupees(outcome.endingValue),
                 status: outcome.tone,
@@ -68,6 +70,7 @@ function fundModel(view: FundResearchView, range: PerformanceRange, benchmark: b
               weightText: formatPercent(sector.weight),
               holdings: sector.holdings.map((holding) => ({
                 name: holding.name,
+                weight: holding.weight,
                 weightText: formatPercent(holding.weight),
               })),
             })),
@@ -114,55 +117,38 @@ function fundModel(view: FundResearchView, range: PerformanceRange, benchmark: b
     returnConsistency: view.returnConsistency
       ? {
           timeframe: view.returnConsistency.timeframe,
-          rows: [
-            {
-              label: "Average rolling return",
-              valueText: `${formatNumber(view.returnConsistency.averageReturn)}%`,
-            },
-            {
-              label: "Median rolling return",
-              valueText: `${formatNumber(view.returnConsistency.medianReturn)}%`,
-            },
-            {
-              label: "Lowest rolling return",
-              valueText: `${formatNumber(view.returnConsistency.minReturn)}%`,
-            },
-            {
-              label: "Highest rolling return",
-              valueText: `${formatNumber(view.returnConsistency.maxReturn)}%`,
-            },
-            {
-              label: "Positive periods",
-              valueText: `${formatNumber(view.returnConsistency.positiveRatio)}%`,
-            },
-            {
-              label: "Negative periods",
-              valueText: `${formatNumber(view.returnConsistency.negativeRatio)}%`,
-            },
-            ...(view.returnConsistency.consistencyScore === null
-              ? []
-              : [
-                  {
-                    label: "Provider consistency score",
-                    valueText: formatNumber(view.returnConsistency.consistencyScore),
-                  },
-                ]),
-          ],
+          averageReturn: view.returnConsistency.averageReturn,
+          medianReturn: view.returnConsistency.medianReturn,
+          minReturn: view.returnConsistency.minReturn,
+          maxReturn: view.returnConsistency.maxReturn,
+          positiveRatio: view.returnConsistency.positiveRatio,
+          negativeRatio: view.returnConsistency.negativeRatio,
+          consistencyScore: view.returnConsistency.consistencyScore,
         }
       : null,
     relatedFunds: {
-      peers: view.relatedFunds.peers.map(({ schemeCode, schemeName, amc, category }) => ({
-        schemeCode,
-        schemeName,
-        amc,
-        category,
-      })),
-      fromAmc: view.relatedFunds.fromAmc.map(({ schemeCode, schemeName, amc, category }) => ({
-        schemeCode,
-        schemeName,
-        amc,
-        category,
-      })),
+      peers: view.relatedFunds.peers.map(
+        ({ schemeCode, schemeName, amc, category, nav, aum, riskLabel }) => ({
+          schemeCode,
+          schemeName,
+          amc,
+          category,
+          nav,
+          aum,
+          riskLabel,
+        }),
+      ),
+      fromAmc: view.relatedFunds.fromAmc.map(
+        ({ schemeCode, schemeName, amc, category, nav, aum, riskLabel }) => ({
+          schemeCode,
+          schemeName,
+          amc,
+          category,
+          nav,
+          aum,
+          riskLabel,
+        }),
+      ),
     },
     facts: [
       {
@@ -298,6 +284,7 @@ export function useComparisonScreenModel({
               outcomes: data.performance.data[range].outcomes.map((outcome, index) => ({
                 name: outcome.name,
                 color: index ? ("comparison-b" as const) : ("comparison-a" as const),
+                returnPercent: outcome.returnPercent,
                 returnText: formatSignedPercent(outcome.returnPercent),
                 valueText: formatRupees(outcome.endingValue),
                 status: outcome.tone,
@@ -355,13 +342,19 @@ export function useComparisonScreenModel({
                 leftText: formatPercent(item.weights[0]),
                 rightText: formatPercent(item.weights[1]),
               })),
-              assetAllocation: data.portfolio.data.assetAllocation.map((item) => ({
+              assetAllocation: data.portfolio.data.assetAllocation.map((item, index) => ({
                 name: item.name,
+                color: allocationColors[index % allocationColors.length] ?? "var(--chart-1)",
+                leftWeight: item.weights[0],
+                rightWeight: item.weights[1],
                 leftText: formatPercent(item.weights[0]),
                 rightText: formatPercent(item.weights[1]),
               })),
-              marketCapAllocation: data.portfolio.data.marketCapAllocation.map((item) => ({
+              marketCapAllocation: data.portfolio.data.marketCapAllocation.map((item, index) => ({
                 name: item.name,
+                color: allocationColors[index % allocationColors.length] ?? "var(--chart-1)",
+                leftWeight: item.weights[0],
+                rightWeight: item.weights[1],
                 leftText: formatPercent(item.weights[0]),
                 rightText: formatPercent(item.weights[1]),
               })),

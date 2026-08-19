@@ -8,19 +8,17 @@ import {
   BookmarkPlusIcon,
   CircleHelpIcon,
   DatabaseIcon,
-  GitCompareArrowsIcon,
   PieChartIcon,
   XIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { chartColorBgClass } from "@/components/line-chart";
 import { SchemeAnalysisChart } from "@/components/scheme-analysis-chart";
 import { FundComparison } from "@/components/fund-comparison";
 import { FundSearch } from "@/components/fund-search";
 import { WatchlistPicker } from "@/components/watchlist-picker";
 import { AllocationBar } from "@/components/research/allocation-bar";
 import { FundFactsGrid } from "@/components/research/fund-facts";
-import { OutcomeSummary } from "@/components/research/outcome-summary";
+import { PerformanceSummary } from "@/components/research/performance-summary";
 import { PortfolioConcentrationCard } from "@/components/research/portfolio-concentration";
 import { RelatedFundLinks } from "@/components/research/related-fund-links";
 import { RiskAndReturnConsistency } from "@/components/research/risk-return-consistency";
@@ -29,7 +27,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Empty,
   EmptyDescription,
@@ -39,7 +36,6 @@ import {
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { type PerformanceRange } from "@/lib/analytics";
 import type { FundResearchReadyModel } from "@/lib/research-display/types";
@@ -187,173 +183,127 @@ function FundResearchScreen({
       <Card id="comparison-controls" className="mt-8" aria-live="polite">
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                Comparison set
-              </p>
-              <h2 className="mt-1 text-lg font-semibold tracking-tight">
-                {isComparing ? "Two funds, one research view" : "Add context to this fund"}
-              </h2>
+            <div className="min-w-0">
+              <CardTitle>
+                {isComparing ? "Comparing with another fund" : "Compare with another fund"}
+              </CardTitle>
+              <CardDescription>
+                {isComparing
+                  ? "Research both funds side by side."
+                  : "Search eligible Direct Growth schemes to compare their return path and reported data."}
+              </CardDescription>
             </div>
             {isComparing ? (
-              <Button variant="ghost" size="sm" onClick={() => onComparisonChange(null)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="shrink-0"
+                onClick={() => onComparisonChange(null)}
+              >
                 <XIcon data-icon="inline-start" /> Remove
               </Button>
             ) : null}
           </div>
         </CardHeader>
-        <CardContent className="grid items-stretch gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-          <div className="rounded-lg border bg-muted/20 p-3">
-            <p className="text-xs font-medium text-muted-foreground">Primary fund</p>
-            <p className="mt-1 truncate font-medium">{model.header.title}</p>
-            <p className="mt-1 truncate text-xs text-muted-foreground">{model.header.subtitle}</p>
-          </div>
-          <div className="grid place-items-center text-muted-foreground" aria-hidden="true">
-            <GitCompareArrowsIcon className="size-5" />
-          </div>
+        <CardContent>
           {isComparing ? (
-            <div className="rounded-lg border bg-muted/20 p-3">
-              <p className="text-xs font-medium text-muted-foreground">Comparison fund</p>
-              <p className="mt-1 truncate font-medium">{comparisonModel.selections[1].title}</p>
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <p className="truncate text-xs text-muted-foreground">
-                  {comparisonModel.selections[1].navText}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="shrink-0"
-                  onClick={() => onComparisonChange(null)}
-                >
-                  Remove
-                </Button>
-              </div>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <p className="truncate font-medium">{comparisonModel.selections[1].title}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {comparisonModel.selections[1].navText}
+              </p>
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed bg-muted/20 p-3">
-              <p className="text-xs font-medium text-muted-foreground">Comparison fund</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Search eligible Direct Growth schemes to compare their return path and reported
-                data.
-              </p>
-              <div className="mt-3">
-                <FundSearch
-                  compact
-                  onSelect={(scheme) => {
-                    if (scheme.schemeCode !== schemeCode) onComparisonChange(scheme.schemeCode);
-                  }}
-                />
-              </div>
-            </div>
+            <FundSearch
+              compact
+              onSelect={(scheme) => {
+                if (scheme.schemeCode !== schemeCode) onComparisonChange(scheme.schemeCode);
+              }}
+            />
           )}
         </CardContent>
       </Card>
       {!isComparing && (
-        <Card className="mt-6">
-          <CardHeader className="gap-6">
-            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
-              <div>
-                <div className="flex items-center gap-2">
-                  <CardTitle>Growth of ₹10,000</CardTitle>
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="About this calculation"
-                        />
-                      }
-                    >
-                      <CircleHelpIcon />
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="bottom"
-                      align="start"
-                      className="w-64 text-pretty leading-5"
-                    >
-                      Based on the NAV change over the selected period. Excludes taxes and
-                      transaction costs.
-                    </TooltipContent>
-                  </Tooltip>
+        <div className="mt-6 grid gap-6 lg:grid-cols-[2fr_1fr] lg:items-stretch">
+          <Card className="lg:row-span-2 lg:flex lg:flex-col">
+            <CardHeader className="gap-4">
+              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <CardTitle>Performance vs benchmark</CardTitle>
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="About this calculation"
+                          />
+                        }
+                      >
+                        <CircleHelpIcon />
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        align="start"
+                        className="w-64 text-pretty leading-5"
+                      >
+                        Growth of ₹10,000 invested at the start of the selected period, based on the
+                        NAV change. Excludes taxes and transaction costs.
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <CardDescription>
+                    {performance?.periodLabel ?? performanceRange} total return
+                  </CardDescription>
                 </div>
-                <CardDescription>If you had invested at the start of this period</CardDescription>
-                <p className="mt-2 text-xs font-medium text-muted-foreground">
-                  Selected period: {performance?.periodLabel ?? performanceRange}
-                  {" total return"}
-                </p>
-              </div>
-              <div className="sm:text-right">
-                <p className="text-xs font-medium text-muted-foreground">Latest NAV</p>
-                <p className="mt-1 font-mono text-xl font-semibold tabular-nums">
-                  {model.currentNav.valueText}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  As of {model.currentNav.dateText}
-                </p>
-              </div>
-            </div>
-            <div
-              className={`grid gap-3 rounded-lg border bg-muted/20 p-3 sm:items-end ${
-                showBenchmark && model.benchmark
-                  ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
-                  : "sm:grid-cols-[minmax(0,1fr)_auto]"
-              }`}
-            >
-              <OutcomeSummary
-                name="This fund"
-                colorClassName={chartColorBgClass("chart-1")}
-                returnText={performance?.outcomes[0]?.returnText ?? "—"}
-                valueText={performance?.outcomes[0]?.valueText ?? "—"}
-                status={performance?.outcomes[0]?.status ?? "neutral"}
-              />
-              {showBenchmark && model.benchmark ? (
-                <div className="border-t pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
-                  <OutcomeSummary
-                    name={model.benchmark.name}
-                    colorClassName={chartColorBgClass("chart-3")}
-                    returnText={performance?.outcomes[1]?.returnText ?? "—"}
-                    valueText={performance?.outcomes[1]?.valueText ?? "—"}
-                    status={performance?.outcomes[1]?.status ?? "neutral"}
-                  />
+                <div className="sm:text-right">
+                  <p className="text-xs font-medium text-muted-foreground">Latest NAV</p>
+                  <p className="mt-1 font-mono text-xl font-semibold tabular-nums">
+                    {model.currentNav.valueText}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    As of {model.currentNav.dateText}
+                  </p>
                 </div>
-              ) : null}
-              <div className="flex flex-wrap items-center gap-3">
-                {model.benchmark ? (
-                  <Field orientation="horizontal" className="w-auto">
-                    <Switch
-                      id={`show-benchmark-${schemeCode}`}
-                      checked={showBenchmark}
-                      onCheckedChange={(checked) => onChartState(performanceRange, checked)}
-                    />
-                    <FieldLabel htmlFor={`show-benchmark-${schemeCode}`}>
-                      Show total-return benchmark
-                    </FieldLabel>
-                  </Field>
-                ) : null}
               </div>
-            </div>
-          </CardHeader>
-          <CardContent aria-live="polite">
-            {model.performance.status === "ready" ? (
-              <SchemeAnalysisChart
-                series={model.performance.data.series}
-                range={performanceRange}
-                onRangeChange={(range) => onChartState(range, showBenchmark)}
+              <PerformanceSummary
+                fund={performance?.outcomes[0]}
+                benchmark={performance?.outcomes[1]}
+                benchmarkName={model.benchmark?.name}
+                showBenchmark={showBenchmark}
+                hasBenchmark={model.benchmark !== null}
+                onToggleBenchmark={(checked) => onChartState(performanceRange, checked)}
+                toggleId={`show-benchmark-${schemeCode}`}
               />
-            ) : (
-              <Alert>
-                <DatabaseIcon />
-                <AlertTitle>NAV history unavailable</AlertTitle>
-                <AlertDescription>
-                  {model.performance.status === "unavailable"
-                    ? model.performance.message
-                    : "Historical NAV data is unavailable right now."}
-                </AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent aria-live="polite" className="lg:flex-1">
+              {model.performance.status === "ready" ? (
+                <SchemeAnalysisChart
+                  series={model.performance.data.series}
+                  range={performanceRange}
+                  onRangeChange={(range) => onChartState(range, showBenchmark)}
+                  chartClassName="min-h-64 w-full lg:h-full lg:min-h-96"
+                />
+              ) : (
+                <Alert>
+                  <DatabaseIcon />
+                  <AlertTitle>NAV history unavailable</AlertTitle>
+                  <AlertDescription>
+                    {model.performance.status === "unavailable"
+                      ? model.performance.message
+                      : "Historical NAV data is unavailable right now."}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+          <RiskAndReturnConsistency
+            riskMetrics={model.metricGroups.find((group) => group.title === "Risk")?.metrics ?? []}
+            consistency={model.returnConsistency}
+          />
+          <FundFactsGrid facts={model.facts} />
+        </div>
       )}
       <div aria-live="polite">
         {comparisonModel.requestError ? (
@@ -393,13 +343,6 @@ function FundResearchScreen({
       ) : null}
       {!comparison && (
         <>
-          <RiskAndReturnConsistency
-            riskMetrics={model.metricGroups.find((group) => group.title === "Risk")?.metrics ?? []}
-            consistency={model.returnConsistency}
-          />
-          <div className="mt-6">
-            <FundFactsGrid facts={model.facts} />
-          </div>
           <section className="mt-6" aria-live="polite">
             <div className="mb-4 flex items-center gap-2">
               <PieChartIcon />
@@ -455,7 +398,7 @@ function FundResearchScreen({
                     research, not recommendations.
                   </p>
                 </div>
-                <div className="mt-5 grid gap-6 sm:grid-cols-2">
+                <div className="mt-5 flex flex-col gap-6">
                   {model.relatedFunds.peers.length ? (
                     <RelatedFundLinks
                       title="Similar funds"

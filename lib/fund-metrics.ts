@@ -1,5 +1,5 @@
-import { annualizedReturn, annualizedVolatility, maxDrawdown } from "@/lib/analytics";
-import { METRIC_KEYS, type FundMetrics, type MetricKey, type NavPoint } from "@/lib/fund-types";
+import { annualizedReturn, annualizedVolatility, maxDrawdown } from "./analytics.ts";
+import { METRIC_KEYS, type FundMetrics, type MetricKey, type NavPoint } from "./fund-types.ts";
 
 const METRIC_LABELS = {
   oneYear: "1 year annualized",

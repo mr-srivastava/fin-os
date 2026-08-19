@@ -117,7 +117,7 @@ function navStartDate() {
 /** A catalogue entry without the fields a refresh run assigns at write time. */
 export type TigzigCatalogueRow = Omit<
   CatalogueEntry,
-  "catalogueVersion" | "sourceLastSeenAt" | "finapiCrossCheck"
+  "catalogueVersion" | "sourceLastSeenAt" | "finapiCrossCheck" | "financials"
 >;
 
 function categorySubFor(category: EquityCategory): string {
@@ -220,6 +220,7 @@ async function requestCataloguePage(
 /** Fetches every Direct+Growth+active scheme TigZig reports for one supported equity category. */
 export async function fetchTigzigCategoryEntries(
   category: EquityCategory,
+  log: (message: string) => void = () => {},
 ): Promise<TigzigCatalogueRow[]> {
   const rows: TigzigCatalogueRow[] = [];
   let offset = 0;
@@ -232,17 +233,25 @@ export async function fetchTigzigCategoryEntries(
       }),
     );
     offset += CATALOGUE_PAGE_LIMIT;
+    log(
+      `    ${category}: page at offset ${offset - CATALOGUE_PAGE_LIMIT} (${rows.length}/${page.totalMatches} so far)`,
+    );
     if (offset >= page.totalMatches || page.results.length === 0) break;
   }
   return rows;
 }
 
 /** Fetches the full Direct+Growth+active catalogue across all supported equity categories. */
-export async function fetchTigzigCatalogue(): Promise<TigzigCatalogueRow[]> {
+export async function fetchTigzigCatalogue(
+  log: (message: string) => void = () => {},
+): Promise<TigzigCatalogueRow[]> {
   const rows: TigzigCatalogueRow[] = [];
   const seen = new Set<string>();
   for (const category of EQUITY_CATEGORIES) {
-    for (const row of await fetchTigzigCategoryEntries(category)) {
+    log(`  Fetching TigZig category "${category}"...`);
+    const categoryRows = await fetchTigzigCategoryEntries(category, log);
+    log(`  ${category}: ${categoryRows.length} eligible schemes`);
+    for (const row of categoryRows) {
       if (seen.has(row.schemeCode)) continue;
       seen.add(row.schemeCode);
       rows.push(row);

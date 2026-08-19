@@ -45,9 +45,10 @@ export type ChartValueMode = "indexed" | "return";
 interface LineChartProps {
   series: readonly ChartSeries[];
   valueMode?: ChartValueMode;
+  className?: string;
 }
 
-export function LineChart({ series, valueMode = "indexed" }: LineChartProps) {
+export function LineChart({ series, valueMode = "indexed", className }: LineChartProps) {
   const allPoints = series.flatMap((item) => item.points);
   if (allPoints.length < 2)
     return (
@@ -72,7 +73,7 @@ export function LineChart({ series, valueMode = "indexed" }: LineChartProps) {
   return (
     <ChartContainer
       config={config}
-      className="min-h-64 w-full"
+      className={className ?? "min-h-64 w-full"}
       aria-label={
         valueMode === "return"
           ? "NAV return chart. The series begins at zero percent for the selected period."

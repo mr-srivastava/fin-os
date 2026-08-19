@@ -15,9 +15,15 @@ interface SchemeAnalysisChartProps {
   series: readonly SchemeAnalysisSeries[];
   range: PerformanceRange;
   onRangeChange: (range: PerformanceRange) => void;
+  chartClassName?: string;
 }
 
-export function SchemeAnalysisChart({ series, range, onRangeChange }: SchemeAnalysisChartProps) {
+export function SchemeAnalysisChart({
+  series,
+  range,
+  onRangeChange,
+  chartClassName,
+}: SchemeAnalysisChartProps) {
   return (
     <>
       <div>
@@ -43,7 +49,11 @@ export function SchemeAnalysisChart({ series, range, onRangeChange }: SchemeAnal
           </ToggleGroup>
         </div>
       </div>
-      <LineChart series={series} valueMode="return" />
+      <LineChart
+        series={series}
+        valueMode="return"
+        className={chartClassName ?? "min-h-64 w-full"}
+      />
       <div className="mt-4 flex flex-wrap gap-3" aria-label="Chart series">
         {series.map((item) => (
           <Badge key={item.name} variant="outline">

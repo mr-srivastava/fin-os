@@ -11,6 +11,7 @@ import type {
   NavPoint,
   PortfolioItem,
   PortfolioSnapshot,
+  RelatedFund,
   Scheme,
   ReturnConsistency,
 } from "./fund-types.ts";
@@ -83,7 +84,9 @@ function toRelatedScheme(source: ProviderRecord, fallback: Scheme): Scheme | nul
 }
 
 export function isEligible(source: ProviderRecord, scheme: Scheme) {
-  const category = scheme.category.toLowerCase();
+  // FinAPI sometimes hyphenates category labels ("Large-Cap") instead of spacing them
+  // ("Large Cap"); normalize before matching so that doesn't silently drop the scheme.
+  const category = scheme.category.toLowerCase().replace(/[-_]/g, " ");
   const plan = scheme.plan.toLowerCase();
   const option = scheme.option.toLowerCase();
   const active = valueAt(source, ["isActive", "is_active", "active"]);
@@ -275,8 +278,18 @@ export function normalizeFundPayload(payload: unknown): FundResearch | null {
     },
     metrics: metricsFor(nav),
     returnConsistency: normalizeReturnConsistency(data.rollingReturns),
-    relatedFunds: normalizeRelatedFunds(data, scheme),
+    relatedFunds: toRelatedFundStubs(normalizeRelatedFunds(data, scheme)),
   };
+}
+
+function toRelatedFundStubs(related: { peers: Scheme[]; fromAmc: Scheme[] }) {
+  const stub = (scheme: Scheme): RelatedFund => ({
+    ...scheme,
+    nav: null,
+    aum: null,
+    riskLabel: null,
+  });
+  return { peers: related.peers.map(stub), fromAmc: related.fromAmc.map(stub) };
 }
 
 function toPortfolio(source: ProviderRecord, asOf: string | null): PortfolioSnapshot {
@@ -381,6 +394,21 @@ async function loadFundResearch(
   const preferredRolling = rollingResults[1];
   if (preferredRolling?.status === "fulfilled" && preferredRolling.value)
     normalized.returnConsistency = preferredRolling.value;
+  const relatedCodes = [
+    ...normalized.relatedFunds.peers.map((fund) => fund.schemeCode),
+    ...normalized.relatedFunds.fromAmc.map((fund) => fund.schemeCode),
+  ];
+  if (relatedCodes.length > 0) {
+    const snapshots = await getFundSnapshots(relatedCodes);
+    normalized.relatedFunds = {
+      peers: normalized.relatedFunds.peers.map((fund) =>
+        enrichRelatedFund(fund, snapshots.get(fund.schemeCode)),
+      ),
+      fromAmc: normalized.relatedFunds.fromAmc.map((fund) =>
+        enrichRelatedFund(fund, snapshots.get(fund.schemeCode)),
+      ),
+    };
+  }
   const definition = resolveBenchmark(normalized.facts.benchmark);
   if (!definition) return normalized;
   const benchmark =
@@ -396,6 +424,97 @@ async function loadFundResearch(
     };
   }
   return normalized;
+}
+
+export interface FundSnapshot {
+  nav: NavPoint | null;
+  aum: number | null;
+  riskLabel: string | null;
+}
+
+/**
+ * A single fund payload plus its NAV, with none of `loadFundResearch`'s extra requests
+ * (rolling summary, benchmark, or its own related-funds enrichment). Used to enrich
+ * related-fund and catalogue listings without the fan-out a full research load would cause.
+ */
+async function loadFundSnapshot(schemeCode: string): Promise<FundSnapshot | null> {
+  const [fundResult, navResult] = await Promise.allSettled([
+    request(`/scheme-code/${schemeCode}`),
+    tigzigService.getNav(schemeCode),
+  ]);
+  if (fundResult.status === "rejected") return null;
+  const normalized = normalizeFundPayload(fundResult.value);
+  if (!normalized) return null;
+  const nav =
+    navResult.status === "fulfilled"
+      ? (navResult.value.at(-1) ?? normalized.currentNav)
+      : normalized.currentNav;
+  return { nav, aum: normalized.facts.aum, riskLabel: normalized.facts.riskLabel };
+}
+
+// Matches the exact concurrency/pacing a diagnostic run confirmed FinAPI tolerates cleanly
+// (240/240 schemes resolved with zero failures at concurrency 2 + 400ms between requests).
+// A prior version used concurrency 8 with no pacing and reproduced the same rate-limit wall
+// the catalogue refresh was hitting - this is deliberately conservative, not a guess.
+const SNAPSHOT_CONCURRENCY = 2;
+const SNAPSHOT_REQUEST_DELAY_MS = 400;
+
+/**
+ * Runs `fn` over `items` with at most `limit` calls in flight at once, and a pause after each
+ * call before a worker starts its next one. Used to keep a batch of snapshot fetches from
+ * bursting requests at the provider, which is what was tripping FinAPI's rate limiting during
+ * catalogue refreshes - concurrency alone wasn't enough; sustained throughput mattered too.
+ */
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+  delayMs = 0,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+  async function worker() {
+    for (;;) {
+      const index = nextIndex++;
+      if (index >= items.length) return;
+      results[index] = await fn(items[index]!);
+      if (delayMs > 0 && nextIndex < items.length) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
+/** Fetches lightweight NAV/facts snapshots for several schemes, deduplicated, with bounded concurrency. */
+export async function getFundSnapshots(
+  schemeCodes: readonly string[],
+): Promise<Map<string, FundSnapshot>> {
+  const uniqueCodes = [...new Set(schemeCodes)];
+  const results = await mapWithConcurrency(
+    uniqueCodes,
+    SNAPSHOT_CONCURRENCY,
+    async (schemeCode) => {
+      try {
+        return await loadFundSnapshot(schemeCode);
+      } catch {
+        return null;
+      }
+    },
+    SNAPSHOT_REQUEST_DELAY_MS,
+  );
+  const snapshots = new Map<string, FundSnapshot>();
+  results.forEach((snapshot, index) => {
+    if (snapshot) snapshots.set(uniqueCodes[index]!, snapshot);
+  });
+  return snapshots;
+}
+
+function enrichRelatedFund(fund: RelatedFund, snapshot: FundSnapshot | undefined): RelatedFund {
+  return snapshot
+    ? { ...fund, nav: snapshot.nav, aum: snapshot.aum, riskLabel: snapshot.riskLabel }
+    : fund;
 }
 
 /** Loads one or more funds while sharing matching benchmark requests across the batch. */
@@ -492,5 +611,6 @@ export async function getFinapiTri(indexName: string): Promise<NavPoint[]> {
 export const finapiService = {
   getFundResearch,
   getFundResearchBatch,
+  getFundSnapshots,
   resolveIsin,
 };

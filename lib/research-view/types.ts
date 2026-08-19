@@ -1,5 +1,5 @@
 import type { PerformanceRange } from "@/lib/analytics";
-import type { Scheme } from "@/lib/fund-types";
+import type { RelatedFund, Scheme } from "@/lib/fund-types";
 
 export type Section<T> = { status: "ready"; data: T } | { status: "unavailable"; message: string };
 export type Tone = "gain" | "loss" | "neutral";
@@ -35,8 +35,8 @@ export interface FundResearchView {
     consistencyScore: number | null;
   } | null;
   relatedFunds: {
-    peers: readonly Scheme[];
-    fromAmc: readonly Scheme[];
+    peers: readonly RelatedFund[];
+    fromAmc: readonly RelatedFund[];
   };
   facts: {
     aum: number | null;

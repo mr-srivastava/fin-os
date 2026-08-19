@@ -32,7 +32,7 @@ export function financialStatus(value: number | null): DisplayStatus {
   return value > 0 ? "gain" : "loss";
 }
 
-const allocationColors = [
+export const allocationColors = [
   "var(--chart-1)",
   "var(--chart-2)",
   "var(--chart-3)",
@@ -78,6 +78,7 @@ function toOutcome(
   return {
     name,
     color,
+    returnPercent: outcome?.returnPercent ?? null,
     returnText: outcome ? formatSignedPercent(outcome.returnPercent) : "—",
     valueText: outcome ? formatRupees(outcome.value) : "—",
     status: financialStatus(outcome?.returnPercent ?? null),
@@ -206,6 +207,7 @@ export function toPortfolioDisplay(fund: FundResearch): PortfolioDisplay | null 
     weightText: formatPercent(sector.weight),
     holdings: (holdingsBySector.get(sector.name) ?? []).map((holding) => ({
       name: holding.name,
+      weight: holding.weight,
       weightText: formatPercent(holding.weight),
     })),
   }));

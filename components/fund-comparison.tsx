@@ -1,10 +1,11 @@
 "use client";
 
 import { CircleAlertIcon } from "lucide-react";
-import { OutcomeSummary } from "@/components/research/outcome-summary";
+import { ComparisonAllocationBars } from "@/components/research/comparison-allocation-bars";
+import { ComparisonMetricList } from "@/components/research/comparison-metric-list";
+import { ComparisonSummary } from "@/components/research/performance-summary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { chartColorBgClass } from "@/components/line-chart";
 import { SchemeAnalysisChart } from "@/components/scheme-analysis-chart";
 import {
   Table,
@@ -63,57 +64,6 @@ function AllocationTable({
   );
 }
 
-function ComparisonTable({
-  title,
-  description,
-  rows,
-  fundNames,
-}: {
-  title: string;
-  description: string;
-  rows: readonly { label: string; values: readonly string[] }[];
-  fundNames: readonly [string, string];
-}) {
-  if (!rows.length) return null;
-  return (
-    <section>
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      <div className="mt-3 overflow-x-auto">
-        <Table className="min-w-[36rem] table-fixed">
-          <colgroup>
-            <col className="w-1/5" />
-            <col className="w-2/5" />
-            <col className="w-2/5" />
-          </colgroup>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="whitespace-normal">Measure</TableHead>
-              {fundNames.map((name) => (
-                <TableHead key={name} className="whitespace-normal break-words">
-                  {name}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.label}>
-                <TableCell className="font-medium whitespace-normal">{row.label}</TableCell>
-                {row.values.map((value, index) => (
-                  <TableCell key={`${row.label}-${fundNames[index]}`} className="font-mono">
-                    {value}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </section>
-  );
-}
-
 export function FundComparison({
   comparison,
   range,
@@ -125,60 +75,47 @@ export function FundComparison({
 }) {
   return (
     <>
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Performance comparison</CardTitle>
-          <CardDescription>
-            Each fund’s return from the start of the selected period.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {comparison.performance.status === "ready" ? (
-            <>
-              <div className="mb-6 grid gap-3 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2">
-                {comparison.performance.data.outcomes.map((outcome, index) => (
-                  <OutcomeSummary
-                    key={outcome.name}
-                    name={outcome.name}
-                    colorClassName={chartColorBgClass(index === 0 ? "foreground" : "chart-3")}
-                    returnText={outcome.returnText}
-                    valueText={outcome.valueText}
-                    status={outcome.status}
+      <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr] lg:items-stretch">
+        <Card className="lg:row-span-2 lg:flex lg:flex-col">
+          <CardHeader>
+            <CardTitle>Performance comparison</CardTitle>
+            <CardDescription>
+              Each fund’s return from the start of the selected period.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="lg:flex-1">
+            {comparison.performance.status === "ready" ? (
+              <>
+                <ComparisonSummary outcomes={comparison.performance.data.outcomes} />
+                <div className="mt-4">
+                  <SchemeAnalysisChart
+                    series={comparison.performance.data.series}
+                    range={range}
+                    onRangeChange={onRangeChange}
+                    chartClassName="min-h-64 w-full lg:h-full lg:min-h-96"
                   />
-                ))}
-              </div>
-              <SchemeAnalysisChart
-                series={comparison.performance.data.series}
-                range={range}
-                onRangeChange={onRangeChange}
+                </div>
+              </>
+            ) : (
+              <Unavailable
+                title="NAV comparison unavailable"
+                message={
+                  comparison.performance.status === "unavailable"
+                    ? comparison.performance.message
+                    : "Performance comparison is unavailable."
+                }
               />
-            </>
-          ) : (
-            <Unavailable
-              title="NAV comparison unavailable"
-              message={
-                comparison.performance.status === "unavailable"
-                  ? comparison.performance.message
-                  : "Performance comparison is unavailable."
-              }
-            />
-          )}
-        </CardContent>
-      </Card>
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>How they differ</CardTitle>
-          <CardDescription>
-            Compare risk, costs, scale, and stated scheme characteristics after reviewing the return
-            path.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-8">
+            )}
+          </CardContent>
+        </Card>
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>Path risk</CardTitle>
+            <CardDescription>Calculated from available NAV history.</CardDescription>
+          </CardHeader>
+          <CardContent>
             {comparison.characteristics.status === "ready" ? (
-              <ComparisonTable
-                title="Path risk"
-                description="Calculated from available NAV history."
+              <ComparisonMetricList
                 rows={comparison.characteristics.data.map((row) => ({
                   label: row.label,
                   values: row.values.map((value) => value.valueText),
@@ -195,15 +132,18 @@ export function FundComparison({
                 }
               />
             )}
-            <ComparisonTable
-              title="Fund facts"
-              description="Provider-supplied scheme characteristics."
-              rows={comparison.facts}
-              fundNames={comparison.fundNames}
-            />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>Fund facts</CardTitle>
+            <CardDescription>Provider-supplied scheme characteristics.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ComparisonMetricList rows={comparison.facts} fundNames={comparison.fundNames} />
+          </CardContent>
+        </Card>
+      </div>
       {comparison.portfolio.status === "ready" ? (
         <section className="mt-6">
           <div className="mb-4">
@@ -220,14 +160,16 @@ export function FundComparison({
               rows={comparison.portfolio.data.sectorAllocation}
               fundNames={comparison.fundNames}
             />
-            <AllocationTable
+            <ComparisonAllocationBars
               title="Asset allocation"
-              rows={comparison.portfolio.data.assetAllocation}
+              description="How each reported portfolio is divided among equity, debt, cash, and other assets."
+              items={comparison.portfolio.data.assetAllocation}
               fundNames={comparison.fundNames}
             />
-            <AllocationTable
+            <ComparisonAllocationBars
               title="Market-cap allocation"
-              rows={comparison.portfolio.data.marketCapAllocation}
+              description="How each reported equity allocation is spread across large-, mid-, and small-cap companies."
+              items={comparison.portfolio.data.marketCapAllocation}
               fundNames={comparison.fundNames}
             />
           </div>

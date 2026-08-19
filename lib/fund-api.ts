@@ -6,7 +6,7 @@ import {
   FundResearchViewSchema,
   SchemeSearchSchema,
 } from "@/lib/fund-schemas";
-import type { ApiErrorCode, Scheme } from "@/lib/fund-types";
+import type { ApiErrorCode, RelatedFund, Scheme } from "@/lib/fund-types";
 import type { ComparisonView, FundResearchView } from "@/lib/research-view/types";
 
 export type ClientApiErrorCode = ApiErrorCode | "invalid_response" | "network_error";
@@ -53,7 +53,7 @@ export function searchFunds(query: string, signal?: AbortSignal) {
 }
 
 export function loadCategoryFunds(category: string, signal?: AbortSignal) {
-  return request<{ category: string; schemes: Scheme[] }>(
+  return request<{ category: string; schemes: RelatedFund[] }>(
     `/api/explore?category=${encodeURIComponent(category)}`,
     CategorySchemeListSchema,
     signal,

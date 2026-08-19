@@ -1,4 +1,5 @@
 import type { PerformanceRange } from "@/lib/analytics";
+import type { NavPoint } from "@/lib/fund-types";
 
 export type DisplayStatus = "gain" | "loss" | "neutral";
 export type AsyncView<T> =
@@ -15,6 +16,7 @@ export interface MetricDisplay {
 export interface OutcomeDisplay {
   name: string;
   color: "fund" | "benchmark" | "comparison-a" | "comparison-b";
+  returnPercent: number | null;
   returnText: string;
   valueText: string;
   status: DisplayStatus;
@@ -61,6 +63,7 @@ export interface MetricGroupDisplay {
 
 export interface HoldingDisplay {
   name: string;
+  weight: number;
   weightText: string;
 }
 
@@ -78,6 +81,16 @@ export interface PortfolioDisplay {
   concentrationText: string | null;
 }
 
+export interface RelatedFundDisplay {
+  schemeCode: string;
+  schemeName: string;
+  amc: string;
+  category: string;
+  nav: NavPoint | null;
+  aum: number | null;
+  riskLabel: string | null;
+}
+
 export interface FundResearchReadyModel {
   schemeCode: string;
   header: FundHeaderDisplay;
@@ -87,11 +100,17 @@ export interface FundResearchReadyModel {
   metricGroups: readonly MetricGroupDisplay[];
   returnConsistency: {
     timeframe: string;
-    rows: readonly { label: string; valueText: string }[];
+    averageReturn: number | null;
+    medianReturn: number | null;
+    minReturn: number | null;
+    maxReturn: number | null;
+    positiveRatio: number | null;
+    negativeRatio: number | null;
+    consistencyScore: number | null;
   } | null;
   relatedFunds: {
-    peers: readonly { schemeCode: string; schemeName: string; amc: string; category: string }[];
-    fromAmc: readonly { schemeCode: string; schemeName: string; amc: string; category: string }[];
+    peers: readonly RelatedFundDisplay[];
+    fromAmc: readonly RelatedFundDisplay[];
   };
   facts: readonly FactDisplay[];
   portfolio: AsyncView<PortfolioDisplay>;
@@ -110,6 +129,15 @@ export interface ComparisonSelectionDisplay {
   status: "empty" | "loading" | "error" | "ready";
 }
 
+export interface ComparisonAllocationItem {
+  name: string;
+  color: string;
+  leftWeight: number | null;
+  rightWeight: number | null;
+  leftText: string;
+  rightText: string;
+}
+
 export interface ComparisonReadyDisplay {
   fundNames: readonly [string, string];
   performance: AsyncView<{
@@ -122,8 +150,8 @@ export interface ComparisonReadyDisplay {
   portfolio: AsyncView<{
     reportDateText: string;
     sectorAllocation: readonly { name: string; leftText: string; rightText: string }[];
-    assetAllocation: readonly { name: string; leftText: string; rightText: string }[];
-    marketCapAllocation: readonly { name: string; leftText: string; rightText: string }[];
+    assetAllocation: readonly ComparisonAllocationItem[];
+    marketCapAllocation: readonly ComparisonAllocationItem[];
     concentration: readonly [string | null, string | null];
   }>;
 }

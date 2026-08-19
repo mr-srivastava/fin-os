@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Separator } from "@/components/ui/separator";
-import { Spinner } from "@/components/ui/spinner";
-import { FundCard } from "@/components/fund-card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { FundCard, FundCardSkeleton, majorityRiskLabel } from "@/components/fund-card";
 import { SelectionBar } from "@/components/selection-bar";
 import { WatchlistToggleButton } from "@/components/watchlist-toggle-button";
 import { EQUITY_CATEGORIES } from "@/lib/fund-categories";
@@ -49,14 +49,18 @@ export function CategoryExplorer() {
         Select a category to view eligible Direct Growth schemes, or select funds below to compare
         or add them to a watchlist. Results are alphabetical, not a performance ranking.
       </p>
-      <div className="mt-6 flex flex-wrap gap-2" aria-label="Equity categories">
+      <div
+        className="mt-6 inline-flex flex-wrap gap-1 rounded-lg border bg-muted/20 p-1"
+        aria-label="Equity categories"
+      >
         {EQUITY_CATEGORIES.map((category) => {
           const isSelected = category === selectedCategory;
           return (
             <Button
               key={category}
-              variant={isSelected ? "default" : "outline"}
-              className="h-9 px-3"
+              variant={isSelected ? "default" : "ghost"}
+              size="sm"
+              className="h-8 px-3"
               aria-pressed={isSelected}
               onClick={() => setSelectedCategory(category)}
             >
@@ -72,27 +76,49 @@ export function CategoryExplorer() {
             <p className="text-sm text-muted-foreground">
               {categoryQuery.data.schemes.length} shown · alphabetical
             </p>
+          ) : categoryQuery.isLoading ? (
+            <Skeleton className="h-5 w-32" />
           ) : null}
           {categoryQuery.isLoading ? (
-            <div className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
-              <Spinner aria-label={`Loading ${selectedCategory} schemes`} /> Loading schemes…
-            </div>
+            <ul
+              className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+              aria-label={`Loading ${selectedCategory} schemes`}
+            >
+              {Array.from({ length: 9 }, (_, index) => (
+                <li key={index}>
+                  <FundCardSkeleton selectable showWatchlistAction />
+                </li>
+              ))}
+            </ul>
           ) : categoryQuery.isError ? (
             <p className="mt-5 text-sm text-destructive">{categoryQuery.error.message}</p>
           ) : categoryQuery.data?.schemes.length ? (
             <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {categoryQuery.data.schemes.map((scheme) => (
-                <li key={scheme.schemeCode}>
-                  <FundCard
-                    fund={scheme}
-                    density="compact"
-                    selectable
-                    selected={selectedSchemeCodes.has(scheme.schemeCode)}
-                    onSelectChange={(selected) => toggleSelection(scheme.schemeCode, selected)}
-                    watchlistAction={<WatchlistToggleButton schemeCode={scheme.schemeCode} />}
-                  />
-                </li>
-              ))}
+              {(() => {
+                const commonRisk = majorityRiskLabel(categoryQuery.data.schemes);
+                return categoryQuery.data.schemes.map((scheme) => (
+                  <li key={scheme.schemeCode}>
+                    <FundCard
+                      fund={{
+                        schemeCode: scheme.schemeCode,
+                        schemeName: scheme.schemeName,
+                        amc: scheme.amc,
+                        category: scheme.category,
+                        riskLabel: scheme.riskLabel === commonRisk ? null : scheme.riskLabel,
+                        aum: scheme.aum,
+                        navPoint: scheme.nav,
+                      }}
+                      density="compact"
+                      selectable
+                      showCategory={false}
+                      showLogo={false}
+                      selected={selectedSchemeCodes.has(scheme.schemeCode)}
+                      onSelectChange={(selected) => toggleSelection(scheme.schemeCode, selected)}
+                      watchlistAction={<WatchlistToggleButton schemeCode={scheme.schemeCode} />}
+                    />
+                  </li>
+                ));
+              })()}
             </ul>
           ) : (
             <Empty className="mt-5 min-h-32">

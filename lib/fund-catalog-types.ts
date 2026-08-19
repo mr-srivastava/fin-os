@@ -32,6 +32,17 @@ export interface CatalogueEntry {
     activeFieldRaw: unknown;
     categoryRaw: string | null;
   } | null;
+  /**
+   * A lightweight NAV/facts snapshot taken from FinAPI+TigZig during the refresh run.
+   * `null` when the snapshot fetch failed or was skipped for this scheme - the catalogue
+   * entry is still valid, just without enriched card data until the next refresh.
+   */
+  financials: {
+    nav: { nav: number; date: string } | null;
+    aum: number | null;
+    riskLabel: string | null;
+    snapshotAt: string;
+  } | null;
   /** Timestamp of the refresh run that most recently saw this scheme in TigZig's catalogue. */
   sourceLastSeenAt: string;
   /** The catalogue version this document belongs to; see `CatalogueMeta`. */

@@ -1,23 +1,53 @@
 import type { FactDisplay } from "@/lib/research-display/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+const COMPACT_LABELS = ["AUM", "Expense ratio", "Portfolio turnover", "Risk"];
+const WIDE_LABELS = ["Benchmark", "Fund managers"];
+
 export function FundFactsGrid({ facts }: { facts: readonly FactDisplay[] }) {
+  const byLabel = new Map(facts.map((fact) => [fact.label, fact]));
+  const compact = COMPACT_LABELS.map((label) => byLabel.get(label)).filter(
+    Boolean,
+  ) as FactDisplay[];
+  const wide = WIDE_LABELS.map((label) => byLabel.get(label)).filter(Boolean) as FactDisplay[];
+  const rest = facts.filter(
+    (fact) => !COMPACT_LABELS.includes(fact.label) && !WIDE_LABELS.includes(fact.label),
+  );
+
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
-        <CardTitle>Fund facts</CardTitle>
+        <CardTitle>Fund overview</CardTitle>
         <CardDescription>
-          Key scheme details, including assets, fees, turnover, and stated risk.
+          Key scheme details, including assets, fees, turnover, and benchmark.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {facts.map((fact) => (
-          <Fact
-            key={fact.label}
-            label={fact.label}
-            value={fact.valueText}
-            numeric={fact.numeric ?? false}
-          />
+      <CardContent className="grid gap-4">
+        {compact.length || rest.length ? (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+            {compact.map((fact) => (
+              <Fact
+                key={fact.label}
+                label={fact.label}
+                value={fact.valueText}
+                numeric={fact.numeric ?? false}
+              />
+            ))}
+            {rest.map((fact) => (
+              <Fact
+                key={fact.label}
+                label={fact.label}
+                value={fact.valueText}
+                numeric={fact.numeric ?? false}
+              />
+            ))}
+          </div>
+        ) : null}
+        {wide.map((fact) => (
+          <div key={fact.label} className="border-t border-border/60 pt-4">
+            <p className="text-xs text-muted-foreground">{fact.label}</p>
+            <p className="mt-1 text-sm font-semibold">{fact.valueText}</p>
+          </div>
         ))}
       </CardContent>
     </Card>
@@ -36,7 +66,9 @@ function Fact({
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`mt-1 text-sm font-medium ${numeric ? "font-mono" : ""}`}>{value}</p>
+      <p className={`mt-1 text-lg font-semibold ${numeric ? "font-mono tabular-nums" : ""}`}>
+        {value}
+      </p>
     </div>
   );
 }

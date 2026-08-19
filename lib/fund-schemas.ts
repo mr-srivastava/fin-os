@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { isIsoDate } from "@/lib/date";
-import type { ApiError, FundResearch, Scheme } from "@/lib/fund-types";
+import type { ApiError, FundResearch, RelatedFund, Scheme } from "@/lib/fund-types";
 import type { ComparisonView, FundResearchView } from "@/lib/research-view/types";
 
 const FiniteNumberSchema = v.pipe(v.number(), v.finite());
@@ -18,13 +18,22 @@ export const NavPointSchema = v.object({
   nav: PositiveFiniteNumberSchema,
 });
 
-export const SchemeSchema: v.GenericSchema<Scheme> = v.object({
+const schemeFields = {
   schemeCode: v.string(),
   schemeName: v.string(),
   amc: v.string(),
   category: v.string(),
   plan: v.string(),
   option: v.string(),
+};
+
+export const SchemeSchema: v.GenericSchema<Scheme> = v.object(schemeFields);
+
+export const RelatedFundSchema: v.GenericSchema<RelatedFund> = v.object({
+  ...schemeFields,
+  nav: v.nullable(NavPointSchema),
+  aum: NullableFiniteNumberSchema,
+  riskLabel: v.nullable(v.string()),
 });
 
 const MetricSchema = v.object({
@@ -99,7 +108,10 @@ export const FundResearchSchema: v.GenericSchema<FundResearch> = v.object({
       consistencyScore: NullableFiniteNumberSchema,
     }),
   ),
-  relatedFunds: v.object({ peers: v.array(SchemeSchema), fromAmc: v.array(SchemeSchema) }),
+  relatedFunds: v.object({
+    peers: v.array(RelatedFundSchema),
+    fromAmc: v.array(RelatedFundSchema),
+  }),
   metrics: v.object({
     oneYear: MetricSchema,
     threeYear: MetricSchema,
@@ -112,7 +124,7 @@ export const FundResearchSchema: v.GenericSchema<FundResearch> = v.object({
 export const SchemeSearchSchema = v.object({ schemes: v.array(SchemeSchema) });
 export const CategorySchemeListSchema = v.object({
   category: v.string(),
-  schemes: v.array(SchemeSchema),
+  schemes: v.array(RelatedFundSchema),
 });
 export const ApiErrorSchema: v.GenericSchema<ApiError> = v.object({
   error: v.picklist([
@@ -194,7 +206,10 @@ export const FundResearchViewSchema = v.object({
       consistencyScore: NullableFiniteNumberSchema,
     }),
   ),
-  relatedFunds: v.object({ peers: v.array(SchemeSchema), fromAmc: v.array(SchemeSchema) }),
+  relatedFunds: v.object({
+    peers: v.array(RelatedFundSchema),
+    fromAmc: v.array(RelatedFundSchema),
+  }),
   facts: v.object({
     aum: NullableFiniteNumberSchema,
     expenseRatio: NullableFiniteNumberSchema,

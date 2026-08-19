@@ -1,5 +1,5 @@
-import type { NavPoint } from "@/lib/fund-types";
-import { parseIsoDate } from "@/lib/date";
+import type { NavPoint } from "./fund-types.ts";
+import { parseIsoDate } from "./date.ts";
 
 const DAYS_IN_YEAR = 365.25;
 export const DEFAULT_INITIAL_INVESTMENT = 10_000;

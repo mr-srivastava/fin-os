@@ -32,6 +32,13 @@ export interface Scheme {
   option: string;
 }
 
+/** A related-fund entry enriched with a lightweight snapshot: latest NAV and top-line facts. */
+export interface RelatedFund extends Scheme {
+  nav: NavPoint | null;
+  aum: number | null;
+  riskLabel: string | null;
+}
+
 export interface Metric {
   value: number | null;
   label: string;
@@ -106,8 +113,8 @@ export interface FundResearch {
   metrics: FundMetrics;
   returnConsistency: ReturnConsistency | null;
   relatedFunds: {
-    peers: Scheme[];
-    fromAmc: Scheme[];
+    peers: RelatedFund[];
+    fromAmc: RelatedFund[];
   };
 }
 
