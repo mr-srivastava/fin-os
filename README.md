@@ -26,18 +26,12 @@
   <img src="docs/readme/hero.png" alt="MF OS fund research screen" width="900">
 </p>
 
-<!--
-  TODO: docs/readme/hero.png and the section images below don't exist yet.
-  Compose them per DESIGN.md — Fraunces headings, Geist Mono metric labels,
-  storm neutrals, #02eff0 accent used sparingly — over real app screenshots.
--->
-
 ---
 
 ### Built for due diligence, not persuasion
 
-MF OS gives distributors a structured research surface for understanding a
-fund's performance, risk, portfolio, and peer context.
+MF OS gives distributors a consistent view of a fund's performance, risk,
+portfolio, and peer context.
 
 **It presents evidence. You make the judgement.**
 
@@ -75,8 +69,8 @@ Build a research shortlist.
 
 <img src="docs/readme/watchlist.png" alt="Browser-local watchlist" width="900">
 
-Save funds into browser-local watchlists and return to them later — no
-account needed.
+Save funds into browser-local watchlists and return to them later (no
+account needed).
 
 ---
 
@@ -85,14 +79,14 @@ account needed.
 MF OS deliberately doesn't rank funds, assign a winner, or turn a collection
 of metrics into a recommendation.
 
-Returns are returns. Risk metrics are risk metrics. Portfolio data is
-portfolio data. The product gives you the evidence and context due diligence
-requires, and keeps the judgement with you.
+A return is a return, not a signal to buy. A risk metric describes the
+path a fund took, not whether that path was wise. MF OS gives you the
+numbers due diligence requires and leaves the judgement with you.
 
 ### Data should admit when it doesn't know
 
-Missing, stale, or unavailable data is surfaced explicitly rather than
-silently substituted or inferred.
+If something's missing or stale, the page says so. MF OS doesn't fill the
+gap with a guess.
 
 [Data & limitations →](https://mfops.netlify.app/data-and-limitations)
 
@@ -103,12 +97,12 @@ silently substituted or inferred.
 MF OS is a Next.js application built around explicit provider boundaries and
 normalized financial-data contracts.
 
-- [docs/architecture.md](docs/architecture.md) — request flow, provider
+- [docs/architecture.md](docs/architecture.md): request flow, provider
   boundaries, and data contracts.
-- [docs/development.md](docs/development.md) — local setup, environment
+- [docs/development.md](docs/development.md): local setup, environment
   configuration, and the checks to run before opening a pull request.
-- [DESIGN.md](DESIGN.md) — visual and content conventions.
-- [AGENTS.md](AGENTS.md) — product boundaries and working rules for
+- [DESIGN.md](DESIGN.md): visual and content conventions.
+- [AGENTS.md](AGENTS.md): product boundaries and working rules for
   contributors and coding agents.
 
 ## Status
