@@ -1,5 +1,11 @@
 import type { NavPoint } from "./fund.types.ts";
-import { providerIsoDate, providerList, providerNumber, providerRecord } from "./providerInput.ts";
+import {
+  providerIsoDate,
+  providerList,
+  providerNumber,
+  providerRecord,
+  type JsonValue,
+} from "./providerInput.ts";
 
 export class ProviderError extends Error {
   public status: number;
@@ -10,7 +16,7 @@ export class ProviderError extends Error {
   }
 }
 
-export function toNav(value: unknown): NavPoint[] {
+export function toNav(value: JsonValue): NavPoint[] {
   return (providerList(value) ?? [])
     .flatMap((item) => {
       const source = providerRecord(item);

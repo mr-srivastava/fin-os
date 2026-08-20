@@ -1,13 +1,13 @@
 import { CircleHelpIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, lookup } from "@/lib/utils";
 import type { FundResearchReadyModel } from "@/lib/research-display/types";
 
-const RISK_CAPTIONS: Record<string, string> = {
+const RISK_CAPTIONS = {
   Volatility: "How much returns fluctuate",
   "Max drawdown": "Largest peak-to-trough decline",
-};
+} satisfies Record<string, string>;
 
 export function RiskAndReturnConsistency({
   riskMetrics,
@@ -54,13 +54,16 @@ export function RiskAndReturnConsistency({
                   <p className="mt-1 font-mono text-lg font-semibold tabular-nums">
                     {metric.valueText}
                   </p>
-                  {RISK_CAPTIONS[metric.label] || metric.context ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {RISK_CAPTIONS[metric.label]}
-                      {RISK_CAPTIONS[metric.label] && metric.context ? " — " : null}
-                      {metric.context}
-                    </p>
-                  ) : null}
+                  {(() => {
+                    const caption = lookup(RISK_CAPTIONS, metric.label);
+                    return caption || metric.context ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {caption}
+                        {caption && metric.context ? " — " : null}
+                        {metric.context}
+                      </p>
+                    ) : null;
+                  })()}
                 </div>
               ))}
             </div>

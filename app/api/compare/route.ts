@@ -3,7 +3,13 @@ import { ProviderError } from "@/lib/provider";
 import { isSchemeCode } from "@/lib/fundInput";
 import { toComparisonView } from "@/lib/research-view/comparison";
 
-export async function GET(request: Request) {
+interface RouteDeps {
+  getFundResearchBatch: typeof fundService.getFundResearchBatch;
+}
+
+const defaultDeps: RouteDeps = { getFundResearchBatch: fundService.getFundResearchBatch };
+
+export async function handleGet(request: Request, deps: RouteDeps = defaultDeps) {
   const params = new URL(request.url).searchParams;
   const fund = params.get("fund") ?? "";
   const against = params.get("against") ?? "";
@@ -13,9 +19,9 @@ export async function GET(request: Request) {
       { status: 400 },
     );
   try {
-    return Response.json(
-      toComparisonView([fund, against], await fundService.getFundResearchBatch([fund, against])),
-    );
+    const [fundResult, againstResult] = await deps.getFundResearchBatch([fund, against]);
+    // SAFETY: getFundResearchBatch settles one result per input scheme code, in order.
+    return Response.json(toComparisonView([fund, against], [fundResult!, againstResult!]));
   } catch (error) {
     const provider =
       error instanceof ProviderError
@@ -26,4 +32,8 @@ export async function GET(request: Request) {
       { status: provider.status },
     );
   }
+}
+
+export async function GET(request: Request) {
+  return handleGet(request);
 }

@@ -8,34 +8,37 @@ export function financialTone(value: number | null): Tone {
   return value > 0 ? "gain" : "loss";
 }
 
+type PerformanceRangeKey = (typeof PERFORMANCE_RANGES)[number]["value"];
+
 export function performanceRanges(
   sources: readonly { name: string; points: readonly NavPoint[] }[],
-): Record<(typeof PERFORMANCE_RANGES)[number]["value"], PerformanceRangeView> {
-  return Object.fromEntries(
-    PERFORMANCE_RANGES.map(({ value, label }) => {
+): Record<PerformanceRangeKey, PerformanceRangeView> {
+  return PERFORMANCE_RANGES.reduce<Record<PerformanceRangeKey, PerformanceRangeView>>(
+    (ranges, { value, label }) => {
       const selectedSources = sources.map((source) => ({
         name: source.name,
         points: filterSeriesByRange([...source.points], value),
       }));
-      return [
-        value,
-        {
-          label,
-          series: selectedSources.map((source) => ({
+      ranges[value] = {
+        label,
+        series: selectedSources.map((source) => ({
+          name: source.name,
+          points: relativeReturnSeries(source.points),
+        })),
+        outcomes: selectedSources.map((source) => {
+          const outcome = investmentOutcome(source.points);
+          return {
             name: source.name,
-            points: relativeReturnSeries(source.points),
-          })),
-          outcomes: selectedSources.map((source) => {
-            const outcome = investmentOutcome(source.points);
-            return {
-              name: source.name,
-              returnPercent: outcome?.returnPercent ?? null,
-              endingValue: outcome?.value ?? null,
-              tone: financialTone(outcome?.returnPercent ?? null),
-            };
-          }),
-        } satisfies PerformanceRangeView,
-      ];
-    }),
-  ) as unknown as Record<(typeof PERFORMANCE_RANGES)[number]["value"], PerformanceRangeView>;
+            returnPercent: outcome?.returnPercent ?? null,
+            endingValue: outcome?.value ?? null,
+            tone: financialTone(outcome?.returnPercent ?? null),
+          };
+        }),
+      };
+      return ranges;
+    },
+    // SAFETY: seeds the reduce accumulator; every PERFORMANCE_RANGES key is assigned above
+    // before this function returns.
+    {} as Record<PerformanceRangeKey, PerformanceRangeView>,
+  );
 }

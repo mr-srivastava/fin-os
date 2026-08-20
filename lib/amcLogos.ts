@@ -7,6 +7,8 @@
  */
 
 /** Strips legal-entity noise so "HDFC Mutual Fund" and "HDFC Asset Management Co. Ltd" collapse to one key. */
+import { lookup } from "./utils.ts";
+
 function slugify(amc: string): string {
   return amc
     .toLowerCase()
@@ -26,14 +28,14 @@ function slugify(amc: string): string {
 const AMC_LOGO_SLUGS = new Set<string>([]);
 
 /** Slug aliases for AMCs whose FinAPI name doesn't collapse cleanly to their logo file's slug. */
-const SLUG_ALIASES: Record<string, string> = {
+const SLUG_ALIASES = {
   kotak: "kotak-mahindra",
   "aditya-birla-sunlife": "aditya-birla-sun-life",
-};
+} satisfies Record<string, string>;
 
 export function amcLogoPath(amc: string): string | null {
   const raw = slugify(amc);
-  const slug = SLUG_ALIASES[raw] ?? raw;
+  const slug = lookup(SLUG_ALIASES, raw) ?? raw;
   return AMC_LOGO_SLUGS.has(slug) ? `/amc-logos/${slug}.svg` : null;
 }
 

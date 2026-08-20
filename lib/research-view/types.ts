@@ -65,11 +65,12 @@ export interface FundResearchView {
   }>;
 }
 
+export type ComparisonSelection =
+  | { status: "ready"; scheme: Scheme; currentNav: { nav: number; date: string } | null }
+  | { status: "unavailable"; schemeCode: string; message: string };
+
 export interface ComparisonView {
-  selections: readonly (
-    | { status: "ready"; scheme: Scheme; currentNav: { nav: number; date: string } | null }
-    | { status: "unavailable"; schemeCode: string; message: string }
-  )[];
+  selections: readonly [ComparisonSelection, ComparisonSelection];
   comparison: Section<{
     fundNames: readonly [string, string];
     performance: Section<Record<PerformanceRange, PerformanceRangeView>>;

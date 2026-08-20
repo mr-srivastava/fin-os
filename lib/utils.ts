@@ -6,6 +6,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Type-safe lookup into a dictionary whose value type is known but whose keys are an open
+ * set at the call site (e.g. a provider-supplied label). Returns `undefined` for keys the
+ * dictionary doesn't have instead of widening the dictionary's own type to an index signature.
+ */
+export function lookup<K extends string, V>(dictionary: Record<K, V>, key: string): V | undefined {
+  return Object.hasOwn(dictionary, key)
+    ? // SAFETY: `Object.hasOwn` just confirmed `key` names an own property of `dictionary`.
+      dictionary[key as K]
+    : undefined;
+}
+
 export type MetricStatus = "gain" | "loss" | "neutral";
 
 export function statusColorClass(status: MetricStatus) {

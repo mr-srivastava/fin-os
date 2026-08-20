@@ -40,6 +40,7 @@
     "valibot": "^1.4.2"
   },
   "devDependencies": {
+    "@oxlint/plugins": "^1.79.0",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^7.0.1",

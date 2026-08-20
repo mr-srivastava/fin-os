@@ -10,7 +10,7 @@ import {
   providerNumber,
   providerRecord,
   providerText,
-  type ProviderRecord,
+  type JsonValue,
 } from "./providerInput.ts";
 import { ProviderError, toNav } from "./provider.ts";
 import type { CatalogueEntry } from "./fundCatalog.types.ts";
@@ -22,7 +22,7 @@ const CATALOGUE_PAGE_LIMIT = 100;
 
 // ---- NAV history ----
 
-export function normalizeTigzigNavPayload(payload: unknown): NavPoint[] | null {
+export function normalizeTigzigNavPayload(payload: JsonValue): NavPoint[] | null {
   const envelope = providerRecord(payload);
   if (!envelope || !("data" in envelope)) return null;
   return toNav(envelope.data);
@@ -50,7 +50,7 @@ export async function getTigzigNav(schemeCode: string): Promise<NavPoint[]> {
       throw new ProviderError("NAV data is busy. Try again in a moment.", 429);
     throw new ProviderError("We could not retrieve NAV data right now.", 502);
   }
-  let payload: unknown;
+  let payload: JsonValue;
   try {
     payload = await response.json();
   } catch {
@@ -64,7 +64,7 @@ export async function getTigzigNav(schemeCode: string): Promise<NavPoint[]> {
 // ---- Market / TRI series ----
 
 export function normalizeTigzigMarketSeriesPayload(
-  payload: unknown,
+  payload: JsonValue,
   indicatorId: string,
 ): NavPoint[] | null {
   const envelope = providerRecord(payload);
@@ -97,7 +97,7 @@ export async function getTigzigMarketSeries(indicatorId: string): Promise<NavPoi
       throw new ProviderError("Benchmark data is busy. Try again in a moment.", 429);
     throw new ProviderError("We could not retrieve benchmark data right now.", 502);
   }
-  let payload: unknown;
+  let payload: JsonValue;
   try {
     payload = await response.json();
   } catch {
@@ -130,7 +130,7 @@ function categoryForSub(categorySub: string): EquityCategory | null {
 }
 
 export function normalizeTigzigCatalogueRow(
-  row: unknown,
+  row: JsonValue,
   expectedCategory: EquityCategory,
 ): TigzigCatalogueRow | null {
   const source = providerRecord(row);
@@ -183,7 +183,7 @@ export function normalizeTigzigCatalogueRow(
 async function requestCataloguePage(
   category: EquityCategory,
   offset: number,
-): Promise<{ results: unknown[]; totalMatches: number }> {
+): Promise<{ results: JsonValue[]; totalMatches: number }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let response: Response;
@@ -203,17 +203,17 @@ async function requestCataloguePage(
       throw new ProviderError("The scheme catalogue is busy. Try again in a moment.", 429);
     throw new ProviderError("We could not retrieve the scheme catalogue right now.", 502);
   }
-  let payload: unknown;
+  let payload: JsonValue;
   try {
     payload = await response.json();
   } catch {
     throw new ProviderError("The scheme catalogue returned an invalid response.", 502);
   }
-  const envelope = providerRecord(payload) as (ProviderRecord & { total_matches?: unknown }) | null;
+  const envelope = providerRecord(payload);
   const results = envelope && providerList(envelope.results);
   if (!envelope || !results)
     throw new ProviderError("The scheme catalogue returned an unexpected response.", 502);
-  const totalMatches = typeof envelope.total_matches === "number" ? envelope.total_matches : 0;
+  const totalMatches = providerNumber(envelope.total_matches) ?? 0;
   return { results, totalMatches };
 }
 

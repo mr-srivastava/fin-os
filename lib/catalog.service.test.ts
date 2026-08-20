@@ -78,19 +78,39 @@ const meta: CatalogueMeta = {
   tigzigSnapshot: { generatedAt: null, etag: null },
 };
 
-function matchesValue(entryValue: unknown, condition: unknown): boolean {
+/** A fake Mongo query condition, restricted to the shapes this test's filters actually use. */
+type FilterValue = string | number | boolean | null | RegExp;
+
+/** A fake Mongo query filter: field-name conditions, plus a `$or` of nested filters. */
+type CatalogueFilter = { [key: string]: FilterValue | CatalogueFilter[] };
+
+function matchesValue(entryValue: FilterValue, condition: FilterValue): boolean {
   if (condition instanceof RegExp) return condition.test(String(entryValue));
   return entryValue === condition;
 }
 
-function matchesFilter(entry: CatalogueEntry, filter: Record<string, unknown>): boolean {
+/** Reads a top-level `CatalogueEntry` field as the primitive shape a fake filter compares against. */
+function fieldValue(entry: CatalogueEntry, key: string): FilterValue {
+  // SAFETY: this test only ever filters on CatalogueEntry's own primitive (string/boolean/null)
+  // top-level fields, never its nested objects (`liveness`, `financials`, `finapiCrossCheck`).
+  const value = entry[key as keyof CatalogueEntry];
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    value === null
+  ) {
+    return value;
+  }
+  throw new Error(`fieldValue: "${key}" is not a primitive field this test fixture can filter on.`);
+}
+
+function matchesFilter(entry: CatalogueEntry, filter: CatalogueFilter): boolean {
   return Object.entries(filter).every(([key, condition]) => {
     if (key === "$or") {
-      return (condition as Record<string, unknown>[]).some((clause) =>
-        matchesFilter(entry, clause),
-      );
+      return (condition as CatalogueFilter[]).some((clause) => matchesFilter(entry, clause));
     }
-    return matchesValue((entry as never)[key], condition);
+    return matchesValue(fieldValue(entry, key), condition as FilterValue);
   });
 }
 
@@ -100,7 +120,7 @@ function cursor(matched: CatalogueEntry[]) {
       const [field, direction] = Object.entries(spec)[0]!;
       const sorted = [...matched].sort(
         (a, b) =>
-          String((a as never)[field]).localeCompare(String((b as never)[field])) * direction,
+          String(fieldValue(a, field)).localeCompare(String(fieldValue(b, field))) * direction,
       );
       return cursor(sorted);
     },
@@ -109,12 +129,16 @@ function cursor(matched: CatalogueEntry[]) {
   };
 }
 
+// mongo.ts has no DI seam; mocking it here swaps only the low-level driver for a faithful
+// in-memory query implementation (see `matchesFilter`/`cursor` above), not the service logic
+// under test.
+// oxlint-disable-next-line anti-slop/no-module-mocking
 vi.mock("./mongo.ts", () => ({
   getDb: async () => ({
     collection: (name: string) => {
       if (name === "catalogue_meta") return { findOne: async () => meta };
       return {
-        find: (filter: Record<string, unknown>) =>
+        find: (filter: CatalogueFilter) =>
           cursor(entries.filter((entry) => matchesFilter(entry, filter))),
       };
     },

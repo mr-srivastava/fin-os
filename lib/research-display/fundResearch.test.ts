@@ -8,7 +8,7 @@ import {
   toPercentagePointsText,
   toPortfolioDisplay,
 } from "@/lib/research-display/fundResearch";
-import type { FundResearch } from "@/lib/fund.types";
+import { fundResearchFixture } from "@/test/fixtures/fundResearchView";
 
 describe("fund research display mapping", () => {
   it("uses explicit financial statuses", () => {
@@ -18,7 +18,7 @@ describe("fund research display mapping", () => {
   });
 
   it("formats missing facts without exposing raw values", () => {
-    const fund = {
+    const fund = fundResearchFixture({
       facts: {
         aum: null,
         expenseRatio: null,
@@ -27,7 +27,7 @@ describe("fund research display mapping", () => {
         riskLabel: null,
         managers: [],
       },
-    } as unknown as FundResearch;
+    });
     expect(toFundFactsDisplay(fund).slice(0, 3)).toEqual([
       { label: "AUM", valueText: "—", numeric: true },
       { label: "Expense ratio", valueText: "—", numeric: true },
@@ -46,13 +46,13 @@ describe("fund research display mapping", () => {
   });
 
   it("maps metric semantics and portfolio data before rendering", () => {
-    const fund = {
+    const fund = fundResearchFixture({
       metrics: {
-        oneYear: { value: 0.12 },
-        threeYear: { value: -0.02 },
-        fiveYear: { value: null },
-        volatility: { value: 0.1 },
-        maxDrawdown: { value: -0.2 },
+        oneYear: { value: 0.12, label: "1Y" },
+        threeYear: { value: -0.02, label: "3Y" },
+        fiveYear: { value: null, label: "5Y" },
+        volatility: { value: 0.1, label: "Volatility" },
+        maxDrawdown: { value: -0.2, label: "Max drawdown" },
       },
       portfolio: {
         asOf: "2025-01-01",
@@ -62,7 +62,7 @@ describe("fund research display mapping", () => {
         marketCapAllocation: [],
         topTenConcentration: 42.5,
       },
-    } as unknown as FundResearch;
+    });
     expect(toFundMetricGroups(fund)[0]?.metrics.map((metric) => metric.status)).toEqual([
       "gain",
       "loss",
@@ -75,7 +75,7 @@ describe("fund research display mapping", () => {
   });
 
   it("keeps latest NAV independent of NAV-history availability", () => {
-    const fund = { currentNav: { nav: 123.45, date: "2025-01-01" } } as FundResearch;
+    const fund = fundResearchFixture({ currentNav: { nav: 123.45, date: "2025-01-01" } });
     expect(toCurrentNavDisplay(fund)).toEqual({ valueText: "₹123.45", dateText: "1 Jan 2025" });
   });
 });

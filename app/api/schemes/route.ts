@@ -2,7 +2,13 @@ import { catalogService } from "@/lib/catalog.service";
 import { ProviderError } from "@/lib/provider";
 import { isSearchQuery } from "@/lib/fundInput";
 
-export async function GET(request: Request) {
+interface RouteDeps {
+  search: typeof catalogService.search;
+}
+
+const defaultDeps: RouteDeps = { search: catalogService.search };
+
+export async function handleGet(request: Request, deps: RouteDeps = defaultDeps) {
   const query = new URL(request.url).searchParams.get("q")?.trim() ?? "";
   if (!isSearchQuery(query)) {
     return Response.json(
@@ -11,7 +17,7 @@ export async function GET(request: Request) {
     );
   }
   try {
-    return Response.json({ schemes: await catalogService.search(query) });
+    return Response.json({ schemes: await deps.search(query) });
   } catch (error) {
     const provider =
       error instanceof ProviderError
@@ -22,4 +28,8 @@ export async function GET(request: Request) {
       { status: provider.status },
     );
   }
+}
+
+export async function GET(request: Request) {
+  return handleGet(request);
 }

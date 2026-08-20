@@ -1,14 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
+import { handlePost as POST } from "./route";
 
 const addItem = vi.fn();
-
-vi.mock("@/lib/watchlist.service", () => ({
-  watchlistService: { addItem },
-  WATCHLIST_ITEM_LIMIT_REACHED: "watchlist_item_limit_reached",
-}));
-vi.mock("@/lib/deviceId", () => ({ getOrCreateDeviceId: async () => "device-a" }));
-
-const { POST } = await import("./route");
+const deps = { getDeviceId: async () => "device-a", addItem };
 
 const VALID_ID = "11111111-1111-1111-1111-111111111111";
 
@@ -24,6 +18,7 @@ describe("POST /api/watchlists/[id]/items", () => {
         body: JSON.stringify({ schemeCode: "x" }),
       }),
       context(VALID_ID),
+      deps,
     );
     expect(response.status).toBe(400);
     expect(addItem).not.toHaveBeenCalled();
@@ -37,6 +32,7 @@ describe("POST /api/watchlists/[id]/items", () => {
         body: JSON.stringify({ schemeCode: "122639" }),
       }),
       context(VALID_ID),
+      deps,
     );
     expect(response.status).toBe(404);
   });
@@ -49,6 +45,7 @@ describe("POST /api/watchlists/[id]/items", () => {
         body: JSON.stringify({ schemeCode: "122639" }),
       }),
       context(VALID_ID),
+      deps,
     );
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({
@@ -71,6 +68,7 @@ describe("POST /api/watchlists/[id]/items", () => {
         body: JSON.stringify({ schemeCode: "122639" }),
       }),
       context(VALID_ID),
+      deps,
     );
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ watchlist: { count: 1 } });

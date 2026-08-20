@@ -2,7 +2,13 @@ import { catalogService } from "@/lib/catalog.service";
 import { ProviderError } from "@/lib/provider";
 import { isEquityCategory } from "@/lib/fundCategories";
 
-export async function GET(request: Request) {
+interface RouteDeps {
+  listByCategory: typeof catalogService.listByCategory;
+}
+
+const defaultDeps: RouteDeps = { listByCategory: catalogService.listByCategory };
+
+export async function handleGet(request: Request, deps: RouteDeps = defaultDeps) {
   const category = new URL(request.url).searchParams.get("category")?.trim() ?? "";
   if (!isEquityCategory(category)) {
     return Response.json(
@@ -11,7 +17,7 @@ export async function GET(request: Request) {
     );
   }
   try {
-    return Response.json({ category, schemes: await catalogService.listByCategory(category) });
+    return Response.json({ category, schemes: await deps.listByCategory(category) });
   } catch (error) {
     const provider =
       error instanceof ProviderError
@@ -22,4 +28,8 @@ export async function GET(request: Request) {
       { status: provider.status },
     );
   }
+}
+
+export async function GET(request: Request) {
+  return handleGet(request);
 }

@@ -6,12 +6,12 @@ export const DEFAULT_INITIAL_INVESTMENT = 10_000;
 
 export type PerformanceRange = "6m" | "1y" | "3y" | "5y" | "max";
 
-const RANGE_MONTHS: Record<Exclude<PerformanceRange, "max">, number> = {
+const RANGE_MONTHS = {
   "6m": 6,
   "1y": 12,
   "3y": 36,
   "5y": 60,
-};
+} satisfies Record<Exclude<PerformanceRange, "max">, number>;
 
 function sorted(points: NavPoint[]) {
   return [...(points ?? [])].sort((a, b) => a.date.localeCompare(b.date));

@@ -1,15 +1,13 @@
 import { describe, expect, test, vi } from "vitest";
 import { ProviderError } from "@/lib/provider";
+import { handleGet as GET } from "./route";
 
 const search = vi.fn();
-
-vi.mock("@/lib/catalog.service", () => ({ catalogService: { search } }));
-
-const { GET } = await import("./route");
+const deps = { search };
 
 describe("GET /api/schemes", () => {
   test("rejects an invalid query before calling the provider", async () => {
-    const response = await GET(new Request("http://localhost/api/schemes?q=x"));
+    const response = await GET(new Request("http://localhost/api/schemes?q=x"), deps);
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({ error: "invalid_query" });
@@ -28,7 +26,7 @@ describe("GET /api/schemes", () => {
       },
     ]);
 
-    const response = await GET(new Request("http://localhost/api/schemes?q=Parag%20Parikh"));
+    const response = await GET(new Request("http://localhost/api/schemes?q=Parag%20Parikh"), deps);
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ schemes: [expect.any(Object)] });
@@ -37,7 +35,7 @@ describe("GET /api/schemes", () => {
   test("preserves the provider error status and safe message", async () => {
     search.mockRejectedValueOnce(new ProviderError("Rate limited", 429));
 
-    const response = await GET(new Request("http://localhost/api/schemes?q=Parag%20Parikh"));
+    const response = await GET(new Request("http://localhost/api/schemes?q=Parag%20Parikh"), deps);
 
     expect(response.status).toBe(429);
     await expect(response.json()).resolves.toEqual({

@@ -1,19 +1,11 @@
 import { describe, expect, test, vi } from "vitest";
+import { handleGet as GET, handlePatch as PATCH, handleDelete as DELETE } from "./route";
 
 const get = vi.fn();
 const rename = vi.fn();
 const remove = vi.fn();
 const getFundResearchBatch = vi.fn();
-
-vi.mock("@/lib/watchlist.service", () => ({
-  watchlistService: { get, rename, remove },
-}));
-vi.mock("@/lib/fund.service", () => ({
-  fundService: { getFundResearchBatch },
-}));
-vi.mock("@/lib/deviceId", () => ({ getOrCreateDeviceId: async () => "device-a" }));
-
-const { GET, PATCH, DELETE } = await import("./route");
+const deps = { getDeviceId: async () => "device-a", get, rename, remove, getFundResearchBatch };
 
 const VALID_ID = "11111111-1111-1111-1111-111111111111";
 
@@ -23,14 +15,14 @@ function context(id: string) {
 
 describe("GET /api/watchlists/[id]", () => {
   test("404s for a malformed id without hitting the service", async () => {
-    const response = await GET(new Request("http://localhost"), context("not-a-uuid"));
+    const response = await GET(context("not-a-uuid"), deps);
     expect(response.status).toBe(404);
     expect(get).not.toHaveBeenCalled();
   });
 
   test("404s when the watchlist does not belong to this device", async () => {
     get.mockResolvedValueOnce(null);
-    const response = await GET(new Request("http://localhost"), context(VALID_ID));
+    const response = await GET(context(VALID_ID), deps);
     expect(response.status).toBe(404);
   });
 
@@ -78,7 +70,7 @@ describe("GET /api/watchlists/[id]", () => {
       { status: "fulfilled", value: null },
     ]);
 
-    const response = await GET(new Request("http://localhost"), context(VALID_ID));
+    const response = await GET(context(VALID_ID), deps);
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.funds).toHaveLength(1);
@@ -92,6 +84,7 @@ describe("PATCH /api/watchlists/[id]", () => {
     const response = await PATCH(
       new Request("http://localhost", { method: "PATCH", body: JSON.stringify({ name: "" }) }),
       context(VALID_ID),
+      deps,
     );
     expect(response.status).toBe(400);
     expect(rename).not.toHaveBeenCalled();
@@ -102,6 +95,7 @@ describe("PATCH /api/watchlists/[id]", () => {
     const response = await PATCH(
       new Request("http://localhost", { method: "PATCH", body: JSON.stringify({ name: "New" }) }),
       context(VALID_ID),
+      deps,
     );
     expect(response.status).toBe(404);
   });
@@ -110,13 +104,13 @@ describe("PATCH /api/watchlists/[id]", () => {
 describe("DELETE /api/watchlists/[id]", () => {
   test("404s when nothing was deleted", async () => {
     remove.mockResolvedValueOnce(false);
-    const response = await DELETE(new Request("http://localhost"), context(VALID_ID));
+    const response = await DELETE(context(VALID_ID), deps);
     expect(response.status).toBe(404);
   });
 
   test("204s on success", async () => {
     remove.mockResolvedValueOnce(true);
-    const response = await DELETE(new Request("http://localhost"), context(VALID_ID));
+    const response = await DELETE(context(VALID_ID), deps);
     expect(response.status).toBe(204);
   });
 });

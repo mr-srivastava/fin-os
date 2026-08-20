@@ -17,22 +17,27 @@ import {
   formatPercent,
   formatRupees,
   formatSignedPercent,
+  lookup,
 } from "@/lib/utils";
-import type { ComparisonScreenModel, FundResearchScreenModel } from "./types";
+import type {
+  ComparisonScreenModel,
+  ComparisonSelectionDisplay,
+  FundResearchScreenModel,
+} from "./types";
 
-const labels: Record<string, string> = {
+const labels = {
   oneYear: "1Y return",
   threeYear: "3Y annualised",
   fiveYear: "5Y annualised",
   volatility: "Volatility",
   maxDrawdown: "Max drawdown",
-};
-const comparisonLabels: Record<string, string> = {
+} satisfies Record<string, string>;
+const comparisonLabels = {
   ...labels,
   threeYear: "3Y annualized",
   fiveYear: "5Y annualized",
   volatility: "1Y volatility",
-};
+} satisfies Record<string, string>;
 
 function withSnapshot(
   fund: FundResearchView["relatedFunds"]["peers"][number],
@@ -124,7 +129,7 @@ function fundModel(
     metricGroups: view.metricGroups.map((group) => ({
       title: group.id === "returns" ? "Annualised returns" : "Risk",
       metrics: group.metrics.map((metric) => ({
-        label: labels[metric.id] ?? metric.id,
+        label: lookup(labels, metric.id) ?? metric.id,
         valueText:
           metric.id === "volatility"
             ? formatPercent(metric.value)
@@ -252,20 +257,26 @@ export function useComparisonScreenModel({
         requestError: resource.error.message,
         comparison: { status: "unavailable" as const, message: resource.error.message },
       };
-    if (!resource.data)
-      return {
-        selections: schemeCodes.map((schemeCode) => ({
-          schemeCode,
-          title: "Loading selected fund…",
-          subtitle: null,
-          navText: "",
-          status: "loading" as const,
-        })) as unknown as ComparisonScreenModel["selections"],
-        requestError: null,
-        comparison: { status: "loading" as const },
-      };
+    if (!resource.data) {
+      const toLoadingSelection = (schemeCode: string): ComparisonSelectionDisplay => ({
+        schemeCode,
+        title: "Loading selected fund…",
+        subtitle: null,
+        navText: "",
+        status: "loading",
+      });
+      // SAFETY: schemeCodes.length < 2 returned above, so indices 0 and 1 exist.
+      const [firstCode, secondCode] = schemeCodes as readonly [string, string];
+      const selections: readonly [ComparisonSelectionDisplay, ComparisonSelectionDisplay] = [
+        toLoadingSelection(firstCode),
+        toLoadingSelection(secondCode),
+      ];
+      return { selections, requestError: null, comparison: { status: "loading" as const } };
+    }
     const view = resource.data;
-    const selections = view.selections.map((selection) =>
+    const toSelectionDisplay = (
+      selection: (typeof view.selections)[number],
+    ): ComparisonSelectionDisplay =>
       selection.status === "ready"
         ? {
             schemeCode: selection.scheme.schemeCode,
@@ -281,9 +292,12 @@ export function useComparisonScreenModel({
             title: "Fund unavailable",
             subtitle: null,
             navText: selection.message,
-            status: "error" as const,
-          },
-    ) as unknown as ComparisonScreenModel["selections"];
+            status: "error",
+          };
+    const selections: readonly [ComparisonSelectionDisplay, ComparisonSelectionDisplay] = [
+      toSelectionDisplay(view.selections[0]),
+      toSelectionDisplay(view.selections[1]),
+    ];
     if (view.comparison.status === "unavailable")
       return { selections, requestError: null, comparison: view.comparison };
     const data = view.comparison.data;
@@ -314,7 +328,7 @@ export function useComparisonScreenModel({
         ? {
             status: "ready" as const,
             data: data.metrics.data.map((row) => ({
-              label: comparisonLabels[row.id] ?? row.id,
+              label: lookup(comparisonLabels, row.id) ?? row.id,
               values: row.values.map((value, index) => ({
                 label: data.fundNames[index]!,
                 valueText:

@@ -13,6 +13,8 @@ export function parseIsoDate(value: string): Temporal.PlainDate | null {
   }
 }
 
+// oxlint-disable-next-line anti-slop/no-unknown-parameters -- doubles as a valibot `v.custom`
+// check, whose signature requires `(input: unknown) => boolean`; narrowing happens inside.
 export function isIsoDate(value: unknown): value is string {
   return typeof value === "string" && parseIsoDate(value) !== null;
 }

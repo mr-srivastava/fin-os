@@ -8,7 +8,7 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    exclude: ["e2e/**", "node_modules/**", ".next/**"],
+    exclude: ["e2e/**", "node_modules/**", ".next/**", "tools/oxlint/anti-slop/**"],
     setupFiles: ["./test/setup.ts"],
     coverage: {
       provider: "v8",

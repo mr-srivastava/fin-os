@@ -24,6 +24,7 @@ import {
   providerNumber,
   providerRecord,
   providerText,
+  type JsonValue,
   type ProviderRecord,
 } from "./providerInput.ts";
 import { resolveBenchmark } from "./benchmarkCatalog.ts";
@@ -100,7 +101,7 @@ export function isEligible(source: ProviderRecord, scheme: Scheme) {
 }
 
 function normalizeRelatedFunds(source: ProviderRecord, scheme: Scheme) {
-  const related = (value: unknown, requireCategory: boolean) =>
+  const related = (value: JsonValue, requireCategory: boolean) =>
     (providerList(value) ?? [])
       .flatMap((item) => {
         const candidate = providerRecord(item);
@@ -121,7 +122,7 @@ function normalizeRelatedFunds(source: ProviderRecord, scheme: Scheme) {
   return { peers: related(source.peers, false), fromAmc: related(fromAmc?.schemeList, true) };
 }
 
-function normalizeReturnConsistency(value: unknown, timeframe = "3Y"): ReturnConsistency | null {
+function normalizeReturnConsistency(value: JsonValue, timeframe = "3Y"): ReturnConsistency | null {
   const rows = providerList(value) ?? [];
   const row = rows
     .map(providerRecord)
@@ -154,7 +155,7 @@ function normalizeReturnConsistency(value: unknown, timeframe = "3Y"): ReturnCon
   };
 }
 
-function toAllocation(value: unknown): AllocationItem[] {
+function toAllocation(value: JsonValue): AllocationItem[] {
   const object = providerRecord(value);
   if (object) {
     return Object.entries(object).flatMap(([name, rawWeight]) => {
@@ -183,7 +184,7 @@ function allocationLabel(name: string) {
     .trim();
 }
 
-function toHoldings(value: unknown): PortfolioItem[] {
+function toHoldings(value: JsonValue): PortfolioItem[] {
   return (providerList(value) ?? []).flatMap((item) => {
     const source = providerRecord(item);
     const name = source && providerText(source.name);
@@ -207,7 +208,7 @@ function portfolioAsOf(source: ProviderRecord) {
   );
 }
 
-export function normalizeFundPayload(payload: unknown): FundResearch | null {
+export function normalizeFundPayload(payload: JsonValue): FundResearch | null {
   const envelope = providerRecord(payload);
   const data = envelope && providerRecord(envelope.data);
   if (!data) return null;
@@ -334,7 +335,7 @@ async function request(path: string): Promise<ProviderRecord> {
       throw new ProviderError("The data service is busy. Try again in a moment.", 429);
     throw new ProviderError("We could not retrieve live fund data right now.", 502);
   }
-  let payload: unknown;
+  let payload: JsonValue;
   try {
     payload = await response.json();
   } catch {
@@ -598,7 +599,7 @@ function applyNavHistory(fund: FundResearch, nav: NavPoint[]) {
 
 // ---- Index TRI series ----
 
-export function normalizeFinapiTriPayload(payload: unknown): NavPoint[] | null {
+export function normalizeFinapiTriPayload(payload: JsonValue): NavPoint[] | null {
   const envelope = providerRecord(payload);
   const rows = envelope && providerList(envelope.data);
   if (!rows) return null;

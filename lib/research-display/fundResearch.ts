@@ -79,16 +79,13 @@ export function toFundFactsDisplay(fund: FundResearch): readonly FactDisplay[] {
   ];
 }
 
-const metricDisplayOptions: Record<
-  MetricKey,
-  { signed: boolean; status: "financial" | "neutral" }
-> = {
+const metricDisplayOptions = {
   oneYear: { signed: true, status: "financial" },
   threeYear: { signed: true, status: "financial" },
   fiveYear: { signed: true, status: "financial" },
   volatility: { signed: false, status: "neutral" },
   maxDrawdown: { signed: true, status: "neutral" },
-};
+} satisfies Record<MetricKey, { signed: boolean; status: "financial" | "neutral" }>;
 
 function historicalContextText(comparison: HistoricalComparison | null): string | undefined {
   if (!comparison) return undefined;
@@ -115,12 +112,13 @@ export function toMetricDisplay(
       : key === "maxDrawdown"
         ? historicalContextText(drawdownVsHistory(fund.nav))
         : undefined;
-  return {
+  const metric: MetricGroupDisplay["metrics"][number] = {
     label,
     valueText: options.signed ? formatSignedPercent(value) : formatPercent(value),
     status: options.status === "financial" ? financialStatus(value) : "neutral",
-    ...(context ? { context } : {}),
   };
+  if (context) metric.context = context;
+  return metric;
 }
 
 export function toFundMetricGroups(fund: FundResearch): readonly MetricGroupDisplay[] {

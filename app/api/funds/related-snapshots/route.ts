@@ -6,7 +6,13 @@ import { ProviderError } from "@/lib/provider";
  * batch load (6 peers + 6 fromAmc) - the client never has a reason to ask for more than that. */
 const MAX_CODES = 12;
 
-export async function GET(request: Request) {
+interface RouteDeps {
+  getFundSnapshots: typeof fundService.getFundSnapshots;
+}
+
+const defaultDeps: RouteDeps = { getFundSnapshots: fundService.getFundSnapshots };
+
+export async function handleGet(request: Request, deps: RouteDeps = defaultDeps) {
   const url = new URL(request.url);
   const codes = [...new Set(url.searchParams.get("codes")?.split(",").filter(Boolean) ?? [])];
   if (codes.length === 0 || codes.length > MAX_CODES || !codes.every(isSchemeCode)) {
@@ -16,7 +22,7 @@ export async function GET(request: Request) {
     );
   }
   try {
-    const snapshots = await fundService.getFundSnapshots(codes);
+    const snapshots = await deps.getFundSnapshots(codes);
     return Response.json({ snapshots: Object.fromEntries(snapshots) });
   } catch (error) {
     const provider =
@@ -28,4 +34,8 @@ export async function GET(request: Request) {
       { status: provider.status },
     );
   }
+}
+
+export async function GET(request: Request) {
+  return handleGet(request);
 }

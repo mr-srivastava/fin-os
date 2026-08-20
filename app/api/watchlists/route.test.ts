@@ -1,19 +1,16 @@
 import { describe, expect, test, vi } from "vitest";
+import { handleGet as GET, handlePost as POST } from "./route";
 
 const list = vi.fn();
 const create = vi.fn();
-
-vi.mock("@/lib/watchlist.service", () => ({ watchlistService: { list, create } }));
-vi.mock("@/lib/deviceId", () => ({ getOrCreateDeviceId: async () => "device-a" }));
-
-const { GET, POST } = await import("./route");
+const deps = { getDeviceId: async () => "device-a", list, create };
 
 describe("GET /api/watchlists", () => {
   test("returns this device's watchlists", async () => {
     list.mockResolvedValueOnce([
       { id: "list-1", name: "Client: Sharma family", count: 3, createdAt: "x", updatedAt: "x" },
     ]);
-    const response = await GET();
+    const response = await GET(deps);
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
       watchlists: [{ id: "list-1", name: "Client: Sharma family" }],
@@ -29,6 +26,7 @@ describe("POST /api/watchlists", () => {
         method: "POST",
         body: JSON.stringify({ name: "" }),
       }),
+      deps,
     );
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({ error: "invalid_name" });
@@ -48,6 +46,7 @@ describe("POST /api/watchlists", () => {
         method: "POST",
         body: JSON.stringify({ name: "Conservative picks Q3" }),
       }),
+      deps,
     );
     expect(response.status).toBe(201);
     await expect(response.json()).resolves.toMatchObject({

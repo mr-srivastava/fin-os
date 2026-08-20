@@ -1,21 +1,42 @@
+import * as v from "valibot";
+
 import { getOrCreateDeviceId } from "@/lib/deviceId";
-import { isWatchlistId, isWatchlistName } from "@/lib/watchlistInput";
+import { isWatchlistId, isWatchlistName, WatchlistNameBodySchema } from "@/lib/watchlistInput";
 import { watchlistService } from "@/lib/watchlist.service";
 import { fundService } from "@/lib/fund.service";
 import { toWatchlistItemSummary } from "@/lib/watchlistView";
 
-export async function GET(_request: Request, context: RouteContext<"/api/watchlists/[id]">) {
+interface RouteDeps {
+  getDeviceId: typeof getOrCreateDeviceId;
+  get: typeof watchlistService.get;
+  rename: typeof watchlistService.rename;
+  remove: typeof watchlistService.remove;
+  getFundResearchBatch: typeof fundService.getFundResearchBatch;
+}
+
+const defaultDeps: RouteDeps = {
+  getDeviceId: getOrCreateDeviceId,
+  get: watchlistService.get,
+  rename: watchlistService.rename,
+  remove: watchlistService.remove,
+  getFundResearchBatch: fundService.getFundResearchBatch,
+};
+
+export async function handleGet(
+  context: RouteContext<"/api/watchlists/[id]">,
+  deps: RouteDeps = defaultDeps,
+) {
   const { id } = await context.params;
-  const deviceId = await getOrCreateDeviceId();
+  const deviceId = await deps.getDeviceId();
   if (!isWatchlistId(id)) {
     return Response.json({ error: "not_found", message: "Watchlist not found." }, { status: 404 });
   }
-  const watchlist = await watchlistService.get(deviceId, id);
+  const watchlist = await deps.get(deviceId, id);
   if (!watchlist) {
     return Response.json({ error: "not_found", message: "Watchlist not found." }, { status: 404 });
   }
   const results = watchlist.schemeCodes.length
-    ? await fundService.getFundResearchBatch(watchlist.schemeCodes)
+    ? await deps.getFundResearchBatch(watchlist.schemeCodes)
     : [];
   const funds = results.flatMap((result) =>
     result.status === "fulfilled" && result.value ? [toWatchlistItemSummary(result.value)] : [],
@@ -36,39 +57,55 @@ export async function GET(_request: Request, context: RouteContext<"/api/watchli
   });
 }
 
-export async function PATCH(request: Request, context: RouteContext<"/api/watchlists/[id]">) {
+export async function handlePatch(
+  request: Request,
+  context: RouteContext<"/api/watchlists/[id]">,
+  deps: RouteDeps = defaultDeps,
+) {
   const { id } = await context.params;
-  const deviceId = await getOrCreateDeviceId();
+  const deviceId = await deps.getDeviceId();
   if (!isWatchlistId(id)) {
     return Response.json({ error: "not_found", message: "Watchlist not found." }, { status: 404 });
   }
-  const body: unknown = await request.json().catch(() => null);
-  const name =
-    body && typeof body === "object" && "name" in body && typeof body.name === "string"
-      ? body.name.trim()
-      : "";
+  const parsed = v.safeParse(WatchlistNameBodySchema, await request.json().catch(() => null));
+  const name = parsed.success ? parsed.output.name.trim() : "";
   if (!isWatchlistName(name)) {
     return Response.json(
       { error: "invalid_name", message: "Give the watchlist a name up to 80 characters." },
       { status: 400 },
     );
   }
-  const watchlist = await watchlistService.rename(deviceId, id, name);
+  const watchlist = await deps.rename(deviceId, id, name);
   if (!watchlist) {
     return Response.json({ error: "not_found", message: "Watchlist not found." }, { status: 404 });
   }
   return Response.json({ watchlist });
 }
 
-export async function DELETE(_request: Request, context: RouteContext<"/api/watchlists/[id]">) {
+export async function handleDelete(
+  context: RouteContext<"/api/watchlists/[id]">,
+  deps: RouteDeps = defaultDeps,
+) {
   const { id } = await context.params;
-  const deviceId = await getOrCreateDeviceId();
+  const deviceId = await deps.getDeviceId();
   if (!isWatchlistId(id)) {
     return Response.json({ error: "not_found", message: "Watchlist not found." }, { status: 404 });
   }
-  const deleted = await watchlistService.remove(deviceId, id);
+  const deleted = await deps.remove(deviceId, id);
   if (!deleted) {
     return Response.json({ error: "not_found", message: "Watchlist not found." }, { status: 404 });
   }
   return new Response(null, { status: 204 });
+}
+
+export async function GET(_request: Request, context: RouteContext<"/api/watchlists/[id]">) {
+  return handleGet(context);
+}
+
+export async function PATCH(request: Request, context: RouteContext<"/api/watchlists/[id]">) {
+  return handlePatch(request, context);
+}
+
+export async function DELETE(_request: Request, context: RouteContext<"/api/watchlists/[id]">) {
+  return handleDelete(context);
 }

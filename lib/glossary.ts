@@ -1,4 +1,5 @@
 import { EQUITY_CATEGORIES, type EquityCategory } from "./fundCategories.ts";
+import { lookup } from "./utils.ts";
 
 /** One-line, plain-language definitions for terms shown bare in the UI. Descriptive only — never evaluative. */
 export const TERM_DEFINITIONS = {
@@ -44,7 +45,7 @@ export function equityCategoryDefinition(category: string): string | null {
  * Plain-language description of what a SEBI riskometer tier means, keyed by the
  * provider-supplied label text. Describes the disclosure, not a verdict on the fund.
  */
-export const RISK_LABEL_DEFINITIONS: Record<string, string> = {
+export const RISK_LABEL_DEFINITIONS = {
   "Low Risk": "SEBI riskometer tier — principal is expected to be at low risk.",
   "Low to Moderate Risk":
     "SEBI riskometer tier — principal is expected to be at low to moderate risk.",
@@ -53,8 +54,8 @@ export const RISK_LABEL_DEFINITIONS: Record<string, string> = {
     "SEBI riskometer tier — principal is expected to be at moderately high risk.",
   "High Risk": "SEBI riskometer tier — principal is expected to be at high risk.",
   "Very High Risk": "SEBI riskometer tier — principal is expected to be at very high risk.",
-};
+} satisfies Record<string, string>;
 
 export function riskLabelDefinition(riskLabel: string): string | null {
-  return RISK_LABEL_DEFINITIONS[riskLabel] ?? null;
+  return lookup(RISK_LABEL_DEFINITIONS, riskLabel) ?? null;
 }

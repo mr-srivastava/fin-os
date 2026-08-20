@@ -1,4 +1,5 @@
 import { assert, test, vi } from "vitest";
+import type { Filter, UpdateFilter } from "mongodb";
 import type { WatchlistDocument } from "./watchlist.types.ts";
 
 const docs: WatchlistDocument[] = [
@@ -20,48 +21,56 @@ const docs: WatchlistDocument[] = [
   },
 ];
 
-function matches(doc: WatchlistDocument, filter: Record<string, unknown>) {
+/** The `$expr` shape this mock understands: `$or` of `$in`/`$lt`+`$size` clauses. */
+type WatchlistExpr = {
+  $or: [{ $in: [string, "$schemeCodes"] } | { $lt: [{ $size: "$schemeCodes" }, number] }];
+};
+
+function matches(doc: WatchlistDocument, filter: Filter<WatchlistDocument>) {
   return Object.entries(filter).every(([key, value]) => {
-    if (key === "$expr") return matchesExpr(doc, value as Record<string, unknown>);
-    return (doc as never)[key] === value;
+    if (key === "$expr") {
+      // SAFETY: mongodb types `$expr` as `Record<string, any>`; this mock only ever receives
+      // the `WatchlistExpr` shape the service under test actually builds.
+      return matchesExpr(doc, value as WatchlistExpr);
+    }
+    // SAFETY: `filter` is a `Filter<WatchlistDocument>`, so every non-operator key it carries
+    // is a `WatchlistDocument` field name.
+    return doc[key as keyof WatchlistDocument] === value;
   });
 }
 
-/** Evaluates just the shape of `$expr` this mock needs: `$or` of `$in`/`$lt`+`$size`. */
-function matchesExpr(doc: WatchlistDocument, expr: Record<string, unknown>): boolean {
-  const clauses = expr.$or as unknown[];
-  return clauses.some((clause) => {
-    const [op, args] = Object.entries(clause as Record<string, unknown[]>)[0]!;
-    if (op === "$in") {
-      const [needle, field] = args as [string, string];
+function matchesExpr(doc: WatchlistDocument, expr: WatchlistExpr): boolean {
+  return expr.$or.some((clause) => {
+    if ("$in" in clause) {
+      const [needle, field] = clause.$in;
       return field === "$schemeCodes" && doc.schemeCodes.includes(needle);
     }
-    if (op === "$lt") {
-      const [sizeExpr, max] = args as [Record<string, string>, number];
-      return sizeExpr.$size === "$schemeCodes" && doc.schemeCodes.length < max;
-    }
-    return false;
+    const [sizeExpr, max] = clause.$lt;
+    return sizeExpr.$size === "$schemeCodes" && doc.schemeCodes.length < max;
   });
 }
 
+// mongo.ts has no DI seam; mocking it here swaps only the low-level driver for a faithful
+// in-memory query implementation (see `matches`/`matchesExpr` above), not the service logic
+// under test.
+// oxlint-disable-next-line anti-slop/no-module-mocking
 vi.mock("./mongo.ts", () => ({
   getDb: async () => ({
     collection: () => ({
-      find: (filter: Record<string, unknown>) => ({
+      find: (filter: Filter<WatchlistDocument>) => ({
         sort: () => ({
           toArray: async () => docs.filter((doc) => matches(doc, filter)),
         }),
       }),
-      findOne: async (filter: Record<string, unknown>) =>
+      findOne: async (filter: Filter<WatchlistDocument>) =>
         docs.find((doc) => matches(doc, filter)) ?? null,
       insertOne: async (doc: WatchlistDocument) => {
         docs.push(doc);
         return { insertedId: doc._id };
       },
       findOneAndUpdate: async (
-        filter: Record<string, unknown>,
-        update: {
-          $set?: Record<string, unknown>;
+        filter: Filter<WatchlistDocument>,
+        update: UpdateFilter<WatchlistDocument> & {
           $addToSet?: { schemeCodes: string };
           $pull?: { schemeCodes: string };
         },
@@ -77,7 +86,7 @@ vi.mock("./mongo.ts", () => ({
         }
         return doc;
       },
-      deleteOne: async (filter: Record<string, unknown>) => {
+      deleteOne: async (filter: Filter<WatchlistDocument>) => {
         const index = docs.findIndex((doc) => matches(doc, filter));
         if (index === -1) return { deletedCount: 0 };
         docs.splice(index, 1);

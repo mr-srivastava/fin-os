@@ -1,27 +1,40 @@
+import * as v from "valibot";
+
 import { getOrCreateDeviceId } from "@/lib/deviceId";
-import { isSchemeCode } from "@/lib/fundInput";
+import { isSchemeCode, SchemeCodeBodySchema } from "@/lib/fundInput";
 import { isWatchlistId } from "@/lib/watchlistInput";
 import { watchlistService, WATCHLIST_ITEM_LIMIT_REACHED } from "@/lib/watchlist.service";
 import { WATCHLIST_MAX_ITEMS } from "@/lib/watchlistInput";
 
-export async function POST(request: Request, context: RouteContext<"/api/watchlists/[id]/items">) {
+interface RouteDeps {
+  getDeviceId: typeof getOrCreateDeviceId;
+  addItem: typeof watchlistService.addItem;
+}
+
+const defaultDeps: RouteDeps = {
+  getDeviceId: getOrCreateDeviceId,
+  addItem: watchlistService.addItem,
+};
+
+export async function handlePost(
+  request: Request,
+  context: RouteContext<"/api/watchlists/[id]/items">,
+  deps: RouteDeps = defaultDeps,
+) {
   const { id } = await context.params;
-  const deviceId = await getOrCreateDeviceId();
+  const deviceId = await deps.getDeviceId();
   if (!isWatchlistId(id)) {
     return Response.json({ error: "not_found", message: "Watchlist not found." }, { status: 404 });
   }
-  const body: unknown = await request.json().catch(() => null);
-  const schemeCode =
-    body && typeof body === "object" && "schemeCode" in body && typeof body.schemeCode === "string"
-      ? body.schemeCode
-      : "";
+  const parsed = v.safeParse(SchemeCodeBodySchema, await request.json().catch(() => null));
+  const schemeCode = parsed.success ? parsed.output.schemeCode : "";
   if (!isSchemeCode(schemeCode)) {
     return Response.json(
       { error: "invalid_scheme_code", message: "Fund code must be a valid AMFI scheme code." },
       { status: 400 },
     );
   }
-  const watchlist = await watchlistService.addItem(deviceId, id, schemeCode);
+  const watchlist = await deps.addItem(deviceId, id, schemeCode);
   if (watchlist === WATCHLIST_ITEM_LIMIT_REACHED) {
     return Response.json(
       {
@@ -43,4 +56,8 @@ export async function POST(request: Request, context: RouteContext<"/api/watchli
       updatedAt: watchlist.updatedAt,
     },
   });
+}
+
+export async function POST(request: Request, context: RouteContext<"/api/watchlists/[id]/items">) {
+  return handlePost(request, context);
 }

@@ -5,6 +5,7 @@ import {
   toComparisonMetricDisplay,
 } from "@/lib/research-display/comparison";
 import type { FundPair, FundResearch } from "@/lib/fund.types";
+import { fundResearchFixture } from "@/test/fixtures/fundResearchView";
 
 describe("comparison display mapping", () => {
   it("represents missing allocation values as display text", () => {
@@ -20,7 +21,7 @@ describe("comparison display mapping", () => {
   });
 
   it("reuses fact formatting and keeps risk metric tones neutral", () => {
-    const fund = {
+    const fund = fundResearchFixture({
       scheme: { schemeName: "Fund" },
       facts: {
         aum: 1234.56,
@@ -30,13 +31,13 @@ describe("comparison display mapping", () => {
         managers: [],
       },
       metrics: {
-        oneYear: { value: 0.1 },
-        threeYear: { value: 0.1 },
-        fiveYear: { value: 0.1 },
-        volatility: { value: 0.2 },
-        maxDrawdown: { value: -0.3 },
+        oneYear: { value: 0.1, label: "1Y" },
+        threeYear: { value: 0.1, label: "3Y" },
+        fiveYear: { value: 0.1, label: "5Y" },
+        volatility: { value: 0.2, label: "Volatility" },
+        maxDrawdown: { value: -0.3, label: "Max drawdown" },
       },
-    } as unknown as FundResearch;
+    });
     const pair = [fund, fund] as const satisfies FundPair<FundResearch>;
     expect(toComparisonFactsDisplay(pair)[0]?.values).toEqual(["₹1,234.56 Cr", "₹1,234.56 Cr"]);
     expect(

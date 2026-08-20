@@ -1,26 +1,45 @@
+import * as v from "valibot";
+
 import { getOrCreateDeviceId } from "@/lib/deviceId";
-import { isWatchlistName } from "@/lib/watchlistInput";
+import { isWatchlistName, WatchlistNameBodySchema } from "@/lib/watchlistInput";
 import { watchlistService } from "@/lib/watchlist.service";
 
-export async function GET() {
-  const deviceId = await getOrCreateDeviceId();
-  const watchlists = await watchlistService.list(deviceId);
+interface RouteDeps {
+  getDeviceId: typeof getOrCreateDeviceId;
+  list: typeof watchlistService.list;
+  create: typeof watchlistService.create;
+}
+
+const defaultDeps: RouteDeps = {
+  getDeviceId: getOrCreateDeviceId,
+  list: watchlistService.list,
+  create: watchlistService.create,
+};
+
+export async function handleGet(deps: RouteDeps = defaultDeps) {
+  const deviceId = await deps.getDeviceId();
+  const watchlists = await deps.list(deviceId);
   return Response.json({ watchlists });
 }
 
-export async function POST(request: Request) {
-  const deviceId = await getOrCreateDeviceId();
-  const body: unknown = await request.json().catch(() => null);
-  const name =
-    body && typeof body === "object" && "name" in body && typeof body.name === "string"
-      ? body.name.trim()
-      : "";
+export async function handlePost(request: Request, deps: RouteDeps = defaultDeps) {
+  const deviceId = await deps.getDeviceId();
+  const parsed = v.safeParse(WatchlistNameBodySchema, await request.json().catch(() => null));
+  const name = parsed.success ? parsed.output.name.trim() : "";
   if (!isWatchlistName(name)) {
     return Response.json(
       { error: "invalid_name", message: "Give the watchlist a name up to 80 characters." },
       { status: 400 },
     );
   }
-  const watchlist = await watchlistService.create(deviceId, name);
+  const watchlist = await deps.create(deviceId, name);
   return Response.json({ watchlist }, { status: 201 });
+}
+
+export async function GET() {
+  return handleGet();
+}
+
+export async function POST(request: Request) {
+  return handlePost(request);
 }

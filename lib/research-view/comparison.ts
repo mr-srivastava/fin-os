@@ -12,23 +12,33 @@ function joined(left: readonly WeightedItem[], right: readonly WeightedItem[]) {
   }));
 }
 
+function toSelection(
+  result: PromiseSettledResult<FundResearch | null>,
+  schemeCode: string,
+): ComparisonView["selections"][number] {
+  if (result.status === "fulfilled" && result.value) {
+    const view = toFundResearchView(result.value);
+    return { status: "ready", scheme: view.scheme, currentNav: view.currentNav };
+  }
+  const message =
+    result.status === "rejected" && result.reason instanceof Error
+      ? result.reason.message
+      : "This fund is not available for research.";
+  return { status: "unavailable", schemeCode, message };
+}
+
 export function toComparisonView(
   schemeCodes: readonly [string, string],
-  results: readonly PromiseSettledResult<FundResearch | null>[],
+  results: readonly [
+    PromiseSettledResult<FundResearch | null>,
+    PromiseSettledResult<FundResearch | null>,
+  ],
 ): ComparisonView {
-  const selections = results.map((result, index) => {
-    const schemeCode = schemeCodes[index]!;
-    if (result.status === "fulfilled" && result.value) {
-      const view = toFundResearchView(result.value);
-      return { status: "ready" as const, scheme: view.scheme, currentNav: view.currentNav };
-    }
-    const message =
-      result.status === "rejected" && result.reason instanceof Error
-        ? result.reason.message
-        : "This fund is not available for research.";
-    return { status: "unavailable" as const, schemeCode, message };
-  });
-  if (selections.length !== 2 || selections.some((selection) => selection.status !== "ready")) {
+  const selections: ComparisonView["selections"] = [
+    toSelection(results[0], schemeCodes[0]),
+    toSelection(results[1], schemeCodes[1]),
+  ];
+  if (selections.some((selection) => selection.status !== "ready")) {
     return {
       selections,
       comparison: { status: "unavailable", message: "Both funds must be available to compare." },

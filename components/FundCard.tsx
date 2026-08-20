@@ -49,7 +49,7 @@ function formatAum(value: number | null | undefined) {
  * untouched name (and `meta: null`) when the pattern isn't recognized, rather than mangling
  * unfamiliar naming.
  */
-function parseSchemeName(name: string): { title: string; meta: string | null } {
+function parseSchemeName(name: string) {
   let title = name;
 
   const planMatch = title.match(/(Direct|Regular)\s*Plan\b/i);
