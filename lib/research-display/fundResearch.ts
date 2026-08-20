@@ -1,14 +1,5 @@
-import {
-  drawdownVsHistory,
-  filterSeriesByRange,
-  investmentOutcome,
-  relativeReturnSeries,
-  volatilityVsHistory,
-  type HistoricalComparison,
-  type PerformanceRange,
-} from "@/lib/analytics";
+import { drawdownVsHistory, volatilityVsHistory, type HistoricalComparison } from "@/lib/analytics";
 import type { FundResearch, MetricKey, WeightedItem } from "@/lib/fund.types";
-import { PERFORMANCE_RANGES } from "@/lib/researchRouteState";
 import {
   formatFullDate,
   formatNumber,
@@ -17,14 +8,10 @@ import {
   formatSignedPercent,
 } from "@/lib/utils";
 import type {
-  ChartSeriesDisplay,
   AllocationDisplay,
   DisplayStatus,
   FactDisplay,
-  FundHeaderDisplay,
   CurrentNavDisplay,
-  OutcomeDisplay,
-  PerformanceDisplay,
   MetricGroupDisplay,
   PortfolioDisplay,
   SectorDisplay,
@@ -58,60 +45,10 @@ export function toPercentagePointsText(value: number): string {
   return formatPercent(value / 100);
 }
 
-export function toFundHeaderDisplay(fund: FundResearch): FundHeaderDisplay {
-  return {
-    title: fund.scheme.schemeName,
-    subtitle: `${fund.scheme.amc} · ${fund.scheme.category} · ${fund.scheme.plan} ${fund.scheme.option}`,
-  };
-}
-
 export function toCurrentNavDisplay(fund: FundResearch): CurrentNavDisplay {
   return {
     valueText: formatRupees(fund.currentNav?.nav ?? null),
     dateText: fund.currentNav?.date ? formatFullDate(fund.currentNav.date) : "—",
-  };
-}
-
-function toOutcome(
-  name: string,
-  color: OutcomeDisplay["color"],
-  points: FundResearch["nav"],
-): OutcomeDisplay {
-  const outcome = investmentOutcome(points);
-  return {
-    name,
-    color,
-    returnPercent: outcome?.returnPercent ?? null,
-    returnText: outcome ? formatSignedPercent(outcome.returnPercent) : "—",
-    valueText: outcome ? formatRupees(outcome.value) : "—",
-    status: financialStatus(outcome?.returnPercent ?? null),
-  };
-}
-
-export function toPerformanceDisplay(
-  fund: FundResearch,
-  range: PerformanceRange,
-  showBenchmark: boolean,
-): PerformanceDisplay {
-  const selectedFundPoints = filterSeriesByRange(fund.nav, range);
-  const series: ChartSeriesDisplay[] = [
-    { name: "This fund", color: "chart-1", points: relativeReturnSeries(selectedFundPoints) },
-  ];
-  const outcomes = [toOutcome("This fund", "fund", selectedFundPoints)];
-  if (showBenchmark && fund.benchmark) {
-    const points = filterSeriesByRange(fund.benchmark.nav, range);
-    series.push({
-      name: fund.benchmark.name,
-      color: "chart-3",
-      points: relativeReturnSeries(points),
-    });
-    outcomes.push(toOutcome(fund.benchmark.name, "benchmark", points));
-  }
-  return {
-    range,
-    periodLabel: PERFORMANCE_RANGES.find((item) => item.value === range)?.label ?? range,
-    outcomes,
-    series,
   };
 }
 

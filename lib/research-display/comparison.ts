@@ -1,36 +1,7 @@
-import {
-  filterSeriesByRange,
-  investmentOutcome,
-  relativeReturnSeries,
-  type PerformanceRange,
-} from "@/lib/analytics";
 import type { FundPair, FundResearch } from "@/lib/fund.types";
-import { formatFullDate, formatPercent, formatRupees, formatSignedPercent } from "@/lib/utils";
-import { financialStatus, toFundFactsDisplay, toMetricDisplay } from "./fundResearch";
-import type { ChartSeriesDisplay, MetricDisplay, OutcomeDisplay } from "./types";
-
-export function toComparisonPerformanceDisplay(
-  funds: FundPair<FundResearch>,
-  range: PerformanceRange,
-) {
-  const series: ChartSeriesDisplay[] = funds.map((fund, index) => ({
-    name: fund.scheme.schemeName,
-    color: index === 0 ? "chart-1" : "chart-3",
-    points: relativeReturnSeries(filterSeriesByRange(fund.nav, range)),
-  }));
-  const outcomes: OutcomeDisplay[] = funds.map((fund, index) => {
-    const outcome = investmentOutcome(filterSeriesByRange(fund.nav, range));
-    return {
-      name: fund.scheme.schemeName,
-      color: index === 0 ? "comparison-a" : "comparison-b",
-      returnPercent: outcome?.returnPercent ?? null,
-      returnText: outcome ? formatSignedPercent(outcome.returnPercent) : "—",
-      valueText: outcome ? formatRupees(outcome.value) : "—",
-      status: financialStatus(outcome?.returnPercent ?? null),
-    };
-  });
-  return { series, outcomes };
-}
+import { formatPercent } from "@/lib/utils";
+import { toFundFactsDisplay, toMetricDisplay } from "./fundResearch";
+import type { MetricDisplay } from "./types";
 
 export function toComparisonMetricDisplay(
   funds: FundPair<FundResearch>,
@@ -74,11 +45,4 @@ export function toComparisonAllocationDisplay(
     leftText: formatPercent(leftByName.get(name) ?? null),
     rightText: formatPercent(rightByName.get(name) ?? null),
   }));
-}
-
-export function toComparisonPortfolioReportDate(funds: FundPair<FundResearch>): string {
-  const [left, right] = funds;
-  return left.portfolio?.asOf && right.portfolio?.asOf
-    ? `Reported as of ${formatFullDate(left.portfolio.asOf)} and ${formatFullDate(right.portfolio.asOf)}.`
-    : "Portfolio report date unavailable for one or both funds.";
 }
