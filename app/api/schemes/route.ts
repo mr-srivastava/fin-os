@@ -1,6 +1,6 @@
-import { catalogService } from "@/lib/catalog.service";
-import { ProviderError } from "@/lib/provider";
-import { isSearchQuery } from "@/lib/fundInput";
+import { catalogService } from "@/lib/catalog/catalog.service";
+import { ProviderError } from "@/lib/providers/provider";
+import { isSearchQuery } from "@/lib/fund/fundInput";
 
 interface RouteDeps {
   search: typeof catalogService.search;

@@ -1,6 +1,6 @@
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
-import { statusColorClass, type MetricStatus } from "@/lib/utils";
+import { statusColorClass, type MetricStatus } from "@/lib/shared/utils";
 
 interface Outcome {
   returnPercent: number | null;

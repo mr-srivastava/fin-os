@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { createWatchlist } from "@/lib/watchlist.client";
+import { createWatchlist } from "@/lib/watchlist/watchlist.client";
 
 export function CreateWatchlistForm() {
   const queryClient = useQueryClient();

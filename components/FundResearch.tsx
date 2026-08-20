@@ -36,13 +36,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { type PerformanceRange } from "@/lib/analytics";
-import type { FundResearchReadyModel } from "@/lib/research-display/types";
+import { type PerformanceRange } from "@/lib/shared/analytics";
+import type { FundResearchReadyModel } from "@/lib/research/research-display/types";
 import {
   useComparisonScreenModel,
   useFundResearchScreenModel,
-} from "@/lib/research-display/useScreenModels";
-import { type FundResearchRouteState, toFundResearchHref } from "@/lib/researchRouteState";
+} from "@/lib/research/research-display/useScreenModels";
+import { type FundResearchRouteState, toFundResearchHref } from "@/lib/research/researchRouteState";
 
 interface FundResearchViewProps {
   schemeCode: string;

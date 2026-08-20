@@ -2,8 +2,8 @@ import Link from "next/link";
 import { GitCompareArrowsIcon } from "lucide-react";
 import { FundCard, majorityRiskLabel } from "@/components/FundCard";
 import { buttonVariants } from "@/components/ui/button";
-import type { RelatedFundDisplay } from "@/lib/research-display/types";
-import { toFundResearchHref } from "@/lib/researchRouteState";
+import type { RelatedFundDisplay } from "@/lib/research/research-display/types";
+import { toFundResearchHref } from "@/lib/research/researchRouteState";
 
 export function RelatedFundLinks({
   title,

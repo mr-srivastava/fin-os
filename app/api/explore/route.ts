@@ -1,6 +1,6 @@
-import { catalogService } from "@/lib/catalog.service";
-import { ProviderError } from "@/lib/provider";
-import { isEquityCategory } from "@/lib/fundCategories";
+import { catalogService } from "@/lib/catalog/catalog.service";
+import { ProviderError } from "@/lib/providers/provider";
+import { isEquityCategory } from "@/lib/fund/fundCategories";
 
 interface RouteDeps {
   listByCategory: typeof catalogService.listByCategory;

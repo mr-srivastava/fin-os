@@ -1,5 +1,5 @@
 import { TermHelp } from "@/components/TermHelp";
-import { TERM_DEFINITIONS } from "@/lib/glossary";
+import { TERM_DEFINITIONS } from "@/lib/shared/glossary";
 
 export function ComparisonMetricList({
   rows,

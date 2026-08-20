@@ -1,8 +1,8 @@
 import { CircleHelpIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatNumber, lookup } from "@/lib/utils";
-import type { FundResearchReadyModel } from "@/lib/research-display/types";
+import { formatNumber, lookup } from "@/lib/shared/utils";
+import type { FundResearchReadyModel } from "@/lib/research/research-display/types";
 
 const RISK_CAPTIONS = {
   Volatility: "How much returns fluctuate",

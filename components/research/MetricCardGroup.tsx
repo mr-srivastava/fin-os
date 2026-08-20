@@ -1,6 +1,6 @@
 import { TrendingDownIcon, TrendingUpIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { statusColorClass, type MetricStatus } from "@/lib/utils";
+import { statusColorClass, type MetricStatus } from "@/lib/shared/utils";
 
 export interface MetricCardValue {
   label: string;

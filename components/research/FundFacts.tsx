@@ -1,7 +1,7 @@
-import type { FactDisplay } from "@/lib/research-display/types";
+import type { FactDisplay } from "@/lib/research/research-display/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TermHelp } from "@/components/TermHelp";
-import { TERM_DEFINITIONS, riskLabelDefinition } from "@/lib/glossary";
+import { TERM_DEFINITIONS, riskLabelDefinition } from "@/lib/shared/glossary";
 
 const COMPACT_LABELS = ["AUM", "Expense ratio", "Portfolio turnover", "Risk"];
 const WIDE_LABELS = ["Benchmark", "Fund managers"];

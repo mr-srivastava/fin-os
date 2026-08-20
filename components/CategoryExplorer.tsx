@@ -10,9 +10,9 @@ import { FundCard, FundCardSkeleton, majorityRiskLabel } from "@/components/Fund
 import { SelectionBar } from "@/components/SelectionBar";
 import { TermHelp } from "@/components/TermHelp";
 import { WatchlistToggleButton } from "@/components/WatchlistToggleButton";
-import { EQUITY_CATEGORIES } from "@/lib/fundCategories";
-import { TERM_DEFINITIONS, equityCategoryDefinition } from "@/lib/glossary";
-import { categoryFundsQueryOptions } from "@/lib/fund.queries";
+import { EQUITY_CATEGORIES } from "@/lib/fund/fundCategories";
+import { TERM_DEFINITIONS, equityCategoryDefinition } from "@/lib/shared/glossary";
+import { categoryFundsQueryOptions } from "@/lib/fund/fund.queries";
 
 export function CategoryExplorer() {
   const [selectedCategory, setSelectedCategory] = useState<

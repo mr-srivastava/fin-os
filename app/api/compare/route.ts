@@ -1,7 +1,7 @@
-import { fundService } from "@/lib/fund.service";
-import { ProviderError } from "@/lib/provider";
-import { isSchemeCode } from "@/lib/fundInput";
-import { toComparisonView } from "@/lib/research-view/comparison";
+import { fundService } from "@/lib/fund/fund.service";
+import { ProviderError } from "@/lib/providers/provider";
+import { isSchemeCode } from "@/lib/fund/fundInput";
+import { toComparisonView } from "@/lib/research/research-view/comparison";
 
 interface RouteDeps {
   getFundResearchBatch: typeof fundService.getFundResearchBatch;

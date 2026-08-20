@@ -15,10 +15,10 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { InputGroupAddon } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
-import type { Scheme } from "@/lib/fund.schema";
-import { isSearchQuery } from "@/lib/fundInput";
-import { schemeSearchQueryOptions } from "@/lib/fund.queries";
-import { cn } from "@/lib/utils";
+import type { Scheme } from "@/lib/fund/fund.schema";
+import { isSearchQuery } from "@/lib/fund/fundInput";
+import { schemeSearchQueryOptions } from "@/lib/fund/fund.queries";
+import { cn } from "@/lib/shared/utils";
 
 type FundSearchProps =
   | { compact?: boolean; onSelect: (scheme: Scheme) => void }

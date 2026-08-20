@@ -28,16 +28,19 @@ language ("good," "bad," "risky choice").
 
 - `app/` contains App Router pages and API route handlers.
 - `components/` contains client components and the local UI primitives.
-- `lib/` contains provider adapters, the Mongo-backed catalogue and watchlist
-  services, schemas, types, date helpers, and analytics.
+- `lib/` is organized by domain: `lib/fund/`, `lib/watchlist/`, `lib/research/`
+  (`research-display/`, `research-view/`, route state), `lib/catalog/`, and
+  `lib/providers/` (FinAPI/TigZig adapters, Mongo, API client/route helpers).
+  `lib/shared/` holds cross-domain helpers (date, utils, glossary, deviceId,
+  chartData, analytics) that don't belong to one domain.
 - `scripts/preflightFinapi.ts` validates representative live provider responses.
 - `scripts/catalogRefresh.ts` rebuilds the scheme catalogue in MongoDB.
 - `docs/` contains architecture and contributor guidance.
 
-Keep provider-specific parsing in `lib/`. Route handlers validate untrusted
-parameters and turn `ProviderError` instances into the documented API response
-shape. Client components must use `lib/fund.client.ts` and its Valibot schemas
-instead of assuming API responses are valid.
+Keep provider-specific parsing in `lib/providers/`. Route handlers validate
+untrusted parameters and turn `ProviderError` instances into the documented
+API response shape. Client components must use `lib/fund/fund.client.ts` and
+its Valibot schemas instead of assuming API responses are valid.
 
 ## File naming
 
@@ -47,11 +50,14 @@ instead of assuming API responses are valid.
   JSX.
 - Next.js special files (`page.tsx`, `route.ts`, `layout.tsx`, etc.) and route
   folders follow Next.js conventions and stay lowercase/kebab-case.
-- `lib/` modules: `camelCase.ts`, with a role suffix when the file plays that
-  role — `.service.ts` (server-side data access), `.client.ts` (client fetch
-  wrappers, kept distinct from `.service.ts` so the two layers can't collide),
-  `.queries.ts` (TanStack Query definitions), `.schema.ts` (Valibot schemas),
-  `.types.ts` (domain types). Plain utility modules take no suffix.
+- `lib/` modules: `camelCase.ts`, grouped under a domain folder
+  (`lib/fund/`, `lib/watchlist/`, `lib/research/`, `lib/catalog/`,
+  `lib/providers/`) or, for cross-domain helpers, `lib/shared/`. Use a role
+  suffix when the file plays that role — `.service.ts` (server-side data
+  access), `.client.ts` (client fetch wrappers, kept distinct from
+  `.service.ts` so the two layers can't collide), `.queries.ts` (TanStack
+  Query definitions), `.schema.ts` (Valibot schemas), `.types.ts` (domain
+  types). Plain utility modules take no suffix.
 - Tests match their source file's new name plus `.test.ts[x]`.
 
 Rename a file's imports along with the file itself — don't leave stale
@@ -59,7 +65,7 @@ kebab-case import specifiers pointing at a renamed module.
 
 ## Data behavior
 
-A MongoDB-backed catalogue (`lib/catalog.service.ts`, refreshed from TigZig via
+A MongoDB-backed catalogue (`lib/catalog/catalog.service.ts`, refreshed from TigZig via
 `pnpm catalog:refresh`) drives scheme search and category browsing. FinAPI
 supplies fund facts and reported portfolio data for a single scheme. TigZig
 supplies NAV history and the Nifty 500 benchmark. Requests are cached for five
@@ -72,8 +78,8 @@ operational use without disabling facts or NAV research. `MONGODB_URI` and
 `MONGODB_DB` must be set for the catalogue and watchlist routes to work; see
 [docs/development.md](docs/development.md#environment-configuration).
 
-Watchlists (`lib/watchlist.service.ts`) are Mongo-backed, device-scoped lists
-of scheme codes, identified by an anonymous cookie from `lib/deviceId.ts`.
+Watchlists (`lib/watchlist/watchlist.service.ts`) are Mongo-backed, device-scoped lists
+of scheme codes, identified by an anonymous cookie from `lib/shared/deviceId.ts`.
 There is no auth: every watchlist read and write must be scoped by
 `deviceId`, and a request for another device's watchlist must behave as if it
 does not exist.

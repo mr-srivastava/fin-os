@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
-import { parseComparisonSearchParams, toFundResearchHref } from "@/lib/researchRouteState";
+import { parseComparisonSearchParams, toFundResearchHref } from "@/lib/research/researchRouteState";
 
 /**
  * `/compare` is not a nav destination - it's reached only via selecting funds elsewhere

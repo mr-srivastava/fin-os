@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { Logomark } from "@/components/Logomark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { watchlistsQueryOptions } from "@/lib/watchlist.queries";
+import { watchlistsQueryOptions } from "@/lib/watchlist/watchlist.queries";
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();

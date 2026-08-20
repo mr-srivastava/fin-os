@@ -1,7 +1,7 @@
-import { getOrCreateDeviceId } from "@/lib/deviceId";
-import { isSchemeCode } from "@/lib/fundInput";
-import { isWatchlistId } from "@/lib/watchlistInput";
-import { watchlistService } from "@/lib/watchlist.service";
+import { getOrCreateDeviceId } from "@/lib/shared/deviceId";
+import { isSchemeCode } from "@/lib/fund/fundInput";
+import { isWatchlistId } from "@/lib/watchlist/watchlistInput";
+import { watchlistService } from "@/lib/watchlist/watchlist.service";
 
 interface RouteDeps {
   getDeviceId: typeof getOrCreateDeviceId;

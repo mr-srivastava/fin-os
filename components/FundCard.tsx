@@ -8,8 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TermHelp } from "@/components/TermHelp";
-import { TERM_DEFINITIONS, equityCategoryDefinition, riskLabelDefinition } from "@/lib/glossary";
-import { cn, formatRupees, statusColorClass, type MetricStatus } from "@/lib/utils";
+import {
+  TERM_DEFINITIONS,
+  equityCategoryDefinition,
+  riskLabelDefinition,
+} from "@/lib/shared/glossary";
+import { cn, formatRupees, statusColorClass, type MetricStatus } from "@/lib/shared/utils";
 
 /**
  * The card-displayable shape a fund can be rendered from. Financial metrics are optional

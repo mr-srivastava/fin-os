@@ -1,4 +1,4 @@
-import { statusColorClass, type MetricStatus } from "@/lib/utils";
+import { statusColorClass, type MetricStatus } from "@/lib/shared/utils";
 
 export function OutcomeSummary({
   name,

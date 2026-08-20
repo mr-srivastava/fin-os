@@ -4,8 +4,8 @@ import { LineChart, type ChartColor, type ChartSeries } from "@/components/LineC
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { PerformanceRange } from "@/lib/analytics";
-import { PERFORMANCE_RANGES } from "@/lib/researchRouteState";
+import type { PerformanceRange } from "@/lib/shared/analytics";
+import { PERFORMANCE_RANGES } from "@/lib/research/researchRouteState";
 
 export interface SchemeAnalysisSeries extends ChartSeries {
   color: ChartColor;

@@ -26,8 +26,8 @@ import {
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { deleteWatchlist, renameWatchlist } from "@/lib/watchlist.client";
-import { watchlistsQueryOptions } from "@/lib/watchlist.queries";
+import { deleteWatchlist, renameWatchlist } from "@/lib/watchlist/watchlist.client";
+import { watchlistsQueryOptions } from "@/lib/watchlist/watchlist.queries";
 import { CreateWatchlistForm } from "@/components/CreateWatchlistForm";
 
 export function WatchlistsIndex() {

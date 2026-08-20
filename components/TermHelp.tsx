@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils";
 
 /**
  * Marks a term as glossed, editorial-style: a dotted underline (not an icon) that solidifies and

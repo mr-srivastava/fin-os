@@ -8,8 +8,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Spinner } from "@/components/ui/spinner";
-import { addWatchlistItem, createWatchlist, removeWatchlistItem } from "@/lib/watchlist.client";
-import { watchlistsQueryOptions } from "@/lib/watchlist.queries";
+import {
+  addWatchlistItem,
+  createWatchlist,
+  removeWatchlistItem,
+} from "@/lib/watchlist/watchlist.client";
+import { watchlistsQueryOptions } from "@/lib/watchlist/watchlist.queries";
 
 interface WatchlistPickerProps {
   /** One fund (card action) or several (selection-bar bulk add). */

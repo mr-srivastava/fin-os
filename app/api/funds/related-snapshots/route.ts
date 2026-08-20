@@ -1,6 +1,6 @@
-import { fundService } from "@/lib/fund.service";
-import { isSchemeCode } from "@/lib/fundInput";
-import { ProviderError } from "@/lib/provider";
+import { fundService } from "@/lib/fund/fund.service";
+import { isSchemeCode } from "@/lib/fund/fundInput";
+import { ProviderError } from "@/lib/providers/provider";
 
 /** Bounds one request to the related-fund count `loadFundResearch` enriches server-side for a
  * batch load (6 peers + 6 fromAmc) - the client never has a reason to ask for more than that. */

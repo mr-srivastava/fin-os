@@ -1,5 +1,5 @@
 import { expect, test, vi } from "vitest";
-import { ProviderError } from "@/lib/provider";
+import { ProviderError } from "@/lib/providers/provider";
 import { handleGet as GET } from "./route";
 
 const getFundSnapshots = vi.fn();

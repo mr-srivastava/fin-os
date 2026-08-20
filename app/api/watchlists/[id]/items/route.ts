@@ -1,10 +1,10 @@
-import { parseJsonBody } from "@/lib/apiRoute";
-import { getOrCreateDeviceId } from "@/lib/deviceId";
-import { isSchemeCode } from "@/lib/fundInput";
-import { SchemeCodeBodySchema } from "@/lib/fund.schema";
-import { isWatchlistId } from "@/lib/watchlistInput";
-import { watchlistService, WATCHLIST_ITEM_LIMIT_REACHED } from "@/lib/watchlist.service";
-import { WATCHLIST_MAX_ITEMS } from "@/lib/watchlistInput";
+import { parseJsonBody } from "@/lib/providers/apiRoute";
+import { getOrCreateDeviceId } from "@/lib/shared/deviceId";
+import { isSchemeCode } from "@/lib/fund/fundInput";
+import { SchemeCodeBodySchema } from "@/lib/fund/fund.schema";
+import { isWatchlistId } from "@/lib/watchlist/watchlistInput";
+import { watchlistService, WATCHLIST_ITEM_LIMIT_REACHED } from "@/lib/watchlist/watchlist.service";
+import { WATCHLIST_MAX_ITEMS } from "@/lib/watchlist/watchlistInput";
 
 interface RouteDeps {
   getDeviceId: typeof getOrCreateDeviceId;

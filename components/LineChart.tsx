@@ -14,15 +14,15 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { investmentValueFromReturn } from "@/lib/analytics";
-import { alignSeriesByMonth } from "@/lib/chartData";
+import { investmentValueFromReturn } from "@/lib/shared/analytics";
+import { alignSeriesByMonth } from "@/lib/shared/chartData";
 import {
   formatCompactDate,
   formatFullDate,
   formatNumber,
   formatPercent,
   formatRupees,
-} from "@/lib/utils";
+} from "@/lib/shared/utils";
 
 /** Every chart in the app uses these same two fixed colors: chart-1 for the primary/first series, chart-3 for the secondary/second series. */
 export type ChartColor = "chart-1" | "chart-3";

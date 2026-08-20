@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { amcInitials, amcLogoPath } from "@/lib/amcLogos";
-import { cn } from "@/lib/utils";
+import { amcInitials, amcLogoPath } from "@/lib/catalog/amcLogos";
+import { cn } from "@/lib/shared/utils";
 
 interface AmcLogoProps {
   amc: string;

@@ -70,7 +70,7 @@ MONGODB_DB=mf-os
 FINAPI_PORTFOLIO_ENABLED=false
 ```
 
-`MONGODB_URI` and `MONGODB_DB` (`lib/mongo.ts`) are required for the scheme
+`MONGODB_URI` and `MONGODB_DB` (`lib/providers/mongo.ts`) are required for the scheme
 catalogue (`/api/schemes`, `/api/explore`) and watchlists
 (`/api/watchlists/**`) to work. Without them, routes that touch the catalogue
 or watchlists fail; fund research routes (`/api/funds/:schemeCode`,

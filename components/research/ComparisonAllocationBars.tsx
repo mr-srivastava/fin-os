@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ComparisonAllocationItem } from "@/lib/research-display/types";
+import type { ComparisonAllocationItem } from "@/lib/research/research-display/types";
 
 function Bar({
   label,

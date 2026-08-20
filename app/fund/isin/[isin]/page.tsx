@@ -1,7 +1,10 @@
 import { notFound, redirect } from "next/navigation";
-import { fundService } from "@/lib/fund.service";
-import { isIsin } from "@/lib/fundInput";
-import { parseFundResearchSearchParams, toFundResearchHref } from "@/lib/researchRouteState";
+import { fundService } from "@/lib/fund/fund.service";
+import { isIsin } from "@/lib/fund/fundInput";
+import {
+  parseFundResearchSearchParams,
+  toFundResearchHref,
+} from "@/lib/research/researchRouteState";
 
 export default async function IsinFundPage({
   params,

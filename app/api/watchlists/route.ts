@@ -1,8 +1,8 @@
-import { parseJsonBody } from "@/lib/apiRoute";
-import { getOrCreateDeviceId } from "@/lib/deviceId";
-import { isWatchlistName } from "@/lib/watchlistInput";
-import { WatchlistNameBodySchema } from "@/lib/watchlist.schema";
-import { watchlistService } from "@/lib/watchlist.service";
+import { parseJsonBody } from "@/lib/providers/apiRoute";
+import { getOrCreateDeviceId } from "@/lib/shared/deviceId";
+import { isWatchlistName } from "@/lib/watchlist/watchlistInput";
+import { WatchlistNameBodySchema } from "@/lib/watchlist/watchlist.schema";
+import { watchlistService } from "@/lib/watchlist/watchlist.service";
 
 interface RouteDeps {
   getDeviceId: typeof getOrCreateDeviceId;

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { AllocationDisplay } from "@/lib/research-display/types";
+import type { AllocationDisplay } from "@/lib/research/research-display/types";
 
 export function AllocationBar({
   title,

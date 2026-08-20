@@ -15,8 +15,8 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { FundCard } from "@/components/FundCard";
 import { SelectionBar } from "@/components/SelectionBar";
-import { removeWatchlistItem } from "@/lib/watchlist.client";
-import { watchlistDetailQueryOptions } from "@/lib/watchlist.queries";
+import { removeWatchlistItem } from "@/lib/watchlist/watchlist.client";
+import { watchlistDetailQueryOptions } from "@/lib/watchlist/watchlist.queries";
 import { Button } from "@/components/ui/button";
 
 export function WatchlistDetail({ id }: { id: string }) {
