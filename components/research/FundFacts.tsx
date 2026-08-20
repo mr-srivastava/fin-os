@@ -54,11 +54,12 @@ export function FundFactsGrid({ facts }: { facts: readonly FactDisplay[] }) {
         ) : null}
         {wide.map((fact) => (
           <div key={fact.label}>
-            <p className="flex items-center gap-1 text-xs text-muted-foreground">
-              {fact.label}
+            <p className="text-xs text-muted-foreground">
               {definitionFor(fact) ? (
-                <TermHelp definition={definitionFor(fact)!} label={fact.label} />
-              ) : null}
+                <TermHelp definition={definitionFor(fact)!}>{fact.label}</TermHelp>
+              ) : (
+                fact.label
+              )}
             </p>
             <p className="mt-1 text-sm font-semibold">{fact.valueText}</p>
           </div>
@@ -81,9 +82,8 @@ function Fact({
 }) {
   return (
     <div>
-      <p className="flex items-center gap-1 text-xs text-muted-foreground">
-        {label}
-        {definition ? <TermHelp definition={definition} label={label} /> : null}
+      <p className="text-xs text-muted-foreground">
+        {definition ? <TermHelp definition={definition}>{label}</TermHelp> : label}
       </p>
       <p className={`mt-1 text-lg font-semibold ${numeric ? "font-mono tabular-nums" : ""}`}>
         {value}

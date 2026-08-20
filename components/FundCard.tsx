@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TermHelp } from "@/components/TermHelp";
 import { TERM_DEFINITIONS, equityCategoryDefinition, riskLabelDefinition } from "@/lib/glossary";
-import { cn, formatRupees, statusColorClass } from "@/lib/utils";
+import { cn, formatRupees, statusColorClass, type MetricStatus } from "@/lib/utils";
 
 /**
  * The card-displayable shape a fund can be rendered from. Financial metrics are optional
@@ -38,7 +38,40 @@ function formatPercent(value: number | null | undefined) {
 
 function formatAum(value: number | null | undefined) {
   if (value === null || value === undefined) return null;
-  return `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })} Cr AUM`;
+  return `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })} Cr`;
+}
+
+/**
+ * Splits a scheme name like "DSP Focused Fund - Direct Plan - Growth" into a shorter
+ * `title` and a `meta` string ("Direct · Growth"). Every scheme in the catalogue repeats
+ * the same handful of plan/option suffixes, so leaving them in the title just makes every
+ * card's headline the same length without adding anything to scan by. Falls back to the
+ * untouched name (and `meta: null`) when the pattern isn't recognized, rather than mangling
+ * unfamiliar naming.
+ */
+function parseSchemeName(name: string): { title: string; meta: string | null } {
+  let title = name;
+
+  const planMatch = title.match(/(Direct|Regular)\s*Plan\b/i);
+  const plan = planMatch
+    ? planMatch[1]!.charAt(0).toUpperCase() + planMatch[1]!.slice(1).toLowerCase()
+    : null;
+  if (planMatch) title = title.replace(planMatch[0]!, "");
+
+  const optionMatch = title.match(/(Growth|IDCW|Dividend|Bonus)\s*(Option)?\b/i);
+  const option = optionMatch
+    ? optionMatch[1]!.charAt(0).toUpperCase() + optionMatch[1]!.slice(1).toLowerCase()
+    : null;
+  if (optionMatch) title = title.replace(optionMatch[0]!, "");
+
+  title = title
+    .replace(/\s*-\s*-\s*/g, " - ")
+    .replace(/^[\s-]+|[\s-]+$/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (!title || !(plan || option)) return { title: name, meta: null };
+  return { title, meta: [plan, option].filter(Boolean).join(" · ") };
 }
 
 /**
@@ -95,7 +128,7 @@ export function FundCard({
   const returnValue = fund.oneYearReturn ?? fund.threeYearReturn;
   const returnText = formatPercent(returnValue);
   const returnLabel = fund.oneYearReturn !== undefined && fund.oneYearReturn !== null ? "1Y" : "3Y";
-  const returnStatus =
+  const returnStatus: MetricStatus =
     returnValue === null || returnValue === undefined
       ? "neutral"
       : returnValue > 0
@@ -105,13 +138,22 @@ export function FundCard({
           : "neutral";
   const aumText = formatAum(fund.aum);
   const navText = fund.navPoint ? formatRupees(fund.navPoint.nav) : null;
+  const { title, meta } = parseSchemeName(fund.schemeName);
+
+  const metrics = [
+    returnText ? { value: returnText, label: returnLabel, status: returnStatus } : null,
+    navText
+      ? { value: navText, label: "NAV", status: "neutral" as const, help: TERM_DEFINITIONS.NAV }
+      : null,
+    aumText ? { value: aumText, label: "AUM", status: "neutral" as const } : null,
+  ].filter((metric): metric is NonNullable<typeof metric> => metric !== null);
 
   return (
     <Card
       size="sm"
       data-density={density}
       className={cn(
-        "group relative h-full py-3 transition-[box-shadow,background-color] duration-200 hover:bg-muted/40 hover:shadow-raised",
+        "group relative h-full py-3 ring-foreground/6 transition-[box-shadow,background-color,--tw-ring-color] duration-200 hover:bg-muted/40 hover:shadow-raised hover:ring-foreground/15",
         density === "comparison" && "min-w-[16rem]",
         className,
       )}
@@ -133,10 +175,13 @@ export function FundCard({
           ) : null}
           {showLogo ? <AmcLogo amc={fund.amc} size="sm" className="mt-0.5 shrink-0" /> : null}
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 font-medium" title={fund.schemeName}>
-              {fund.schemeName}
+            <p className="line-clamp-2 text-sm font-medium leading-snug" title={fund.schemeName}>
+              {title}
             </p>
-            <p className="mt-1 truncate text-xs leading-5 text-muted-foreground">{fund.amc}</p>
+            <p className="mt-1 truncate text-xs leading-5 text-muted-foreground">
+              {fund.amc}
+              {meta ? <span className="text-muted-foreground/70"> · {meta}</span> : null}
+            </p>
           </div>
           {watchlistAction ? (
             <span className="pointer-events-auto shrink-0">{watchlistAction}</span>
@@ -146,64 +191,60 @@ export function FundCard({
         {(showCategory && fund.category) || fund.riskLabel ? (
           <div className="flex flex-wrap items-center gap-1.5">
             {showCategory && fund.category ? (
-              <span className="pointer-events-auto inline-flex items-center gap-1">
+              equityCategoryDefinition(fund.category) ? (
+                <TermHelp
+                  definition={equityCategoryDefinition(fund.category)!}
+                  render={<Badge variant="outline" className="pointer-events-auto" />}
+                >
+                  {fund.category}
+                </TermHelp>
+              ) : (
                 <Badge variant="outline">{fund.category}</Badge>
-                {equityCategoryDefinition(fund.category) ? (
-                  <TermHelp
-                    definition={equityCategoryDefinition(fund.category)!}
-                    label={fund.category}
-                  />
-                ) : null}
-              </span>
+              )
             ) : null}
             {fund.riskLabel ? (
-              <span className="pointer-events-auto inline-flex items-center gap-1">
+              riskLabelDefinition(fund.riskLabel) ? (
+                <TermHelp
+                  definition={riskLabelDefinition(fund.riskLabel)!}
+                  render={<Badge variant="secondary" className="pointer-events-auto" />}
+                >
+                  {fund.riskLabel}
+                </TermHelp>
+              ) : (
                 <Badge variant="secondary">{fund.riskLabel}</Badge>
-                {riskLabelDefinition(fund.riskLabel) ? (
-                  <TermHelp
-                    definition={riskLabelDefinition(fund.riskLabel)!}
-                    label={fund.riskLabel}
-                  />
-                ) : null}
-              </span>
+              )
             ) : null}
           </div>
         ) : null}
 
-        {navText || returnText || aumText ? (
-          <div className="space-y-0.5">
-            {navText ? (
-              <p className="font-mono text-base leading-tight font-semibold tabular-nums">
-                {navText}
-                <span className="pointer-events-auto ml-1.5 inline-flex items-center gap-1 text-xs font-normal text-muted-foreground">
-                  NAV
-                  <TermHelp definition={TERM_DEFINITIONS.NAV} label="NAV" />
-                </span>
-              </p>
-            ) : returnText ? (
-              <p
-                className={cn(
-                  "font-mono text-base leading-tight font-semibold tabular-nums",
-                  statusColorClass(returnStatus),
+        {metrics.length > 0 ? (
+          <div className="mt-auto grid grid-cols-3 gap-2 border-t border-border/60 pt-2.5">
+            {metrics.map((metric) => (
+              <div key={metric.label} className="min-w-0">
+                <p
+                  className={cn(
+                    "truncate font-mono text-sm leading-tight font-semibold tabular-nums",
+                    metric.status !== "neutral"
+                      ? statusColorClass(metric.status)
+                      : "text-foreground",
+                  )}
+                >
+                  {metric.value}
+                </p>
+                {metric.help ? (
+                  <TermHelp
+                    definition={metric.help}
+                    className="pointer-events-auto text-[11px] leading-tight text-muted-foreground"
+                  >
+                    {metric.label}
+                  </TermHelp>
+                ) : (
+                  <p className="text-[11px] leading-tight text-muted-foreground">
+                    {metric.label === returnLabel ? `${returnLabel} Return` : metric.label}
+                  </p>
                 )}
-              >
-                {returnText}
-                <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                  {returnLabel}
-                </span>
-              </p>
-            ) : null}
-            {(navText && returnText) || aumText ? (
-              <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                {navText && returnText ? (
-                  <span>
-                    <span className={statusColorClass(returnStatus)}>{returnText}</span>{" "}
-                    {returnLabel}
-                  </span>
-                ) : null}
-                {aumText ? <span>{aumText}</span> : null}
-              </p>
-            ) : null}
+              </div>
+            ))}
           </div>
         ) : null}
       </CardContent>

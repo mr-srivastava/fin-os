@@ -42,10 +42,12 @@ export function CategoryExplorer() {
             Browse the eligible equity universe.
           </h2>
         </div>
-        <span className="inline-flex items-center gap-1">
-          <Badge variant="outline">Direct Growth schemes only</Badge>
-          <TermHelp definition={TERM_DEFINITIONS["Direct Growth"]} label="Direct Growth" />
-        </span>
+        <TermHelp
+          definition={TERM_DEFINITIONS["Direct Growth"]}
+          render={<Badge variant="outline" />}
+        >
+          Direct Growth schemes only
+        </TermHelp>
       </div>
       <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
         Select a category to view eligible Direct Growth schemes, or select funds below to compare
@@ -58,19 +60,21 @@ export function CategoryExplorer() {
         {EQUITY_CATEGORIES.map((category) => {
           const isSelected = category === selectedCategory;
           const definition = equityCategoryDefinition(category);
-          return (
-            <span key={category} className="inline-flex items-center gap-0.5">
-              <Button
-                variant={isSelected ? "default" : "ghost"}
-                size="sm"
-                className="h-8 px-3"
-                aria-pressed={isSelected}
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
-              </Button>
-              {definition ? <TermHelp definition={definition} label={category} /> : null}
-            </span>
+          const buttonProps = {
+            variant: isSelected ? ("default" as const) : ("ghost" as const),
+            size: "sm" as const,
+            className: "h-8 px-3",
+            "aria-pressed": isSelected,
+            onClick: () => setSelectedCategory(category),
+          };
+          return definition ? (
+            <TermHelp key={category} definition={definition} render={<Button {...buttonProps} />}>
+              {category}
+            </TermHelp>
+          ) : (
+            <Button key={category} {...buttonProps}>
+              {category}
+            </Button>
           );
         })}
       </div>
