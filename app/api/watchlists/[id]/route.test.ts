@@ -65,8 +65,10 @@ describe("GET /api/watchlists/[id]", () => {
             managers: [],
           },
           metrics: {
-            oneYear: { label: "1Y", value: 12 },
-            threeYear: { label: "3Y", value: 18 },
+            // FundMetrics values are fractions (0.12 = 12%), matching what annualizedReturn
+            // actually produces - not already-scaled percentages.
+            oneYear: { label: "1Y", value: 0.12 },
+            threeYear: { label: "3Y", value: 0.18 },
             fiveYear: { label: "5Y", value: null },
             volatility: { label: "Vol", value: null },
             maxDrawdown: { label: "MDD", value: null },

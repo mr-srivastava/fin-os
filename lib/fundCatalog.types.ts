@@ -41,6 +41,10 @@ export interface CatalogueEntry {
     nav: { nav: number; date: string } | null;
     aum: number | null;
     riskLabel: string | null;
+    /** Annualized (CAGR) return over the trailing year, as a percentage (e.g. 12.3 for +12.3%). */
+    oneYearReturn: number | null;
+    /** Annualized (CAGR) return over the trailing three years, as a percentage. */
+    threeYearReturn: number | null;
     snapshotAt: string;
   } | null;
   /** Timestamp of the refresh run that most recently saw this scheme in TigZig's catalogue. */

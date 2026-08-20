@@ -288,6 +288,8 @@ function toRelatedFundStubs(related: { peers: Scheme[]; fromAmc: Scheme[] }) {
     nav: null,
     aum: null,
     riskLabel: null,
+    oneYearReturn: null,
+    threeYearReturn: null,
   });
   return { peers: related.peers.map(stub), fromAmc: related.fromAmc.map(stub) };
 }
@@ -430,12 +432,23 @@ export interface FundSnapshot {
   nav: NavPoint | null;
   aum: number | null;
   riskLabel: string | null;
+  oneYearReturn: number | null;
+  threeYearReturn: number | null;
+}
+
+/** `annualizedReturn` (and `FundMetrics`) return a fraction (0.123); `FundCard` expects a percentage (12.3). */
+function toPercent(fraction: number | null): number | null {
+  return fraction === null ? null : fraction * 100;
 }
 
 /**
  * A single fund payload plus its NAV, with none of `loadFundResearch`'s extra requests
  * (rolling summary, benchmark, or its own related-funds enrichment). Used to enrich
  * related-fund and catalogue listings without the fan-out a full research load would cause.
+ *
+ * `tigzigService.getNav` already returns up to 5 years of history - the same source the full
+ * fund-research page uses for its return metrics - so 1Y/3Y annualized return comes for free
+ * from data this call is fetching anyway, rather than needing a separate request.
  */
 async function loadFundSnapshot(schemeCode: string): Promise<FundSnapshot | null> {
   const [fundResult, navResult] = await Promise.allSettled([
@@ -445,11 +458,16 @@ async function loadFundSnapshot(schemeCode: string): Promise<FundSnapshot | null
   if (fundResult.status === "rejected") return null;
   const normalized = normalizeFundPayload(fundResult.value);
   if (!normalized) return null;
-  const nav =
-    navResult.status === "fulfilled"
-      ? (navResult.value.at(-1) ?? normalized.currentNav)
-      : normalized.currentNav;
-  return { nav, aum: normalized.facts.aum, riskLabel: normalized.facts.riskLabel };
+  const navHistory = navResult.status === "fulfilled" ? navResult.value : [];
+  const nav = navHistory.at(-1) ?? normalized.currentNav;
+  const metrics = navHistory.length > 0 ? metricsFor(navHistory) : null;
+  return {
+    nav,
+    aum: normalized.facts.aum,
+    riskLabel: normalized.facts.riskLabel,
+    oneYearReturn: toPercent(metrics?.oneYear.value ?? null),
+    threeYearReturn: toPercent(metrics?.threeYear.value ?? null),
+  };
 }
 
 // Matches the exact concurrency/pacing a diagnostic run confirmed FinAPI tolerates cleanly
@@ -513,7 +531,14 @@ export async function getFundSnapshots(
 
 function enrichRelatedFund(fund: RelatedFund, snapshot: FundSnapshot | undefined): RelatedFund {
   return snapshot
-    ? { ...fund, nav: snapshot.nav, aum: snapshot.aum, riskLabel: snapshot.riskLabel }
+    ? {
+        ...fund,
+        nav: snapshot.nav,
+        aum: snapshot.aum,
+        riskLabel: snapshot.riskLabel,
+        oneYearReturn: snapshot.oneYearReturn,
+        threeYearReturn: snapshot.threeYearReturn,
+      }
     : fund;
 }
 

@@ -32,11 +32,17 @@ export interface Scheme {
   option: string;
 }
 
-/** A related-fund entry enriched with a lightweight snapshot: latest NAV and top-line facts. */
+/**
+ * A related-fund entry enriched with a lightweight snapshot: latest NAV and top-line facts.
+ * `oneYearReturn`/`threeYearReturn` are annualized (CAGR) returns as percentages (e.g. 12.3 for
+ * +12.3%), matching `FundCard`'s own `formatPercent` - not the raw fraction `FundMetrics` uses.
+ */
 export interface RelatedFund extends Scheme {
   nav: NavPoint | null;
   aum: number | null;
   riskLabel: string | null;
+  oneYearReturn: number | null;
+  threeYearReturn: number | null;
 }
 
 export interface Metric {

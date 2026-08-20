@@ -34,6 +34,8 @@ export const RelatedFundSchema: v.GenericSchema<RelatedFund> = v.object({
   nav: v.nullable(NavPointSchema),
   aum: NullableFiniteNumberSchema,
   riskLabel: v.nullable(v.string()),
+  oneYearReturn: NullableFiniteNumberSchema,
+  threeYearReturn: NullableFiniteNumberSchema,
 });
 
 const MetricSchema = v.object({

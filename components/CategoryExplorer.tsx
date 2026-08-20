@@ -111,6 +111,8 @@ export function CategoryExplorer() {
                         riskLabel: scheme.riskLabel === commonRisk ? null : scheme.riskLabel,
                         aum: scheme.aum,
                         navPoint: scheme.nav,
+                        oneYearReturn: scheme.oneYearReturn,
+                        threeYearReturn: scheme.threeYearReturn,
                       }}
                       density="compact"
                       selectable

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   AlertCircleIcon,
   ArrowLeftIcon,
-  BookmarkPlusIcon,
   CircleHelpIcon,
   DatabaseIcon,
   PieChartIcon,
@@ -15,7 +14,7 @@ import { useEffect, useState } from "react";
 import { SchemeAnalysisChart } from "@/components/SchemeAnalysisChart";
 import { FundComparison } from "@/components/FundComparison";
 import { FundSearch } from "@/components/FundSearch";
-import { WatchlistPicker } from "@/components/WatchlistPicker";
+import { WatchlistToggleButton } from "@/components/WatchlistToggleButton";
 import { AllocationBar } from "@/components/research/AllocationBar";
 import { FundFactsGrid } from "@/components/research/FundFacts";
 import { PerformanceSummary } from "@/components/research/PerformanceSummary";
@@ -165,15 +164,10 @@ function FundResearchScreen({
         <ArrowLeftIcon data-icon="inline-start" />
         Back to research
       </Link>
-      <header className="mt-10 max-w-4xl">
+      <header className="mt-10">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Badge variant="secondary">{isComparing ? "Fund comparison" : "Fund research"}</Badge>
-          <WatchlistPicker schemeCodes={[schemeCode]}>
-            <Button variant="outline" size="sm">
-              <BookmarkPlusIcon data-icon="inline-start" />
-              Add to watchlist
-            </Button>
-          </WatchlistPicker>
+          <WatchlistToggleButton schemeCode={schemeCode} label="Add to watchlist" />
         </div>
         <h1 className="mt-4 font-heading text-3xl font-semibold tracking-tight sm:text-5xl">
           {model.header.title}

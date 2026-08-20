@@ -91,6 +91,8 @@ export interface RelatedFundDisplay {
   nav: NavPoint | null;
   aum: number | null;
   riskLabel: string | null;
+  oneYearReturn: number | null;
+  threeYearReturn: number | null;
 }
 
 export interface FundResearchReadyModel {

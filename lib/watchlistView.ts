@@ -23,8 +23,11 @@ export function toWatchlistItemSummary(fund: FundResearch): WatchlistItemSummary
     category: fund.scheme.category,
     riskLabel: fund.facts.riskLabel,
     aum: fund.facts.aum,
-    oneYearReturn: fund.metrics.oneYear.value,
-    threeYearReturn: fund.metrics.threeYear.value,
+    // FundMetrics values are fractions (0.123); FundCard's formatPercent expects a percentage
+    // (12.3), matching RelatedFund's oneYearReturn/threeYearReturn convention.
+    oneYearReturn: fund.metrics.oneYear.value === null ? null : fund.metrics.oneYear.value * 100,
+    threeYearReturn:
+      fund.metrics.threeYear.value === null ? null : fund.metrics.threeYear.value * 100,
     currentNav: fund.currentNav?.nav ?? null,
   };
 }

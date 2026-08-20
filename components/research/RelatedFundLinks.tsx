@@ -30,6 +30,8 @@ export function RelatedFundLinks({
                 riskLabel: fund.riskLabel === commonRisk ? null : fund.riskLabel,
                 aum: fund.aum,
                 navPoint: fund.nav,
+                oneYearReturn: fund.oneYearReturn,
+                threeYearReturn: fund.threeYearReturn,
               }}
               density="compact"
             />

@@ -128,7 +128,7 @@ function fundModel(view: FundResearchView, range: PerformanceRange, benchmark: b
       : null,
     relatedFunds: {
       peers: view.relatedFunds.peers.map(
-        ({ schemeCode, schemeName, amc, category, nav, aum, riskLabel }) => ({
+        ({
           schemeCode,
           schemeName,
           amc,
@@ -136,10 +136,22 @@ function fundModel(view: FundResearchView, range: PerformanceRange, benchmark: b
           nav,
           aum,
           riskLabel,
+          oneYearReturn,
+          threeYearReturn,
+        }) => ({
+          schemeCode,
+          schemeName,
+          amc,
+          category,
+          nav,
+          aum,
+          riskLabel,
+          oneYearReturn,
+          threeYearReturn,
         }),
       ),
       fromAmc: view.relatedFunds.fromAmc.map(
-        ({ schemeCode, schemeName, amc, category, nav, aum, riskLabel }) => ({
+        ({
           schemeCode,
           schemeName,
           amc,
@@ -147,6 +159,18 @@ function fundModel(view: FundResearchView, range: PerformanceRange, benchmark: b
           nav,
           aum,
           riskLabel,
+          oneYearReturn,
+          threeYearReturn,
+        }) => ({
+          schemeCode,
+          schemeName,
+          amc,
+          category,
+          nav,
+          aum,
+          riskLabel,
+          oneYearReturn,
+          threeYearReturn,
         }),
       ),
     },

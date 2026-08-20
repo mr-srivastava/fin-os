@@ -19,7 +19,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:ci": "pnpm typecheck && pnpm lint && pnpm test:unit && pnpm test:e2e",
     "preflight:finapi": "node --experimental-strip-types scripts/preflight-finapi.ts",
-    "catalog:refresh": "node --experimental-strip-types --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/catalog-refresh.ts"
+    "catalog:refresh": "node --experimental-strip-types --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/catalogRefresh.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

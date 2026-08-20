@@ -26,9 +26,26 @@ export interface CatalogueRefreshOptions {
 
 const silentLog = () => {};
 
-/** True when `entry` already carries a snapshot taken on the same calendar day as `today` (a `YYYY-MM-DD` prefix of an ISO timestamp). */
+/**
+ * True when `entry` already carries a complete, same-day snapshot: taken today (a `YYYY-MM-DD`
+ * prefix of an ISO timestamp) AND written by a version of this code that populated every
+ * current `financials` field. A snapshot written before a field like `oneYearReturn` existed
+ * has that key `undefined` even though `financials` itself is non-null - checking `snapshotAt`
+ * alone would treat it as "done for today" and skip re-fetching, leaving the new field
+ * permanently blank until the next calendar day. Checking every field's presence makes a
+ * refresh self-healing across schema changes, not just date changes.
+ */
 function hasSnapshotFromDay(entry: CatalogueEntry | undefined, today: string): boolean {
-  return entry?.financials !== null && entry?.financials?.snapshotAt.slice(0, 10) === today;
+  const financials = entry?.financials;
+  return (
+    financials !== null &&
+    financials?.snapshotAt.slice(0, 10) === today &&
+    financials?.nav !== undefined &&
+    financials?.aum !== undefined &&
+    financials?.riskLabel !== undefined &&
+    financials?.oneYearReturn !== undefined &&
+    financials?.threeYearReturn !== undefined
+  );
 }
 
 async function buildCatalogueEntries(log: (message: string) => void): Promise<{
@@ -100,6 +117,8 @@ async function buildCatalogueEntries(log: (message: string) => void): Promise<{
             nav: snapshot.nav,
             aum: snapshot.aum,
             riskLabel: snapshot.riskLabel,
+            oneYearReturn: snapshot.oneYearReturn,
+            threeYearReturn: snapshot.threeYearReturn,
             snapshotAt: generatedAt,
           }
         : (existing?.financials ?? null),
@@ -240,6 +259,8 @@ function toCatalogueScheme(entry: CatalogueEntry): RelatedFund {
     nav: entry.financials?.nav ?? null,
     aum: entry.financials?.aum ?? null,
     riskLabel: entry.financials?.riskLabel ?? null,
+    oneYearReturn: entry.financials?.oneYearReturn ?? null,
+    threeYearReturn: entry.financials?.threeYearReturn ?? null,
   };
 }
 
