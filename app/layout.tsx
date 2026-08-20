@@ -3,6 +3,7 @@ import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/components/query-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
@@ -22,7 +23,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geist.variable} ${geistMono.variable} ${fraunces.variable} dark`}>
+    <html
+      lang="en"
+      className={`${geist.variable} ${geistMono.variable} ${fraunces.variable}`}
+      suppressHydrationWarning
+    >
       <body className="flex min-h-screen flex-col">
         <a
           href="#main-content"
@@ -30,13 +35,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        <TooltipProvider>
-          <QueryProvider>
-            <SiteHeader />
-            <div className="flex-1">{children}</div>
-            <SiteFooter />
-          </QueryProvider>
-        </TooltipProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <QueryProvider>
+              <SiteHeader />
+              <div className="flex-1">{children}</div>
+              <SiteFooter />
+            </QueryProvider>
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

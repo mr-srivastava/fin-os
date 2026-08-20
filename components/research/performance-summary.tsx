@@ -37,8 +37,8 @@ export function PerformanceSummary({
       : `${excessPercent > 0 ? "+" : ""}${(excessPercent * 100).toFixed(1)} pp`;
 
   return (
-    <div className="rounded-lg border bg-muted/20 p-3">
-      <div className={`grid gap-3 ${comparing ? "grid-cols-3" : "grid-cols-1"}`}>
+    <div>
+      <div className={`grid gap-4 ${comparing ? "grid-cols-3" : "grid-cols-1"}`}>
         <div>
           <p className="text-xs text-muted-foreground">Fund</p>
           <p
@@ -51,7 +51,7 @@ export function PerformanceSummary({
           </p>
         </div>
         {comparing ? (
-          <div className="border-l border-border/60 pl-3">
+          <div>
             <p className="truncate text-xs text-muted-foreground">{benchmarkName ?? "Benchmark"}</p>
             <p
               className={`mt-1 font-mono text-lg font-semibold tabular-nums ${statusColorClass(benchmark?.status ?? "neutral")}`}
@@ -64,7 +64,7 @@ export function PerformanceSummary({
           </div>
         ) : null}
         {comparing ? (
-          <div className="border-l border-border/60 pl-3">
+          <div>
             <p className="text-xs text-muted-foreground">Excess</p>
             <p
               className={`mt-1 font-mono text-lg font-semibold tabular-nums ${
@@ -77,7 +77,7 @@ export function PerformanceSummary({
         ) : null}
       </div>
       {hasBenchmark ? (
-        <div className="mt-3 border-t border-border/60 pt-3">
+        <div className="mt-4">
           <Field orientation="horizontal" className="w-auto">
             <Switch id={toggleId} checked={showBenchmark} onCheckedChange={onToggleBenchmark} />
             <FieldLabel htmlFor={toggleId}>Show total-return benchmark</FieldLabel>
@@ -104,40 +104,34 @@ export function ComparisonSummary({
       : `${diffPercent > 0 ? "+" : ""}${(diffPercent * 100).toFixed(1)} pp`;
 
   return (
-    <div className="rounded-lg border bg-muted/20 p-3">
-      <div className="grid grid-cols-3 gap-3">
-        <div>
-          <p className="truncate text-xs text-muted-foreground">{a.name}</p>
-          <p
-            className={`mt-1 font-mono text-lg font-semibold tabular-nums ${statusColorClass(a.status)}`}
-          >
-            {a.returnText}
-          </p>
-          <p className="mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">
-            {a.valueText}
-          </p>
-        </div>
-        <div className="border-l border-border/60 pl-3">
-          <p className="truncate text-xs text-muted-foreground">{b.name}</p>
-          <p
-            className={`mt-1 font-mono text-lg font-semibold tabular-nums ${statusColorClass(b.status)}`}
-          >
-            {b.returnText}
-          </p>
-          <p className="mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">
-            {b.valueText}
-          </p>
-        </div>
-        <div className="border-l border-border/60 pl-3">
-          <p className="text-xs text-muted-foreground">Difference</p>
-          <p
-            className={`mt-1 font-mono text-lg font-semibold tabular-nums ${
-              diffPercent === null ? "" : diffPercent >= 0 ? "text-positive" : "text-negative"
-            }`}
-          >
-            {diffText}
-          </p>
-        </div>
+    <div className="grid grid-cols-3 gap-4">
+      <div>
+        <p className="truncate text-xs text-muted-foreground">{a.name}</p>
+        <p
+          className={`mt-1 font-mono text-lg font-semibold tabular-nums ${statusColorClass(a.status)}`}
+        >
+          {a.returnText}
+        </p>
+        <p className="mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">{a.valueText}</p>
+      </div>
+      <div>
+        <p className="truncate text-xs text-muted-foreground">{b.name}</p>
+        <p
+          className={`mt-1 font-mono text-lg font-semibold tabular-nums ${statusColorClass(b.status)}`}
+        >
+          {b.returnText}
+        </p>
+        <p className="mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">{b.valueText}</p>
+      </div>
+      <div>
+        <p className="text-xs text-muted-foreground">Difference</p>
+        <p
+          className={`mt-1 font-mono text-lg font-semibold tabular-nums ${
+            diffPercent === null ? "" : diffPercent >= 0 ? "text-positive" : "text-negative"
+          }`}
+        >
+          {diffText}
+        </p>
       </div>
     </div>
   );

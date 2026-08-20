@@ -107,7 +107,7 @@ export function FundResearchDataProvider({ schemeCode, routeState }: FundResearc
       <main className="mx-auto grid min-h-screen max-w-6xl place-items-center px-4 sm:px-6">
         <Empty className="max-w-lg">
           <EmptyHeader>
-            <EmptyMedia variant="icon">
+            <EmptyMedia variant="negative">
               <AlertCircleIcon />
             </EmptyMedia>
             <EmptyTitle>Fund unavailable</EmptyTitle>

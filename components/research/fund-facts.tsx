@@ -44,7 +44,7 @@ export function FundFactsGrid({ facts }: { facts: readonly FactDisplay[] }) {
           </div>
         ) : null}
         {wide.map((fact) => (
-          <div key={fact.label} className="border-t border-border/60 pt-4">
+          <div key={fact.label}>
             <p className="text-xs text-muted-foreground">{fact.label}</p>
             <p className="mt-1 text-sm font-semibold">{fact.valueText}</p>
           </div>

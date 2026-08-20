@@ -8,11 +8,11 @@ export function ResearchStart() {
   return (
     <main id="main-content" className="mx-auto max-w-6xl px-4 sm:px-6">
       <section className="flex flex-col items-center py-14 text-center sm:py-20">
-        <p className="font-mono text-xs tracking-[0.18em] text-primary uppercase">
+        <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
           Fund research, not fund advice
         </p>
         <h1 className="mt-4 max-w-3xl font-heading text-4xl leading-[1.05] font-medium tracking-tight text-balance sm:text-6xl">
-          Understand a fund’s <em className="text-primary not-italic">return path.</em>
+          Understand a fund’s <em className="text-gradient-brand not-italic">return path.</em>
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
           Look up a known fund or browse the eligible equity universe. navnote helps you research

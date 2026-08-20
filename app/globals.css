@@ -5,33 +5,258 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Ledger — ink-paper dark ground, brass ink for accents, ledger green/brick for gains/losses. */
-  --background: oklch(0.175 0.014 152);
-  --foreground: oklch(0.94 0.021 89);
-  --card: oklch(0.213 0.015 152);
-  --card-foreground: oklch(0.94 0.021 89);
-  --popover: oklch(0.213 0.015 152);
-  --popover-foreground: oklch(0.94 0.021 89);
-  --primary: oklch(0.78 0.13 84);
-  --primary-foreground: oklch(0.19 0.02 84);
-  --secondary: oklch(0.28 0.017 150);
-  --secondary-foreground: oklch(0.94 0.021 89);
-  --muted: oklch(0.255 0.016 150);
-  --muted-foreground: oklch(0.68 0.026 90);
-  --accent: oklch(0.28 0.017 150);
-  --accent-foreground: oklch(0.94 0.021 89);
-  --destructive: oklch(0.63 0.19 25);
-  --positive: oklch(0.72 0.13 152);
-  --negative: oklch(0.66 0.18 27);
-  --border: oklch(0.94 0.021 89 / 12%);
-  --input: oklch(0.94 0.021 89 / 15%);
-  --ring: oklch(0.78 0.13 84 / 60%);
-  --chart-1: oklch(0.78 0.13 84);
-  --chart-2: oklch(0.72 0.13 152);
-  --chart-3: oklch(0.7 0.09 230);
-  --chart-4: oklch(0.66 0.18 27);
-  --chart-5: oklch(0.68 0.07 300);
-  --radius: 0.3rem;
+  /* ---------------------------------------------------------------------
+   * Primitives — implementation detail. Components must not reference
+   * these directly; consume the semantic tokens below (or their Tailwind
+   * utilities, e.g. `bg-positive-surface`) instead.
+   * --------------------------------------------------------------------- */
+  --storm-25: #fcfdfd;
+  --storm-50: #f7f9f9;
+  --storm-100: #eef2f3;
+  --storm-200: #dce4e6;
+  --storm-300: #bac8cc;
+  --storm-400: #8fa2a7;
+  --storm-500: #687d83;
+  --storm-600: #4d6268;
+  --storm-700: #384c52;
+  --storm-800: #223940;
+  --storm-900: #0f282f;
+  --storm-950: #091b20;
+
+  --cyan-50: #ecfeff;
+  --cyan-100: #cfffff;
+  --cyan-200: #a1fcfc;
+  --cyan-300: #65f7f7;
+  --cyan-400: #22f2f2;
+  --cyan-500: #02eff0;
+  --cyan-600: #00c4c7;
+  --cyan-700: #00999e;
+  --cyan-800: #08777b;
+  --cyan-900: #0b5f63;
+  --cyan-950: #043e42;
+
+  --green-50: #f0fdf4;
+  --green-100: #dcfce7;
+  --green-200: #bbf7d0;
+  --green-300: #86efac;
+  --green-400: #4ade80;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+  --green-800: #166534;
+  --green-900: #14532d;
+
+  --red-50: #fef2f2;
+  --red-100: #fee2e2;
+  --red-200: #fecaca;
+  --red-300: #fca5a5;
+  --red-400: #f87171;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+  --red-700: #b91c1c;
+  --red-800: #991b1b;
+  --red-900: #7f1d1d;
+
+  --amber-50: #fffbeb;
+  --amber-100: #fef3c7;
+  --amber-200: #fde68a;
+  --amber-300: #fcd34d;
+  --amber-400: #fbbf24;
+  --amber-500: #f59e0b;
+  --amber-600: #d97706;
+  --amber-700: #b45309;
+  --amber-800: #92400e;
+  --amber-900: #78350f;
+
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-300: #93c5fd;
+  --blue-400: #60a5fa;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue-800: #1e40af;
+  --blue-900: #1e3a8a;
+
+  /* -----------------------------------------------------------------
+   * Light theme — semantic tokens
+   * ----------------------------------------------------------------- */
+  --bg-canvas: var(--storm-25);
+  --bg-surface: #ffffff;
+  --bg-surface-subtle: var(--storm-50);
+  --bg-surface-muted: var(--storm-100);
+  --bg-surface-hover: var(--storm-50);
+  --bg-surface-active: var(--cyan-50);
+
+  --text-primary: var(--storm-900);
+  --text-secondary: var(--storm-600);
+  --text-tertiary: var(--storm-500);
+  --text-disabled: var(--storm-400);
+  --text-inverse: #ffffff;
+  --text-link: var(--cyan-800);
+  --text-link-hover: var(--cyan-900);
+
+  --border-subtle: var(--storm-100);
+  --border-default: var(--storm-200);
+  --border-strong: var(--storm-300);
+  --divider: var(--storm-200);
+
+  --interactive-primary: var(--storm-900);
+  --interactive-primary-hover: var(--storm-800);
+  --interactive-primary-active: var(--storm-950);
+  --interactive-on-primary: #ffffff;
+
+  --brand-accent: var(--cyan-500);
+  --brand-accent-hover: var(--cyan-600);
+  --brand-accent-strong: var(--cyan-800);
+  --accent-surface: var(--cyan-50);
+  --accent-surface-hover: var(--cyan-100);
+  --accent-border: var(--cyan-200);
+  --accent-text: var(--cyan-800);
+
+  --focus-ring: var(--cyan-500);
+
+  --positive-surface: var(--green-50);
+  --positive-border: var(--green-200);
+  --positive-text: var(--green-700);
+  --positive-icon: var(--green-600);
+  --positive-strong: var(--green-600);
+
+  --negative-surface: var(--red-50);
+  --negative-border: var(--red-200);
+  --negative-text: var(--red-700);
+  --negative-icon: var(--red-600);
+  --negative-strong: var(--red-600);
+
+  --warning-surface: var(--amber-50);
+  --warning-border: var(--amber-200);
+  --warning-text: var(--amber-700);
+  --warning-icon: var(--amber-600);
+  --warning-strong: var(--amber-500);
+
+  --info-surface: var(--blue-50);
+  --info-border: var(--blue-200);
+  --info-text: var(--blue-700);
+  --info-icon: var(--blue-600);
+
+  --disabled-bg: var(--storm-100);
+  --disabled-text: var(--storm-400);
+  --disabled-border: var(--storm-200);
+
+  --selected-bg: var(--cyan-50);
+  --selected-hover: var(--cyan-100);
+  --selected-border: var(--cyan-300);
+  --selected-text: var(--storm-900);
+  --selected-accent: var(--cyan-600);
+
+  --destructive: var(--red-600);
+  --destructive-hover: var(--red-700);
+  --destructive-foreground: #ffffff;
+
+  --change-neutral: var(--storm-500);
+
+  --chart-1: #02bfc3;
+  --chart-2: #6366f1;
+  --chart-3: #8b5cf6;
+  --chart-4: #2563eb;
+  --chart-5: #ec4899;
+  --chart-6: #64748b;
+  --chart-grid: var(--storm-200);
+  --chart-axis: var(--storm-500);
+
+  --gradient-brand: linear-gradient(135deg, #0f282f 0%, #0f282f 25%, #08777b 65%, #02eff0 100%);
+
+  --radius: 0.5rem;
+  --shadow-card: 0 1px 2px oklch(0.145 0.02 220 / 4%), 0 8px 20px -8px oklch(0.145 0.02 220 / 8%);
+  --shadow-raised:
+    0 2px 4px oklch(0.145 0.02 220 / 6%), 0 16px 32px -12px oklch(0.145 0.02 220 / 14%);
+}
+
+.dark {
+  --bg-canvas: var(--storm-950);
+  --bg-surface: var(--storm-900);
+  --bg-surface-subtle: #173239;
+  --bg-surface-muted: var(--storm-800);
+  --bg-surface-hover: #173239;
+  --bg-surface-active: var(--cyan-950);
+
+  --text-primary: var(--storm-50);
+  --text-secondary: var(--storm-300);
+  --text-tertiary: var(--storm-400);
+  --text-disabled: var(--storm-500);
+  --text-inverse: var(--storm-950);
+  --text-link: var(--cyan-300);
+  --text-link-hover: var(--cyan-200);
+
+  --border-subtle: #173239;
+  --border-default: var(--storm-700);
+  --border-strong: var(--storm-600);
+  --divider: var(--storm-700);
+
+  --interactive-primary: var(--storm-100);
+  --interactive-primary-hover: var(--storm-200);
+  --interactive-primary-active: var(--storm-300);
+  --interactive-on-primary: var(--storm-950);
+
+  --brand-accent: var(--cyan-500);
+  --brand-accent-hover: var(--cyan-400);
+  --brand-accent-strong: var(--cyan-300);
+  --accent-surface: var(--cyan-950);
+  --accent-surface-hover: var(--cyan-900);
+  --accent-border: var(--cyan-800);
+  --accent-text: var(--cyan-300);
+
+  --focus-ring: var(--cyan-400);
+
+  --positive-surface: var(--green-900);
+  --positive-border: var(--green-700);
+  --positive-text: var(--green-400);
+  --positive-icon: var(--green-400);
+  --positive-strong: var(--green-500);
+
+  --negative-surface: var(--red-900);
+  --negative-border: var(--red-700);
+  --negative-text: var(--red-400);
+  --negative-icon: var(--red-400);
+  --negative-strong: var(--red-500);
+
+  --warning-surface: var(--amber-900);
+  --warning-border: var(--amber-700);
+  --warning-text: var(--amber-400);
+  --warning-icon: var(--amber-400);
+  --warning-strong: var(--amber-500);
+
+  --info-surface: var(--blue-900);
+  --info-border: var(--blue-700);
+  --info-text: var(--blue-400);
+  --info-icon: var(--blue-400);
+
+  --disabled-bg: var(--storm-800);
+  --disabled-text: var(--storm-500);
+  --disabled-border: var(--storm-700);
+
+  --selected-bg: var(--cyan-950);
+  --selected-hover: var(--cyan-900);
+  --selected-border: var(--cyan-700);
+  --selected-text: var(--storm-50);
+  --selected-accent: var(--cyan-500);
+
+  --destructive: var(--red-600);
+  --destructive-hover: var(--red-700);
+  --destructive-foreground: #ffffff;
+
+  --change-neutral: var(--storm-400);
+
+  --chart-1: #02bfc3;
+  --chart-2: #818cf8;
+  --chart-3: #a78bfa;
+  --chart-4: #60a5fa;
+  --chart-5: #f472b6;
+  --chart-6: #94a3b8;
+  --chart-grid: var(--storm-700);
+  --chart-axis: var(--storm-400);
+
   --shadow-card:
     0 1px 2px oklch(0.05 0 0 / 35%), 0 8px 20px -8px oklch(0.05 0 0 / 55%),
     inset 0 1px 0 oklch(0.94 0.021 89 / 6%);
@@ -44,26 +269,100 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-fraunces);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+
+  /* shadcn structural tokens, mapped onto the semantic layer */
+  --color-background: var(--bg-canvas);
+  --color-foreground: var(--text-primary);
+  --color-card: var(--bg-surface);
+  --color-card-foreground: var(--text-primary);
+  --color-popover: var(--bg-surface);
+  --color-popover-foreground: var(--text-primary);
+  --color-primary: var(--interactive-primary);
+  --color-primary-foreground: var(--interactive-on-primary);
+  --color-secondary: var(--bg-surface-subtle);
+  --color-secondary-foreground: var(--text-primary);
+  --color-muted: var(--bg-surface-muted);
+  --color-muted-foreground: var(--text-secondary);
+  /* Structural hover/accent surface used by menus, dropdowns, toggles — neutral, not brand cyan. */
+  --color-accent: var(--bg-surface-hover);
+  --color-accent-foreground: var(--text-primary);
   --color-destructive: var(--destructive);
-  --color-positive: var(--positive);
-  --color-negative: var(--negative);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border-default);
+  --color-input: var(--border-strong);
+  --color-ring: var(--focus-ring);
+
+  /* Brand / cyan — identity, selection, interaction emphasis. */
+  --color-brand: var(--brand-accent);
+  --color-brand-hover: var(--brand-accent-hover);
+  --color-brand-strong: var(--brand-accent-strong);
+  --color-accent-surface: var(--accent-surface);
+  --color-accent-surface-hover: var(--accent-surface-hover);
+  --color-accent-border: var(--accent-border);
+  --color-accent-text: var(--accent-text);
+
+  --color-link: var(--text-link);
+  --color-link-hover: var(--text-link-hover);
+
+  /* Selection — brand concept, not positive/semantic. */
+  --color-selected-bg: var(--selected-bg);
+  --color-selected-hover: var(--selected-hover);
+  --color-selected-border: var(--selected-border);
+  --color-selected-text: var(--selected-text);
+  --color-selected-accent: var(--selected-accent);
+
+  /* Semantic — positive. */
+  --color-positive: var(--positive-text);
+  --color-positive-surface: var(--positive-surface);
+  --color-positive-border: var(--positive-border);
+  --color-positive-text: var(--positive-text);
+  --color-positive-icon: var(--positive-icon);
+  --color-positive-strong: var(--positive-strong);
+
+  /* Semantic — negative. */
+  --color-negative: var(--negative-text);
+  --color-negative-surface: var(--negative-surface);
+  --color-negative-border: var(--negative-border);
+  --color-negative-text: var(--negative-text);
+  --color-negative-icon: var(--negative-icon);
+  --color-negative-strong: var(--negative-strong);
+
+  /* Semantic — warning. */
+  --color-warning: var(--warning-text);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-border: var(--warning-border);
+  --color-warning-text: var(--warning-text);
+  --color-warning-icon: var(--warning-icon);
+  --color-warning-strong: var(--warning-strong);
+
+  /* Semantic — informational. */
+  --color-info: var(--info-text);
+  --color-info-surface: var(--info-surface);
+  --color-info-border: var(--info-border);
+  --color-info-text: var(--info-text);
+  --color-info-icon: var(--info-icon);
+
+  --color-disabled-bg: var(--disabled-bg);
+  --color-disabled-text: var(--disabled-text);
+  --color-disabled-border: var(--disabled-border);
+
+  --color-change-neutral: var(--change-neutral);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-divider: var(--divider);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-axis: var(--chart-axis);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -78,7 +377,6 @@
   }
   body {
     @apply min-h-screen bg-background font-sans text-foreground antialiased;
-    color-scheme: dark;
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
@@ -95,5 +393,19 @@
       var(--border) 35px,
       var(--border) calc(35px + 1px)
     );
+  }
+  .bg-gradient-brand {
+    background-image: var(--gradient-brand);
+  }
+  .text-gradient-brand {
+    /* The gradient's Storm-900 end is illegible on the dark canvas, so dark mode falls back
+       to solid brand cyan instead of reusing the light-mode gradient stops. */
+    background-image: var(--gradient-brand);
+    background-clip: text;
+    color: transparent;
+  }
+  .dark .text-gradient-brand {
+    background-image: none;
+    color: var(--brand-accent);
   }
 }

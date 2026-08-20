@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FundCard, FundCardSkeleton, majorityRiskLabel } from "@/components/fund-card";
 import { SelectionBar } from "@/components/selection-bar";
@@ -33,9 +32,7 @@ export function CategoryExplorer() {
     <section aria-labelledby="category-explorer-title">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <p className="font-mono text-xs tracking-[0.18em] text-primary uppercase">
-            Research index
-          </p>
+          <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">Research index</p>
           <h2
             id="category-explorer-title"
             className="mt-2 font-heading text-2xl font-medium tracking-tight"
@@ -70,8 +67,7 @@ export function CategoryExplorer() {
         })}
       </div>
       <div className="mt-8" aria-live="polite" aria-busy={categoryQuery.isLoading}>
-        <Separator />
-        <div className="pt-6">
+        <div>
           {categoryQuery.data ? (
             <p className="text-sm text-muted-foreground">
               {categoryQuery.data.schemes.length} shown · alphabetical
@@ -91,7 +87,7 @@ export function CategoryExplorer() {
               ))}
             </ul>
           ) : categoryQuery.isError ? (
-            <p className="mt-5 text-sm text-destructive">{categoryQuery.error.message}</p>
+            <p className="mt-5 text-sm text-negative">{categoryQuery.error.message}</p>
           ) : categoryQuery.data?.schemes.length ? (
             <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {(() => {

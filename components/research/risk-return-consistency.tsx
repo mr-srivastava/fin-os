@@ -42,9 +42,9 @@ export function RiskAndReturnConsistency({
             >
               Historical risk
             </h3>
-            <div className="mt-3 grid grid-cols-2 divide-x divide-border/60 rounded-lg border border-border/60">
+            <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4">
               {riskMetrics.map((metric) => (
-                <div key={metric.label} className="p-3">
+                <div key={metric.label}>
                   <p className="text-xs text-muted-foreground">{metric.label}</p>
                   <p className="mt-1 font-mono text-lg font-semibold tabular-nums">
                     {metric.valueText}
@@ -61,10 +61,7 @@ export function RiskAndReturnConsistency({
         ) : null}
 
         {consistency ? (
-          <section
-            aria-labelledby="return-consistency-title"
-            className={`space-y-4 ${riskMetrics.length ? "border-t border-border/60 pt-4" : ""}`}
-          >
+          <section aria-labelledby="return-consistency-title" className="space-y-4">
             <h3
               id="return-consistency-title"
               className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"

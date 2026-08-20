@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ArrowLeftIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 
-const externalLinkClassName = "font-medium text-foreground underline underline-offset-4";
+const externalLinkClassName =
+  "font-medium text-link underline underline-offset-4 hover:text-link-hover";
 
 export default function DataAndLimitationsPage() {
   return (

@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import type { SectorDisplay } from "@/lib/research-display/types";
 
 const VISIBLE_HOLDINGS = 6;
@@ -73,7 +72,6 @@ export function SectorHoldings({ sectors }: { sectors: readonly SectorDisplay[] 
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Separator />
         <Accordion multiple>
           {sectors.map((sector) => {
             return (

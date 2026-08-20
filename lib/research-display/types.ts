@@ -24,7 +24,7 @@ export interface OutcomeDisplay {
 
 export interface ChartSeriesDisplay {
   name: string;
-  color: "foreground" | "chart-1" | "chart-3";
+  color: "chart-1" | "chart-3";
   points: readonly { date: string; value: number }[];
 }
 

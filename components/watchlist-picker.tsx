@@ -83,7 +83,7 @@ export function WatchlistPicker({ schemeCodes, children }: WatchlistPickerProps)
           research triage, not investment recommendations.
         </p>
         {mutationError ? (
-          <output className="mt-2 block text-xs text-destructive">{mutationError}</output>
+          <output className="mt-2 block text-xs text-negative">{mutationError}</output>
         ) : null}
         <div className="mt-3 flex max-h-56 flex-col gap-2 overflow-y-auto">
           {watchlistsQuery.isLoading ? (

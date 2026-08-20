@@ -278,7 +278,7 @@ export function useComparisonScreenModel({
               range,
               series: data.performance.data[range].series.map((series, index) => ({
                 name: series.name,
-                color: index ? ("chart-3" as const) : ("foreground" as const),
+                color: index ? ("chart-3" as const) : ("chart-1" as const),
                 points: series.points,
               })),
               outcomes: data.performance.data[range].outcomes.map((outcome, index) => ({

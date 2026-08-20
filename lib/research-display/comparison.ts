@@ -15,7 +15,7 @@ export function toComparisonPerformanceDisplay(
 ) {
   const series: ChartSeriesDisplay[] = funds.map((fund, index) => ({
     name: fund.scheme.schemeName,
-    color: index === 0 ? "foreground" : "chart-3",
+    color: index === 0 ? "chart-1" : "chart-3",
     points: relativeReturnSeries(filterSeriesByRange(fund.nav, range)),
   }));
   const outcomes: OutcomeDisplay[] = funds.map((fund, index) => {

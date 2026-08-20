@@ -72,7 +72,7 @@ export function WatchlistDetail({ id }: { id: string }) {
                 : ""}
             </p>
             {removeMutation.isError ? (
-              <output className="mt-2 block text-sm text-destructive">
+              <output className="mt-2 block text-sm text-negative">
                 {removeMutation.error.message}
               </output>
             ) : null}
@@ -113,7 +113,10 @@ export function WatchlistDetail({ id }: { id: string }) {
                     Select funds from Explore and add them to this watchlist.
                   </EmptyDescription>
                 </EmptyHeader>
-                <Link href="/" className="text-sm font-medium underline-offset-4 hover:underline">
+                <Link
+                  href="/"
+                  className="text-sm font-medium text-link underline-offset-4 hover:text-link-hover hover:underline"
+                >
                   Go to Explore
                 </Link>
               </Empty>

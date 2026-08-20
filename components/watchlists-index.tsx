@@ -56,7 +56,7 @@ export function WatchlistsIndex() {
   return (
     <main id="main-content" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <header>
-        <p className="font-mono text-xs tracking-[0.18em] text-primary uppercase">
+        <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
           Distributor lists
         </p>
         <h1 className="mt-2 font-heading text-3xl font-medium tracking-tight sm:text-4xl">
@@ -74,7 +74,7 @@ export function WatchlistsIndex() {
 
       <div className="mt-8">
         {deleteMutation.isError ? (
-          <output className="mb-3 block text-sm text-destructive">
+          <output className="mb-3 block text-sm text-negative">
             {deleteMutation.error.message}
           </output>
         ) : null}
@@ -83,7 +83,7 @@ export function WatchlistsIndex() {
             <Spinner aria-label="Loading watchlists" /> Loading watchlists…
           </div>
         ) : query.isError ? (
-          <p className="text-sm text-destructive">{query.error.message}</p>
+          <p className="text-sm text-negative">{query.error.message}</p>
         ) : query.data?.watchlists.length ? (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {query.data.watchlists.map((watchlist) => (
@@ -125,7 +125,7 @@ export function WatchlistsIndex() {
                           </Button>
                         </form>
                         {renameError && editingId === watchlist.id ? (
-                          <output className="mt-1.5 block text-xs text-destructive">
+                          <output className="mt-1.5 block text-xs text-negative">
                             {renameError}
                           </output>
                         ) : null}
@@ -202,7 +202,10 @@ export function WatchlistsIndex() {
                 Create a list above, or select funds from Explore and add them to a new list.
               </EmptyDescription>
             </EmptyHeader>
-            <Link href="/" className="text-sm font-medium underline-offset-4 hover:underline">
+            <Link
+              href="/"
+              className="text-sm font-medium text-link underline-offset-4 hover:text-link-hover hover:underline"
+            >
               Go to Explore
             </Link>
           </Empty>

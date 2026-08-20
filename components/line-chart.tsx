@@ -24,10 +24,11 @@ import {
   formatRupees,
 } from "@/lib/utils";
 
-export type ChartColor = "foreground" | "chart-1" | "chart-3";
+/** Every chart in the app uses these same two fixed colors: chart-1 for the primary/first series, chart-3 for the secondary/second series. */
+export type ChartColor = "chart-1" | "chart-3";
 
 export function chartColorBgClass(color: ChartColor) {
-  return color === "foreground" ? "bg-foreground" : `bg-(--${color})`;
+  return `bg-(--${color})`;
 }
 export interface ChartPoint {
   date: string;
