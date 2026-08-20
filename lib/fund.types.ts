@@ -1,3 +1,5 @@
+import type { RelatedFund, Scheme } from "@/lib/fund.schema";
+
 /** A dated NAV value. `nav` is a positive currency value. */
 export interface NavPoint {
   date: string;
@@ -22,28 +24,6 @@ export interface ReturnConsistency {
 }
 
 export type BenchmarkReturnBasis = "total_return";
-
-export interface Scheme {
-  schemeCode: string;
-  schemeName: string;
-  amc: string;
-  category: string;
-  plan: string;
-  option: string;
-}
-
-/**
- * A related-fund entry enriched with a lightweight snapshot: latest NAV and top-line facts.
- * `oneYearReturn`/`threeYearReturn` are annualized (CAGR) returns as percentages (e.g. 12.3 for
- * +12.3%), matching `FundCard`'s own `formatPercent` - not the raw fraction `FundMetrics` uses.
- */
-export interface RelatedFund extends Scheme {
-  nav: NavPoint | null;
-  aum: number | null;
-  riskLabel: string | null;
-  oneYearReturn: number | null;
-  threeYearReturn: number | null;
-}
 
 export interface Metric {
   value: number | null;
@@ -122,19 +102,6 @@ export interface FundResearch {
     peers: RelatedFund[];
     fromAmc: RelatedFund[];
   };
-}
-
-export type ApiErrorCode =
-  | "invalid_query"
-  | "invalid_scheme_code"
-  | "invalid_isin"
-  | "invalid_comparison"
-  | "not_found"
-  | "provider_error";
-
-export interface ApiError {
-  error: ApiErrorCode;
-  message: string;
 }
 
 export type FundPair<T> = readonly [T, T];

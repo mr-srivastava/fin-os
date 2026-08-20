@@ -1,7 +1,7 @@
-import * as v from "valibot";
-
+import { parseJsonBody } from "@/lib/apiRoute";
 import { getOrCreateDeviceId } from "@/lib/deviceId";
-import { isWatchlistName, WatchlistNameBodySchema } from "@/lib/watchlistInput";
+import { isWatchlistName } from "@/lib/watchlistInput";
+import { WatchlistNameBodySchema } from "@/lib/watchlist.schema";
 import { watchlistService } from "@/lib/watchlist.service";
 
 interface RouteDeps {
@@ -24,8 +24,8 @@ export async function handleGet(deps: RouteDeps = defaultDeps) {
 
 export async function handlePost(request: Request, deps: RouteDeps = defaultDeps) {
   const deviceId = await deps.getDeviceId();
-  const parsed = v.safeParse(WatchlistNameBodySchema, await request.json().catch(() => null));
-  const name = parsed.success ? parsed.output.name.trim() : "";
+  const body = await parseJsonBody(request, WatchlistNameBodySchema);
+  const name = body?.name.trim() ?? "";
   if (!isWatchlistName(name)) {
     return Response.json(
       { error: "invalid_name", message: "Give the watchlist a name up to 80 characters." },

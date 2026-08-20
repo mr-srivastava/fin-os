@@ -3,13 +3,12 @@ import * as v from "valibot";
 import {
   ApiErrorSchema,
   ComparisonViewSchema,
-  FundResearchSchema,
   FundResearchViewSchema,
   NavPointSchema,
   SchemeSearchSchema,
+  type ApiErrorCode,
 } from "./fund.schema.ts";
 import { isIsin, isSchemeCode, isSearchQuery } from "./fundInput.ts";
-import type { ApiErrorCode } from "./fund.types.ts";
 
 test("accepts a valid scheme search response", () => {
   const result = v.safeParse(SchemeSearchSchema, {
@@ -26,15 +25,6 @@ test("accepts a valid scheme search response", () => {
   });
 
   assert.equal(result.success, true);
-});
-
-test("rejects an invalid nested fund response", () => {
-  const result = v.safeParse(FundResearchSchema, {
-    scheme: {},
-    nav: [{ date: "2025-01-01", nav: "not-a-number" }],
-  });
-
-  assert.equal(result.success, false);
 });
 
 test("rejects malformed nested research views", () => {

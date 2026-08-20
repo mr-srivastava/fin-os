@@ -8,7 +8,10 @@ function joined(left: readonly WeightedItem[], right: readonly WeightedItem[]) {
   const rightByName = new Map(right.map((item) => [item.name, item.weight]));
   return [...new Set([...leftByName.keys(), ...rightByName.keys()])].map((name) => ({
     name,
-    weights: [leftByName.get(name) ?? null, rightByName.get(name) ?? null] as const,
+    weights: [leftByName.get(name) ?? null, rightByName.get(name) ?? null] as [
+      number | null,
+      number | null,
+    ],
   }));
 }
 
@@ -67,7 +70,10 @@ export function toComparisonView(
       ? {
           status: "ready" as const,
           data: {
-            reportDates: [leftPortfolio.asOf, rightPortfolio.asOf] as const,
+            reportDates: [leftPortfolio.asOf, rightPortfolio.asOf] as [
+              string | null,
+              string | null,
+            ],
             sectorAllocation: joined(leftPortfolio.sectors, rightPortfolio.sectors),
             assetAllocation: joined(leftPortfolio.assetAllocation, rightPortfolio.assetAllocation),
             marketCapAllocation: joined(
@@ -77,7 +83,7 @@ export function toComparisonView(
             concentration: [
               leftPortfolio.topTenConcentration,
               rightPortfolio.topTenConcentration,
-            ] as const,
+            ] as [number | null, number | null],
           },
         }
       : {

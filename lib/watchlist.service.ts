@@ -4,11 +4,8 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "./mongo.ts";
 import { WATCHLIST_MAX_ITEMS } from "./watchlistInput.ts";
-import {
-  WATCHLISTS_COLLECTION,
-  type WatchlistDocument,
-  type WatchlistSummary,
-} from "./watchlist.types.ts";
+import { WATCHLISTS_COLLECTION, type WatchlistDocument } from "./watchlist.types.ts";
+import type { WatchlistSummary } from "./watchlist.schema.ts";
 
 export const WATCHLIST_ITEM_LIMIT_REACHED = "watchlist_item_limit_reached" as const;
 

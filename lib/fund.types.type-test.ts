@@ -1,10 +1,5 @@
-import {
-  isFundPair,
-  type ApiError,
-  type FundPair,
-  type FundResearch,
-  type MetricKey,
-} from "./fund.types.ts";
+import { isFundPair, type FundPair, type FundResearch, type MetricKey } from "./fund.types.ts";
+import type { ApiError } from "./fund.schema.ts";
 
 const validError = {
   error: "not_found",

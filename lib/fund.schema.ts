@@ -1,7 +1,5 @@
 import * as v from "valibot";
 import { isIsoDate } from "@/lib/date";
-import type { ApiError, FundResearch, RelatedFund, Scheme } from "@/lib/fund.types";
-import type { ComparisonView, FundResearchView } from "@/lib/research-view/types";
 
 const FiniteNumberSchema = v.pipe(v.number(), v.finite());
 const NullableFiniteNumberSchema = v.nullable(FiniteNumberSchema);
@@ -18,6 +16,9 @@ export const NavPointSchema = v.object({
   nav: PositiveFiniteNumberSchema,
 });
 
+/** Shape of a POST body carrying a scheme code; the value itself is still checked with `isSchemeCode`. */
+export const SchemeCodeBodySchema = v.object({ schemeCode: v.string() });
+
 const schemeFields = {
   schemeCode: v.string(),
   schemeName: v.string(),
@@ -27,9 +28,10 @@ const schemeFields = {
   option: v.string(),
 };
 
-export const SchemeSchema: v.GenericSchema<Scheme> = v.object(schemeFields);
+export const SchemeSchema = v.object(schemeFields);
+export type Scheme = v.InferOutput<typeof SchemeSchema>;
 
-export const RelatedFundSchema: v.GenericSchema<RelatedFund> = v.object({
+export const RelatedFundSchema = v.object({
   ...schemeFields,
   nav: v.nullable(NavPointSchema),
   aum: NullableFiniteNumberSchema,
@@ -37,6 +39,7 @@ export const RelatedFundSchema: v.GenericSchema<RelatedFund> = v.object({
   oneYearReturn: NullableFiniteNumberSchema,
   threeYearReturn: NullableFiniteNumberSchema,
 });
+export type RelatedFund = v.InferOutput<typeof RelatedFundSchema>;
 
 const RelatedSnapshotSchema = v.object({
   nav: v.nullable(NavPointSchema),
@@ -52,109 +55,29 @@ export const RelatedSnapshotsSchema = v.object({
   snapshots: v.record(v.string(), RelatedSnapshotSchema),
 });
 
-const MetricSchema = v.object({
-  label: v.string(),
-  value: NullableFiniteNumberSchema,
-});
-
-const DataAvailabilitySchema = v.union([
-  v.object({ available: v.literal(true) }),
-  v.object({ available: v.literal(false), reason: v.string() }),
-]);
-
-const NavHistoryAvailabilitySchema = v.union([
-  v.object({ available: v.literal(true), source: v.literal("TigZig") }),
-  v.object({ available: v.literal(false), source: v.null(), reason: v.string() }),
-]);
-
-const AllocationItemSchema = v.object({
-  name: v.string(),
-  weight: NonNegativeFiniteNumberSchema,
-});
-
-const PortfolioItemSchema = v.object({
-  name: v.string(),
-  weight: NonNegativeFiniteNumberSchema,
-  sector: v.nullable(v.string()),
-});
-
-const PortfolioSchema = v.object({
-  asOf: v.nullable(v.string()),
-  holdings: v.array(PortfolioItemSchema),
-  sectors: v.array(AllocationItemSchema),
-  assetAllocation: v.array(AllocationItemSchema),
-  marketCapAllocation: v.array(AllocationItemSchema),
-  topTenConcentration: NullableFiniteNumberSchema,
-});
-
-const BenchmarkSchema = v.object({
-  name: v.string(),
-  returnBasis: v.literal("total_return"),
-  nav: v.array(NavPointSchema),
-});
-
-export const FundResearchSchema: v.GenericSchema<FundResearch> = v.object({
-  scheme: SchemeSchema,
-  nav: v.array(NavPointSchema),
-  benchmark: v.nullable(BenchmarkSchema),
-  currentNav: v.nullable(NavPointSchema),
-  facts: v.object({
-    aum: NullableFiniteNumberSchema,
-    expenseRatio: NullableFiniteNumberSchema,
-    portfolioTurnover: NullableFiniteNumberSchema,
-    benchmark: v.nullable(v.string()),
-    riskLabel: v.nullable(v.string()),
-    managers: v.array(v.string()),
-  }),
-  portfolio: v.nullable(PortfolioSchema),
-  availability: v.object({
-    navHistory: NavHistoryAvailabilitySchema,
-    facts: DataAvailabilitySchema,
-    portfolio: DataAvailabilitySchema,
-  }),
-  returnConsistency: v.nullable(
-    v.object({
-      timeframe: v.string(),
-      averageReturn: FiniteNumberSchema,
-      medianReturn: FiniteNumberSchema,
-      minReturn: FiniteNumberSchema,
-      maxReturn: FiniteNumberSchema,
-      positiveRatio: FiniteNumberSchema,
-      negativeRatio: FiniteNumberSchema,
-      consistencyScore: NullableFiniteNumberSchema,
-    }),
-  ),
-  relatedFunds: v.object({
-    peers: v.array(RelatedFundSchema),
-    fromAmc: v.array(RelatedFundSchema),
-  }),
-  metrics: v.object({
-    oneYear: MetricSchema,
-    threeYear: MetricSchema,
-    fiveYear: MetricSchema,
-    volatility: MetricSchema,
-    maxDrawdown: MetricSchema,
-  }),
-});
-
 export const SchemeSearchSchema = v.object({ schemes: v.array(SchemeSchema) });
 export const CategorySchemeListSchema = v.object({
   category: v.string(),
   schemes: v.array(RelatedFundSchema),
 });
-export const ApiErrorSchema: v.GenericSchema<ApiError> = v.object({
-  error: v.picklist([
-    "invalid_query",
-    "invalid_scheme_code",
-    "invalid_isin",
-    "invalid_comparison",
-    "not_found",
-    "provider_error",
-  ]),
+const API_ERROR_CODES = [
+  "invalid_query",
+  "invalid_scheme_code",
+  "invalid_isin",
+  "invalid_comparison",
+  "not_found",
+  "provider_error",
+] as const;
+export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
+
+export const ApiErrorSchema = v.object({
+  error: v.picklist(API_ERROR_CODES),
   message: v.string(),
 });
+export type ApiError = v.InferOutput<typeof ApiErrorSchema>;
 
 const ToneSchema = v.picklist(["gain", "loss", "neutral"]);
+export type Tone = v.InferOutput<typeof ToneSchema>;
 const DatedValueSchema = v.object({ date: IsoDateSchema, value: FiniteNumberSchema });
 const PerformanceRangeViewSchema = v.object({
   label: v.string(),
@@ -168,6 +91,7 @@ const PerformanceRangeViewSchema = v.object({
     }),
   ),
 });
+export type PerformanceRangeView = v.InferOutput<typeof PerformanceRangeViewSchema>;
 const PerformanceRangesSchema = v.object({
   "6m": PerformanceRangeViewSchema,
   "1y": PerformanceRangeViewSchema,
@@ -235,7 +159,8 @@ export const FundResearchViewSchema = v.object({
     managers: v.array(v.string()),
   }),
   portfolio: SectionSchema(FundPortfolioViewSchema),
-}) satisfies v.GenericSchema<FundResearchView>;
+});
+export type FundResearchView = v.InferOutput<typeof FundResearchViewSchema>;
 
 const ComparisonPortfolioViewSchema = v.object({
   reportDates: v.tuple([v.nullable(IsoDateSchema), v.nullable(IsoDateSchema)]),
@@ -291,4 +216,5 @@ export const ComparisonViewSchema = v.object({
       portfolio: SectionSchema(ComparisonPortfolioViewSchema),
     }),
   ),
-}) satisfies v.GenericSchema<ComparisonView>;
+});
+export type ComparisonView = v.InferOutput<typeof ComparisonViewSchema>;

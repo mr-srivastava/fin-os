@@ -1,4 +1,4 @@
-import * as v from "valibot";
+import { createApiClient, type ApiResult as SharedApiResult } from "@/lib/apiClient";
 import {
   ApiErrorSchema,
   CategorySchemeListSchema,
@@ -6,51 +6,24 @@ import {
   FundResearchViewSchema,
   RelatedSnapshotsSchema,
   SchemeSearchSchema,
+  type ApiErrorCode,
+  type ComparisonView,
+  type FundResearchView,
+  type RelatedFund,
   type RelatedSnapshot,
+  type Scheme,
 } from "@/lib/fund.schema";
-import type { ApiErrorCode, RelatedFund, Scheme } from "@/lib/fund.types";
-import type { ComparisonView, FundResearchView } from "@/lib/research-view/types";
 
 export type ClientApiErrorCode = ApiErrorCode | "invalid_response" | "network_error";
+export type ApiResult<T> = SharedApiResult<T, ApiErrorCode>;
 
-export type ApiResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: ClientApiErrorCode; message: string; status: number };
-
-async function request<T>(
-  path: string,
-  schema: v.GenericSchema<T>,
-  signal?: AbortSignal,
-): Promise<ApiResult<T>> {
-  try {
-    const response = await fetch(path, signal ? { signal } : {});
-    const payload: unknown = await response.json();
-    const result = v.safeParse(schema, payload, { abortEarly: true });
-    if (response.ok && result.success) return { ok: true, data: result.output };
-
-    const error = v.safeParse(ApiErrorSchema, payload, { abortEarly: true });
-    return {
-      ok: false,
-      error: error.success ? error.output.error : "invalid_response",
-      message: error.success ? error.output.message : "The response was invalid.",
-      status: response.status,
-    };
-  } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") throw error;
-    return {
-      ok: false,
-      error: "network_error",
-      message: "The request could not be completed.",
-      status: 0,
-    };
-  }
-}
+const request = createApiClient(ApiErrorSchema);
 
 export function searchFunds(query: string, signal?: AbortSignal) {
   return request<{ schemes: Scheme[] }>(
     `/api/schemes?q=${encodeURIComponent(query)}`,
     SchemeSearchSchema,
-    signal,
+    signal ? { signal } : undefined,
   );
 }
 
@@ -58,7 +31,7 @@ export function loadCategoryFunds(category: string, signal?: AbortSignal) {
   return request<{ category: string; schemes: RelatedFund[] }>(
     `/api/explore?category=${encodeURIComponent(category)}`,
     CategorySchemeListSchema,
-    signal,
+    signal ? { signal } : undefined,
   );
 }
 
@@ -66,7 +39,7 @@ export function loadFundResearch(schemeCode: string, signal?: AbortSignal) {
   return request<FundResearchView>(
     `/api/funds/${encodeURIComponent(schemeCode)}`,
     FundResearchViewSchema,
-    signal,
+    signal ? { signal } : undefined,
   );
 }
 
@@ -74,7 +47,7 @@ export function loadRelatedFundSnapshots(schemeCodes: readonly string[], signal?
   return request<{ snapshots: Record<string, RelatedSnapshot> }>(
     `/api/funds/related-snapshots?codes=${schemeCodes.map(encodeURIComponent).join(",")}`,
     RelatedSnapshotsSchema,
-    signal,
+    signal ? { signal } : undefined,
   );
 }
 
@@ -82,6 +55,6 @@ export function loadComparison(fund: string, against: string, signal?: AbortSign
   return request<ComparisonView>(
     `/api/compare?fund=${encodeURIComponent(fund)}&against=${encodeURIComponent(against)}`,
     ComparisonViewSchema,
-    signal,
+    signal ? { signal } : undefined,
   );
 }

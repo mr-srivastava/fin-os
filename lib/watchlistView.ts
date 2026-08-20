@@ -2,18 +2,9 @@
  * pages render. Reuses `fundService.getFundResearchBatch` rather than issuing one fetch per
  * scheme code. */
 import type { FundResearch } from "./fund.types.ts";
+import type { WatchlistItemSummary } from "./watchlist.schema.ts";
 
-export interface WatchlistItemSummary {
-  schemeCode: string;
-  schemeName: string;
-  amc: string;
-  category: string;
-  riskLabel: string | null;
-  aum: number | null;
-  oneYearReturn: number | null;
-  threeYearReturn: number | null;
-  currentNav: number | null;
-}
+export type { WatchlistItemSummary };
 
 export function toWatchlistItemSummary(fund: FundResearch): WatchlistItemSummary {
   return {

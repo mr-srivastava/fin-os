@@ -1,7 +1,7 @@
-import * as v from "valibot";
-
+import { parseJsonBody } from "@/lib/apiRoute";
 import { getOrCreateDeviceId } from "@/lib/deviceId";
-import { isSchemeCode, SchemeCodeBodySchema } from "@/lib/fundInput";
+import { isSchemeCode } from "@/lib/fundInput";
+import { SchemeCodeBodySchema } from "@/lib/fund.schema";
 import { isWatchlistId } from "@/lib/watchlistInput";
 import { watchlistService, WATCHLIST_ITEM_LIMIT_REACHED } from "@/lib/watchlist.service";
 import { WATCHLIST_MAX_ITEMS } from "@/lib/watchlistInput";
@@ -26,8 +26,8 @@ export async function handlePost(
   if (!isWatchlistId(id)) {
     return Response.json({ error: "not_found", message: "Watchlist not found." }, { status: 404 });
   }
-  const parsed = v.safeParse(SchemeCodeBodySchema, await request.json().catch(() => null));
-  const schemeCode = parsed.success ? parsed.output.schemeCode : "";
+  const body = await parseJsonBody(request, SchemeCodeBodySchema);
+  const schemeCode = body?.schemeCode ?? "";
   if (!isSchemeCode(schemeCode)) {
     return Response.json(
       { error: "invalid_scheme_code", message: "Fund code must be a valid AMFI scheme code." },

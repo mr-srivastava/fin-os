@@ -11,10 +11,9 @@ import type {
   NavPoint,
   PortfolioItem,
   PortfolioSnapshot,
-  RelatedFund,
-  Scheme,
   ReturnConsistency,
 } from "./fund.types.ts";
+import type { RelatedFund, Scheme } from "./fund.schema.ts";
 import { ProviderError, toNav } from "./provider.ts";
 import { metricsFor, unavailableMetrics } from "./fundMetrics.ts";
 import { isSchemeCode } from "./fundInput.ts";

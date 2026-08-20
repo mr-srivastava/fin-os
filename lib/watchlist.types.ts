@@ -9,11 +9,3 @@ export interface WatchlistDocument {
   updatedAt: string;
   schemeCodes: string[];
 }
-
-export interface WatchlistSummary {
-  id: string;
-  name: string;
-  count: number;
-  createdAt: string;
-  updatedAt: string;
-}

@@ -1,49 +1,15 @@
-import * as v from "valibot";
+import { createApiClient, type ApiResult } from "@/lib/apiClient";
 import {
   WatchlistApiErrorSchema,
   WatchlistCreatedSchema,
+  WatchlistDeletedSchema,
   WatchlistDetailSchema,
   WatchlistListSchema,
 } from "@/lib/watchlist.schema";
 
-export type WatchlistApiResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string; message: string; status: number };
+export type WatchlistApiResult<T> = ApiResult<T, string>;
 
-async function request<T>(
-  path: string,
-  schema: v.GenericSchema<T>,
-  init?: RequestInit,
-): Promise<WatchlistApiResult<T>> {
-  try {
-    const response = await fetch(path, init);
-    if (response.status === 204) {
-      // No content responses (e.g. delete) parse as an empty success payload.
-      const result = v.safeParse(schema, {}, { abortEarly: true });
-      return result.success
-        ? { ok: true, data: result.output }
-        : { ok: true, data: undefined as T };
-    }
-    const payload: unknown = await response.json();
-    const result = v.safeParse(schema, payload, { abortEarly: true });
-    if (response.ok && result.success) return { ok: true, data: result.output };
-
-    const error = v.safeParse(WatchlistApiErrorSchema, payload, { abortEarly: true });
-    return {
-      ok: false,
-      error: error.success ? error.output.error : "invalid_response",
-      message: error.success ? error.output.message : "The response was invalid.",
-      status: response.status,
-    };
-  } catch {
-    return {
-      ok: false,
-      error: "network_error",
-      message: "The request could not be completed.",
-      status: 0,
-    };
-  }
-}
+const request = createApiClient(WatchlistApiErrorSchema);
 
 export function listWatchlists() {
   return request("/api/watchlists", WatchlistListSchema);
@@ -66,7 +32,7 @@ export function renameWatchlist(id: string, name: string) {
 }
 
 export function deleteWatchlist(id: string) {
-  return request(`/api/watchlists/${encodeURIComponent(id)}`, v.object({}), {
+  return request(`/api/watchlists/${encodeURIComponent(id)}`, WatchlistDeletedSchema, {
     method: "DELETE",
   });
 }

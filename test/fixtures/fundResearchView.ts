@@ -1,4 +1,5 @@
-import type { FundResearch, Scheme } from "@/lib/fund.types";
+import type { Scheme } from "@/lib/fund.schema";
+import type { FundResearch } from "@/lib/fund.types";
 
 type FundResearchOverrides = {
   [K in keyof FundResearch]?: FundResearch[K] extends readonly unknown[]

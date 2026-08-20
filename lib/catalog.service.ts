@@ -3,7 +3,7 @@ import { EQUITY_CATEGORIES, type EquityCategory } from "./fundCategories.ts";
 import { finapiService, type FundSnapshot } from "./finapi.service.ts";
 import { tigzigService } from "./tigzig.service.ts";
 import { getDb, getMongoClient } from "./mongo.ts";
-import type { RelatedFund, Scheme } from "./fund.types.ts";
+import type { RelatedFund, Scheme } from "./fund.schema.ts";
 import {
   CATALOGUE_META_COLLECTION,
   SCHEMES_COLLECTION,
