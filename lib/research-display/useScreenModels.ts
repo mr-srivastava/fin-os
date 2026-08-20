@@ -3,7 +3,12 @@
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { PerformanceRange } from "@/lib/analytics";
-import { comparisonQueryOptions, fundQueryOptions } from "@/lib/fund.queries";
+import {
+  comparisonQueryOptions,
+  fundQueryOptions,
+  relatedSnapshotsQueryOptions,
+} from "@/lib/fund.queries";
+import type { RelatedSnapshot } from "@/lib/fund.schema";
 import { allocationColors } from "./fundResearch";
 import type { FundResearchView } from "@/lib/research-view/types";
 import {
@@ -29,7 +34,20 @@ const comparisonLabels: Record<string, string> = {
   volatility: "1Y volatility",
 };
 
-function fundModel(view: FundResearchView, range: PerformanceRange, benchmark: boolean) {
+function withSnapshot(
+  fund: FundResearchView["relatedFunds"]["peers"][number],
+  snapshots: Record<string, RelatedSnapshot>,
+) {
+  const snapshot = snapshots[fund.schemeCode];
+  return snapshot ? { ...fund, ...snapshot } : fund;
+}
+
+function fundModel(
+  view: FundResearchView,
+  range: PerformanceRange,
+  benchmark: boolean,
+  relatedSnapshots: Record<string, RelatedSnapshot>,
+) {
   const performance =
     view.performance.status === "ready"
       ? (() => {
@@ -127,52 +145,8 @@ function fundModel(view: FundResearchView, range: PerformanceRange, benchmark: b
         }
       : null,
     relatedFunds: {
-      peers: view.relatedFunds.peers.map(
-        ({
-          schemeCode,
-          schemeName,
-          amc,
-          category,
-          nav,
-          aum,
-          riskLabel,
-          oneYearReturn,
-          threeYearReturn,
-        }) => ({
-          schemeCode,
-          schemeName,
-          amc,
-          category,
-          nav,
-          aum,
-          riskLabel,
-          oneYearReturn,
-          threeYearReturn,
-        }),
-      ),
-      fromAmc: view.relatedFunds.fromAmc.map(
-        ({
-          schemeCode,
-          schemeName,
-          amc,
-          category,
-          nav,
-          aum,
-          riskLabel,
-          oneYearReturn,
-          threeYearReturn,
-        }) => ({
-          schemeCode,
-          schemeName,
-          amc,
-          category,
-          nav,
-          aum,
-          riskLabel,
-          oneYearReturn,
-          threeYearReturn,
-        }),
-      ),
+      peers: view.relatedFunds.peers.map((fund) => withSnapshot(fund, relatedSnapshots)),
+      fromAmc: view.relatedFunds.fromAmc.map((fund) => withSnapshot(fund, relatedSnapshots)),
     },
     facts: [
       {
@@ -220,14 +194,33 @@ export function useFundResearchScreenModel({
   showBenchmark: boolean;
 }): FundResearchScreenModel {
   const resource = useFundResearchResource(schemeCode);
+  const relatedCodes = useMemo(
+    () =>
+      resource.data
+        ? [
+            ...resource.data.relatedFunds.peers.map((fund) => fund.schemeCode),
+            ...resource.data.relatedFunds.fromAmc.map((fund) => fund.schemeCode),
+          ]
+        : [],
+    [resource.data],
+  );
+  const snapshotsResource = useQuery(relatedSnapshotsQueryOptions(relatedCodes));
   return useMemo(
     () =>
       resource.isError && !resource.data
         ? { status: "error" as const, message: resource.error.message }
         : !resource.data
           ? { status: "loading" as const }
-          : { status: "ready" as const, data: fundModel(resource.data, range, showBenchmark) },
-    [range, resource.data, resource.error, resource.isError, showBenchmark],
+          : {
+              status: "ready" as const,
+              data: fundModel(
+                resource.data,
+                range,
+                showBenchmark,
+                snapshotsResource.data?.snapshots ?? {},
+              ),
+            },
+    [range, resource.data, resource.error, resource.isError, showBenchmark, snapshotsResource.data],
   );
 }
 

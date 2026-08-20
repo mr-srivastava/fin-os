@@ -4,7 +4,9 @@ import {
   CategorySchemeListSchema,
   ComparisonViewSchema,
   FundResearchViewSchema,
+  RelatedSnapshotsSchema,
   SchemeSearchSchema,
+  type RelatedSnapshot,
 } from "@/lib/fund.schema";
 import type { ApiErrorCode, RelatedFund, Scheme } from "@/lib/fund.types";
 import type { ComparisonView, FundResearchView } from "@/lib/research-view/types";
@@ -64,6 +66,14 @@ export function loadFundResearch(schemeCode: string, signal?: AbortSignal) {
   return request<FundResearchView>(
     `/api/funds/${encodeURIComponent(schemeCode)}`,
     FundResearchViewSchema,
+    signal,
+  );
+}
+
+export function loadRelatedFundSnapshots(schemeCodes: readonly string[], signal?: AbortSignal) {
+  return request<{ snapshots: Record<string, RelatedSnapshot> }>(
+    `/api/funds/related-snapshots?codes=${schemeCodes.map(encodeURIComponent).join(",")}`,
+    RelatedSnapshotsSchema,
     signal,
   );
 }

@@ -72,6 +72,8 @@ function ChartContainer({
   );
 }
 
+/** `config.color` is injected into a raw <style> block with no escaping - only ever pass
+ * developer-authored ChartConfig here, never a color sourced from provider/user data. */
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([, config]) => config.color);
 

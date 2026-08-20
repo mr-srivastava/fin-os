@@ -4,5 +4,6 @@ import { finapiService } from "./finapi.service.ts";
 export const fundService = {
   getFundResearch: finapiService.getFundResearch,
   getFundResearchBatch: finapiService.getFundResearchBatch,
+  getFundSnapshots: finapiService.getFundSnapshots,
   resolveIsin: finapiService.resolveIsin,
 };

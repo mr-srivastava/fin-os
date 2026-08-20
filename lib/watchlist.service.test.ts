@@ -21,7 +21,27 @@ const docs: WatchlistDocument[] = [
 ];
 
 function matches(doc: WatchlistDocument, filter: Record<string, unknown>) {
-  return Object.entries(filter).every(([key, value]) => (doc as never)[key] === value);
+  return Object.entries(filter).every(([key, value]) => {
+    if (key === "$expr") return matchesExpr(doc, value as Record<string, unknown>);
+    return (doc as never)[key] === value;
+  });
+}
+
+/** Evaluates just the shape of `$expr` this mock needs: `$or` of `$in`/`$lt`+`$size`. */
+function matchesExpr(doc: WatchlistDocument, expr: Record<string, unknown>): boolean {
+  const clauses = expr.$or as unknown[];
+  return clauses.some((clause) => {
+    const [op, args] = Object.entries(clause as Record<string, unknown[]>)[0]!;
+    if (op === "$in") {
+      const [needle, field] = args as [string, string];
+      return field === "$schemeCodes" && doc.schemeCodes.includes(needle);
+    }
+    if (op === "$lt") {
+      const [sizeExpr, max] = args as [Record<string, string>, number];
+      return sizeExpr.$size === "$schemeCodes" && doc.schemeCodes.length < max;
+    }
+    return false;
+  });
 }
 
 vi.mock("./mongo.ts", () => ({
@@ -105,7 +125,8 @@ test("rename, add item, remove item, and delete are all device-scoped", async ()
 
   assert.equal(await addWatchlistItem("device-b", "list-1", "999999"), null);
   const withItem = await addWatchlistItem("device-a", "list-1", "141925");
-  assert.deepEqual(withItem?.schemeCodes, ["120564", "122639", "141925"]);
+  assert.ok(withItem && typeof withItem === "object");
+  assert.deepEqual(withItem.schemeCodes, ["120564", "122639", "141925"]);
 
   const withoutItem = await removeWatchlistItem("device-a", "list-1", "141925");
   assert.deepEqual(withoutItem?.schemeCodes, ["120564", "122639"]);

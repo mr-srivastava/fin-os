@@ -38,6 +38,20 @@ export const RelatedFundSchema: v.GenericSchema<RelatedFund> = v.object({
   threeYearReturn: NullableFiniteNumberSchema,
 });
 
+const RelatedSnapshotSchema = v.object({
+  nav: v.nullable(NavPointSchema),
+  aum: NullableFiniteNumberSchema,
+  riskLabel: v.nullable(v.string()),
+  oneYearReturn: NullableFiniteNumberSchema,
+  threeYearReturn: NullableFiniteNumberSchema,
+});
+export type RelatedSnapshot = v.InferOutput<typeof RelatedSnapshotSchema>;
+
+/** Response of GET /api/funds/related-snapshots, keyed by scheme code. */
+export const RelatedSnapshotsSchema = v.object({
+  snapshots: v.record(v.string(), RelatedSnapshotSchema),
+});
+
 const MetricSchema = v.object({
   label: v.string(),
   value: NullableFiniteNumberSchema,

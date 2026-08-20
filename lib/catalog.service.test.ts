@@ -78,15 +78,44 @@ const meta: CatalogueMeta = {
   tigzigSnapshot: { generatedAt: null, etag: null },
 };
 
+function matchesValue(entryValue: unknown, condition: unknown): boolean {
+  if (condition instanceof RegExp) return condition.test(String(entryValue));
+  return entryValue === condition;
+}
+
+function matchesFilter(entry: CatalogueEntry, filter: Record<string, unknown>): boolean {
+  return Object.entries(filter).every(([key, condition]) => {
+    if (key === "$or") {
+      return (condition as Record<string, unknown>[]).some((clause) =>
+        matchesFilter(entry, clause),
+      );
+    }
+    return matchesValue((entry as never)[key], condition);
+  });
+}
+
+function cursor(matched: CatalogueEntry[]) {
+  return {
+    sort: (spec: Record<string, 1 | -1>) => {
+      const [field, direction] = Object.entries(spec)[0]!;
+      const sorted = [...matched].sort(
+        (a, b) =>
+          String((a as never)[field]).localeCompare(String((b as never)[field])) * direction,
+      );
+      return cursor(sorted);
+    },
+    limit: (count: number) => cursor(matched.slice(0, count)),
+    toArray: async () => matched,
+  };
+}
+
 vi.mock("./mongo.ts", () => ({
   getDb: async () => ({
     collection: (name: string) => {
       if (name === "catalogue_meta") return { findOne: async () => meta };
       return {
-        find: (filter: { catalogueVersion: string }) => ({
-          toArray: async () =>
-            entries.filter((entry) => entry.catalogueVersion === filter.catalogueVersion),
-        }),
+        find: (filter: Record<string, unknown>) =>
+          cursor(entries.filter((entry) => matchesFilter(entry, filter))),
       };
     },
   }),

@@ -1,5 +1,7 @@
 export const WATCHLIST_NAME_MIN_LENGTH = 1;
 export const WATCHLIST_NAME_MAX_LENGTH = 80;
+/** Caps provider fan-out: a GET on a watchlist fetches research for every scheme code in it. */
+export const WATCHLIST_MAX_ITEMS = 25;
 export const WATCHLIST_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

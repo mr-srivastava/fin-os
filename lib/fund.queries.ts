@@ -3,6 +3,7 @@ import {
   loadCategoryFunds,
   loadComparison,
   loadFundResearch,
+  loadRelatedFundSnapshots,
   searchFunds,
   type ApiResult,
 } from "@/lib/fund.client";
@@ -31,6 +32,13 @@ export const categoryFundsQueryOptions = (category: string | null) =>
     queryKey: ["category-funds", category] as const,
     queryFn: ({ signal }) => loadCategoryFunds(category!, signal).then(dataOrThrow),
     enabled: Boolean(category),
+  });
+
+export const relatedSnapshotsQueryOptions = (schemeCodes: readonly string[]) =>
+  queryOptions({
+    queryKey: ["related-snapshots", ...schemeCodes] as const,
+    queryFn: ({ signal }) => loadRelatedFundSnapshots(schemeCodes, signal).then(dataOrThrow),
+    enabled: schemeCodes.length > 0,
   });
 
 export const comparisonQueryOptions = (fund: string | undefined, against: string | undefined) =>

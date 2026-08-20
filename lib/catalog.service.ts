@@ -282,27 +282,45 @@ async function getCurrentEntries(): Promise<CatalogueEntry[]> {
     .toArray();
 }
 
+async function getCurrentVersion(): Promise<string | null> {
+  const db = await getDb();
+  const meta = await db.collection<CatalogueMeta>(CATALOGUE_META_COLLECTION).findOne({
+    _id: "current",
+  });
+  return meta?.version ?? null;
+}
+
+/** Escapes regex metacharacters so `query` is matched literally. */
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /** Searches the catalogue by scheme name or AMC for the browse search box. */
 export async function searchCatalogue(query: string): Promise<Scheme[]> {
-  const needle = query.toLowerCase();
-  const entries = await getCurrentEntries();
-  return entries
-    .filter(
-      (entry) =>
-        entry.schemeName.toLowerCase().includes(needle) || entry.amc.toLowerCase().includes(needle),
-    )
-    .slice(0, 12)
-    .map(toScheme);
+  const version = await getCurrentVersion();
+  if (!version) return [];
+  const needle = new RegExp(escapeRegex(query), "i");
+  const db = await getDb();
+  const entries = await db
+    .collection<CatalogueEntry>(SCHEMES_COLLECTION)
+    .find({ catalogueVersion: version, $or: [{ schemeName: needle }, { amc: needle }] })
+    .limit(12)
+    .toArray();
+  return entries.map(toScheme);
 }
 
 /** Lists the catalogue's schemes in one supported equity category for the browse experience. */
 export async function listCatalogueByCategory(category: EquityCategory): Promise<RelatedFund[]> {
-  const entries = await getCurrentEntries();
-  return entries
-    .filter((entry) => entry.category === category)
-    .sort((left, right) => left.schemeName.localeCompare(right.schemeName))
-    .slice(0, 24)
-    .map(toCatalogueScheme);
+  const version = await getCurrentVersion();
+  if (!version) return [];
+  const db = await getDb();
+  const entries = await db
+    .collection<CatalogueEntry>(SCHEMES_COLLECTION)
+    .find({ catalogueVersion: version, category })
+    .sort({ schemeName: 1 })
+    .limit(24)
+    .toArray();
+  return entries.map(toCatalogueScheme);
 }
 
 export const catalogService = {

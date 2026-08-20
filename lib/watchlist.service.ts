@@ -3,11 +3,14 @@
  * behave exactly like the id does not exist. */
 import { randomUUID } from "node:crypto";
 import { getDb } from "./mongo.ts";
+import { WATCHLIST_MAX_ITEMS } from "./watchlistInput.ts";
 import {
   WATCHLISTS_COLLECTION,
   type WatchlistDocument,
   type WatchlistSummary,
 } from "./watchlist.types.ts";
+
+export const WATCHLIST_ITEM_LIMIT_REACHED = "watchlist_item_limit_reached" as const;
 
 function toSummary(doc: WatchlistDocument): WatchlistSummary {
   return {
@@ -75,18 +78,36 @@ export async function deleteWatchlist(deviceId: string, id: string): Promise<boo
   return deletedCount === 1;
 }
 
+/**
+ * Adds `schemeCode` unless doing so would push the watchlist past `WATCHLIST_MAX_ITEMS` -
+ * a cap on provider fan-out, since every item in a watchlist is fetched on every read.
+ * Returns `WATCHLIST_ITEM_LIMIT_REACHED` when the watchlist exists but is already full
+ * (and doesn't already contain `schemeCode`), or `null` when it doesn't belong to `deviceId`.
+ */
 export async function addWatchlistItem(
   deviceId: string,
   id: string,
   schemeCode: string,
-): Promise<WatchlistDocument | null> {
+): Promise<WatchlistDocument | null | typeof WATCHLIST_ITEM_LIMIT_REACHED> {
   const col = await collection();
   const updatedAt = new Date().toISOString();
-  return col.findOneAndUpdate(
-    { _id: id, deviceId },
+  const updated = await col.findOneAndUpdate(
+    {
+      _id: id,
+      deviceId,
+      $expr: {
+        $or: [
+          { $in: [schemeCode, "$schemeCodes"] },
+          { $lt: [{ $size: "$schemeCodes" }, WATCHLIST_MAX_ITEMS] },
+        ],
+      },
+    },
     { $addToSet: { schemeCodes: schemeCode }, $set: { updatedAt } },
     { returnDocument: "after" },
   );
+  if (updated) return updated;
+  const existing = await col.findOne({ _id: id, deviceId });
+  return existing ? WATCHLIST_ITEM_LIMIT_REACHED : null;
 }
 
 export async function removeWatchlistItem(

@@ -2,7 +2,10 @@ import { describe, expect, test, vi } from "vitest";
 
 const addItem = vi.fn();
 
-vi.mock("@/lib/watchlist.service", () => ({ watchlistService: { addItem } }));
+vi.mock("@/lib/watchlist.service", () => ({
+  watchlistService: { addItem },
+  WATCHLIST_ITEM_LIMIT_REACHED: "watchlist_item_limit_reached",
+}));
 vi.mock("@/lib/deviceId", () => ({ getOrCreateDeviceId: async () => "device-a" }));
 
 const { POST } = await import("./route");
@@ -36,6 +39,21 @@ describe("POST /api/watchlists/[id]/items", () => {
       context(VALID_ID),
     );
     expect(response.status).toBe(404);
+  });
+
+  test("400s when the watchlist is already at the item limit", async () => {
+    addItem.mockResolvedValueOnce("watchlist_item_limit_reached");
+    const response = await POST(
+      new Request("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({ schemeCode: "122639" }),
+      }),
+      context(VALID_ID),
+    );
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "watchlist_item_limit_reached",
+    });
   });
 
   test("adds the scheme code and returns the updated summary", async () => {

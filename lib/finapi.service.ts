@@ -369,6 +369,7 @@ export async function resolveIsin(isin: string): Promise<string | null> {
 async function loadFundResearch(
   schemeCode: string,
   benchmarkRequests: Map<string, Promise<PromiseSettledResult<NavPoint[]>>>,
+  enrichRelated: boolean,
 ): Promise<FundResearch | null> {
   const [fundResult, navResult] = await Promise.allSettled([
     request(`/scheme-code/${schemeCode}`),
@@ -396,10 +397,16 @@ async function loadFundResearch(
   const preferredRolling = rollingResults[1];
   if (preferredRolling?.status === "fulfilled" && preferredRolling.value)
     normalized.returnConsistency = preferredRolling.value;
-  const relatedCodes = [
-    ...normalized.relatedFunds.peers.map((fund) => fund.schemeCode),
-    ...normalized.relatedFunds.fromAmc.map((fund) => fund.schemeCode),
-  ];
+  // Related-fund snapshot enrichment costs up to 12 extra provider round trips per fund - skip
+  // it for a single fund-page load (the client fetches it lazily via /api/funds/related-snapshots
+  // instead) and only pay that cost up front for a batch load (watchlists), where it's cheaper
+  // to enrich once server-side than to have each card fire its own request.
+  const relatedCodes = enrichRelated
+    ? [
+        ...normalized.relatedFunds.peers.map((fund) => fund.schemeCode),
+        ...normalized.relatedFunds.fromAmc.map((fund) => fund.schemeCode),
+      ]
+    : [];
   if (relatedCodes.length > 0) {
     const snapshots = await getFundSnapshots(relatedCodes);
     normalized.relatedFunds = {
@@ -548,15 +555,18 @@ export async function getFundResearchBatch(
 ): Promise<PromiseSettledResult<FundResearch | null>[]> {
   const benchmarkRequests = new Map<string, Promise<PromiseSettledResult<NavPoint[]>>>();
   return Promise.allSettled(
-    schemeCodes.map((schemeCode) => loadFundResearch(schemeCode, benchmarkRequests)),
+    schemeCodes.map((schemeCode) => loadFundResearch(schemeCode, benchmarkRequests, true)),
   );
 }
 
 export async function getFundResearch(schemeCode: string): Promise<FundResearch | null> {
-  const [result] = await getFundResearchBatch([schemeCode]);
-  if (!result) throw new ProviderError("We could not load this fund right now.");
-  if (result.status === "rejected") throw result.reason;
-  return result.value;
+  const benchmarkRequests = new Map<string, Promise<PromiseSettledResult<NavPoint[]>>>();
+  try {
+    return await loadFundResearch(schemeCode, benchmarkRequests, false);
+  } catch (error) {
+    if (error instanceof ProviderError) throw error;
+    throw new ProviderError("We could not load this fund right now.");
+  }
 }
 
 function clearNavResearch(fund: FundResearch) {
