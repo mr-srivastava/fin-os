@@ -14,7 +14,7 @@ const RANGE_MONTHS: Record<Exclude<PerformanceRange, "max">, number> = {
 };
 
 function sorted(points: NavPoint[]) {
-  return [...points].sort((a, b) => a.date.localeCompare(b.date));
+  return [...(points ?? [])].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function daysBetween(start: string, end: string) {
@@ -69,6 +69,79 @@ export function maxDrawdown(points: NavPoint[]) {
     maximum = Math.min(maximum, point.nav / peak - 1);
   }
   return maximum;
+}
+
+export interface HistoricalComparison {
+  current: number;
+  historicalAverage: number;
+  direction: "above" | "below" | "near";
+}
+
+/** Values within this relative distance of each other are reported as "near" rather than forced above/below. */
+const NEAR_THRESHOLD = 0.1;
+
+function compareToHistorical(current: number, historicalAverage: number): HistoricalComparison {
+  if (historicalAverage === 0) {
+    return { current, historicalAverage, direction: current === 0 ? "near" : "above" };
+  }
+  const relativeDiff = (current - historicalAverage) / Math.abs(historicalAverage);
+  const direction =
+    Math.abs(relativeDiff) <= NEAR_THRESHOLD ? "near" : relativeDiff > 0 ? "above" : "below";
+  return { current, historicalAverage, direction };
+}
+
+/**
+ * Compares a fund's current (trailing 1-year) volatility to the average of its own
+ * volatility over each of the preceding `years` 1-year periods. Descriptive only —
+ * says where the current value sits relative to the fund's own history, not whether
+ * that is good or bad.
+ */
+export function volatilityVsHistory(points: NavPoint[], years = 3): HistoricalComparison | null {
+  const series = sorted(points);
+  const end = series.at(-1);
+  if (!end) return null;
+  const endDate = parseIsoDate(end.date);
+  if (!endDate) return null;
+
+  const current = annualizedVolatility(series);
+  if (current === null) return null;
+
+  const samples: number[] = [];
+  for (let yearsAgo = 1; yearsAgo <= years; yearsAgo += 1) {
+    const windowEnd = endDate.subtract({ years: yearsAgo }).toString();
+    const window = series.filter((point) => point.date <= windowEnd);
+    const value = annualizedVolatility(window);
+    if (value !== null) samples.push(value);
+  }
+  if (samples.length === 0) return null;
+
+  const historicalAverage = samples.reduce((total, value) => total + value, 0) / samples.length;
+  return compareToHistorical(current, historicalAverage);
+}
+
+/**
+ * Compares a fund's most recent 1-year drawdown to its deepest drawdown over the
+ * full available history. Direction is based on drawdown *severity* (magnitude of
+ * decline), so "above" means a deeper drawdown, matching the intuitive reading of
+ * `volatilityVsHistory`. `current`/`historicalAverage` remain the actual signed
+ * drawdown values for display. Descriptive only, see `volatilityVsHistory`.
+ */
+export function drawdownVsHistory(points: NavPoint[]): HistoricalComparison | null {
+  const series = sorted(points);
+  if (series.length < 3) return null;
+  const end = series.at(-1);
+  if (!end) return null;
+  const endDate = parseIsoDate(end.date);
+  if (!endDate) return null;
+
+  const startDate = endDate.subtract({ years: 1 }).toString();
+  const recentWindow = series.filter((point) => point.date >= startDate);
+  const current = maxDrawdown(recentWindow);
+  const historicalAverage = maxDrawdown(series);
+  if (current === null || historicalAverage === null) return null;
+
+  const severityComparison = compareToHistorical(Math.abs(current), Math.abs(historicalAverage));
+  return { current, historicalAverage, direction: severityComparison.direction };
 }
 
 export function normalizeSeries(points: NavPoint[]) {

@@ -1,7 +1,10 @@
 import {
+  drawdownVsHistory,
   filterSeriesByRange,
   investmentOutcome,
   relativeReturnSeries,
+  volatilityVsHistory,
+  type HistoricalComparison,
   type PerformanceRange,
 } from "@/lib/analytics";
 import type { FundResearch, MetricKey, WeightedItem } from "@/lib/fund-types";
@@ -150,6 +153,18 @@ const metricDisplayOptions: Record<
   maxDrawdown: { signed: true, status: "neutral" },
 };
 
+function historicalContextText(comparison: HistoricalComparison | null): string | undefined {
+  if (!comparison) return undefined;
+  switch (comparison.direction) {
+    case "above":
+      return "above this fund's own history";
+    case "below":
+      return "below this fund's own history";
+    case "near":
+      return "in line with this fund's own history";
+  }
+}
+
 export function toMetricDisplay(
   fund: FundResearch,
   key: MetricKey,
@@ -157,10 +172,17 @@ export function toMetricDisplay(
 ): MetricGroupDisplay["metrics"][number] {
   const value = fund.metrics[key].value;
   const options = metricDisplayOptions[key];
+  const context =
+    key === "volatility"
+      ? historicalContextText(volatilityVsHistory(fund.nav))
+      : key === "maxDrawdown"
+        ? historicalContextText(drawdownVsHistory(fund.nav))
+        : undefined;
   return {
     label,
     valueText: options.signed ? formatSignedPercent(value) : formatPercent(value),
     status: options.status === "financial" ? financialStatus(value) : "neutral",
+    ...(context ? { context } : {}),
   };
 }
 

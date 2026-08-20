@@ -2,13 +2,16 @@ import { assert, test } from "vitest";
 import {
   annualizedReturn,
   annualizedVolatility,
+  drawdownVsHistory,
   filterSeriesByRange,
   investmentOutcome,
   investmentValueFromReturn,
   maxDrawdown,
   normalizeSeries,
   relativeReturnSeries,
+  volatilityVsHistory,
 } from "./analytics.ts";
+import { parseIsoDate } from "./date.ts";
 
 const monthly = [
   { date: "2020-01-01", nav: 100 },
@@ -110,4 +113,64 @@ test("converts a return into the current value of the initial investment", () =>
 
 test("requires a meaningful daily return sample for volatility", () => {
   assert.equal(annualizedVolatility(monthly), null);
+});
+
+/** Generates a daily NAV series with a per-year daily-return standard deviation. */
+function dailySeries(startDate: string, days: number, dailyStdDevByYear: number[]) {
+  const start = parseIsoDate(startDate);
+  if (!start) throw new Error("invalid start date");
+  let nav = 100;
+  const points = [{ date: start.toString(), nav }];
+  for (let day = 1; day < days; day += 1) {
+    const yearIndex = Math.floor(day / 252);
+    const stdDev = dailyStdDevByYear[Math.min(yearIndex, dailyStdDevByYear.length - 1)] ?? 0;
+    // Deterministic alternating +/- swing sized by the target std dev, not random noise.
+    const move = day % 2 === 0 ? stdDev : -stdDev;
+    nav *= 1 + move;
+    points.push({ date: start.add({ days: day }).toString(), nav });
+  }
+  return points;
+}
+
+test("volatilityVsHistory returns null when history is too short", () => {
+  assert.equal(volatilityVsHistory(monthly), null);
+});
+
+test("reports volatility as near its own history when the daily swing is unchanged", () => {
+  const series = dailySeries("2020-01-01", 252 * 4, [0.01, 0.01, 0.01, 0.01]);
+  const result = volatilityVsHistory(series);
+  assert.ok(result !== null);
+  assert.equal(result.direction, "near");
+});
+
+test("reports volatility as above its own history when the recent year swings more", () => {
+  const series = dailySeries("2020-01-01", 252 * 4, [0.005, 0.005, 0.005, 0.03]);
+  const result = volatilityVsHistory(series);
+  assert.ok(result !== null);
+  assert.equal(result.direction, "above");
+});
+
+test("reports volatility as below its own history when the recent year swings less", () => {
+  const series = dailySeries("2020-01-01", 252 * 4, [0.03, 0.03, 0.03, 0.005]);
+  const result = volatilityVsHistory(series);
+  assert.ok(result !== null);
+  assert.equal(result.direction, "below");
+});
+
+test("drawdownVsHistory returns null when history is too short", () => {
+  assert.equal(drawdownVsHistory(monthly.slice(-2)), null);
+});
+
+test("reports the recent drawdown as shallower than a deeper historical drawdown", () => {
+  const series = [
+    { date: "2020-01-01", nav: 100 },
+    { date: "2020-06-01", nav: 60 }, // a deep historical crash
+    { date: "2020-12-01", nav: 100 },
+    { date: "2024-06-01", nav: 105 },
+    { date: "2024-12-01", nav: 100 }, // a shallow recent dip
+    { date: "2025-01-01", nav: 103 },
+  ];
+  const result = drawdownVsHistory(series);
+  assert.ok(result !== null);
+  assert.equal(result.direction, "below");
 });

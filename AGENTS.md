@@ -5,10 +5,24 @@ to make safe, focused changes to navnote.
 
 ## Product boundaries
 
-navnote is a research tool for active Direct Growth Indian equity mutual funds.
-Do not present content or calculations as investment advice. The product can
-show partial research when an upstream provider fails, so preserve the existing
+navnote is a research tool for active Direct Growth Indian equity mutual funds,
+used by distributors doing due diligence rather than by individual investors
+self-directing trades. Do not present content or calculations as investment
+advice, and do not rank or recommend funds. The product can show partial
+research when an upstream provider fails, so preserve the existing
 availability states and user-facing error handling.
+
+Contextualizing existing data is allowed and encouraged; judging it is not.
+It is fine to tell a user what a number means or how it compares to a
+known, factual reference point (its category, a SEBI-mandated limit, its own
+history) — for example, "expense ratio is within the SEBI cap for this
+category" or "volatility is higher than this fund's 3-year average." It is
+not fine to tell a user whether that makes the fund good, safe, or worth
+choosing — no green/red "verdict" styling, no wording like "good value" or
+"strong fund," and no CTA implying a decision has been made for the user
+(prefer wishlist/watchlist actions over "Invest"/"Start SIP"). When in doubt,
+prefer descriptive language ("above," "below," "within") over evaluative
+language ("good," "bad," "risky choice").
 
 ## Repository map
 

@@ -8,7 +8,9 @@ The TER is calculated as a percentage of the scheme's average Net Asset Value (N
 
 Currently in India, the expense ratio is fungible — there is no limit on any particular type of allowed expense, as long as the total expense ratio is within the prescribed limit. The regulatory limits of TER that can be incurred/charged to the fund by a Mutual Fund AMC are specified under Regulation 52 of SEBI Mutual Fund Regulations.
 
-## TER Limits (Effective April 1, 2020)
+> **Framework superseded:** effective April 1, 2026, SEBI overhauled this framework. TER was renamed the **Base Expense Ratio (BER)**, and brokerage/transaction costs and statutory/regulatory levies (GST, STT, stamp duty, exchange fees) are now disclosed separately rather than folded into one combined ratio. The 2020 slabs below are retained for historical context; they are no longer the current rule. This page has not been updated with the 2026 slab table because a verified primary-source figure (the SEBI circular itself, not secondary reporting) has not yet been sourced.
+
+## TER Limits (Effective April 1, 2020 – Superseded April 1, 2026)
 
 > **Missing figure:** the original source included an image (`Expense ratio.jpeg`) showing TER limits by scheme type and AUM slab that was not carried over. Source SEBI Regulation 52 directly for current limits until this is replaced.
 

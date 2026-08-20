@@ -26,6 +26,16 @@ The objective of an equity fund is generally to seek long-term capital appreciat
 
 > **Missing figure:** the original source included an image (`categorisation_1.jpeg`) showing equity fund categories per SEBI's Categorization and Rationalization guidelines that was not carried over.
 
+### Market-Cap Based Funds
+
+SEBI defines "Large Cap," "Mid Cap," and "Small Cap" by a company's rank on market capitalization among all listed companies, not by a fixed rupee threshold — the ranking is published and refreshed periodically by AMFI.
+
+- **Large Cap Fund** — invests at least 80% of its assets in large-cap companies (ranked 1st–100th by market capitalization). Typically the most established, liquid companies.
+- **Mid Cap Fund** — invests at least 65% of its assets in mid-cap companies (ranked 101st–250th). Higher growth potential than large caps, with higher volatility.
+- **Small Cap Fund** — invests at least 65% of its assets in small-cap companies (ranked 251st onward). Highest growth potential among the three, and typically the most volatile and least liquid.
+- **Large & Mid Cap Fund** — invests at least 35% of its assets in large-cap companies and at least 35% in mid-cap companies, blending the two.
+- **Flexi Cap Fund** — invests at least 65% of its assets in equity and equity-related instruments, with no minimum allocation requirement to any particular market-cap segment — the fund manager has full flexibility to move across large-, mid-, and small-cap companies as market conditions change.
+
 ### Sector Specific Funds
 
 Sectoral funds invest in a particular sector of the economy, such as infrastructure, banking, technology, or pharmaceuticals.
@@ -52,6 +62,10 @@ Equity funds may be categorized based on the valuation parameters adopted in sto
 - **Value funds** identify stocks that are currently undervalued but are expected to perform well over time as the value is unlocked.
 
 Equity funds may hold a concentrated portfolio to benefit from stock selection — these funds carry higher risk, since the effect of a wrong selection can be substantial on the portfolio's return.
+
+### Focused Funds
+
+Focused funds hold a concentrated portfolio of at most 30 stocks (across market caps, as specified in the Scheme Information Document). Because a wrong stock selection has a larger impact on a smaller portfolio, focused funds carry more concentration risk than diversified equity funds — but a correct call also has a larger impact on returns.
 
 ### Contra Funds
 

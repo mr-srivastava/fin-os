@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TermHelp } from "@/components/term-help";
+import { TERM_DEFINITIONS, equityCategoryDefinition, riskLabelDefinition } from "@/lib/glossary";
 import { cn, formatRupees, statusColorClass } from "@/lib/utils";
 
 /**
@@ -143,8 +145,28 @@ export function FundCard({
 
         {(showCategory && fund.category) || fund.riskLabel ? (
           <div className="flex flex-wrap items-center gap-1.5">
-            {showCategory ? <Badge variant="outline">{fund.category}</Badge> : null}
-            {fund.riskLabel ? <Badge variant="secondary">{fund.riskLabel}</Badge> : null}
+            {showCategory && fund.category ? (
+              <span className="pointer-events-auto inline-flex items-center gap-1">
+                <Badge variant="outline">{fund.category}</Badge>
+                {equityCategoryDefinition(fund.category) ? (
+                  <TermHelp
+                    definition={equityCategoryDefinition(fund.category)!}
+                    label={fund.category}
+                  />
+                ) : null}
+              </span>
+            ) : null}
+            {fund.riskLabel ? (
+              <span className="pointer-events-auto inline-flex items-center gap-1">
+                <Badge variant="secondary">{fund.riskLabel}</Badge>
+                {riskLabelDefinition(fund.riskLabel) ? (
+                  <TermHelp
+                    definition={riskLabelDefinition(fund.riskLabel)!}
+                    label={fund.riskLabel}
+                  />
+                ) : null}
+              </span>
+            ) : null}
           </div>
         ) : null}
 
@@ -153,7 +175,10 @@ export function FundCard({
             {navText ? (
               <p className="font-mono text-base leading-tight font-semibold tabular-nums">
                 {navText}
-                <span className="ml-1.5 text-xs font-normal text-muted-foreground">NAV</span>
+                <span className="pointer-events-auto ml-1.5 inline-flex items-center gap-1 text-xs font-normal text-muted-foreground">
+                  NAV
+                  <TermHelp definition={TERM_DEFINITIONS.NAV} label="NAV" />
+                </span>
               </p>
             ) : returnText ? (
               <p

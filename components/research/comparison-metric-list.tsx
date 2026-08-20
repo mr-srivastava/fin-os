@@ -1,3 +1,6 @@
+import { TermHelp } from "@/components/term-help";
+import { TERM_DEFINITIONS } from "@/lib/glossary";
+
 export function ComparisonMetricList({
   rows,
   fundNames,
@@ -25,7 +28,15 @@ export function ComparisonMetricList({
       <div className="divide-y divide-border/60">
         {rows.map((row) => (
           <div key={row.label} className="py-3 first:pt-0 last:pb-0">
-            <p className="text-xs text-muted-foreground">{row.label}</p>
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              {row.label}
+              {TERM_DEFINITIONS[row.label as keyof typeof TERM_DEFINITIONS] ? (
+                <TermHelp
+                  definition={TERM_DEFINITIONS[row.label as keyof typeof TERM_DEFINITIONS]}
+                  label={row.label}
+                />
+              ) : null}
+            </p>
             <div className="mt-1 grid grid-cols-2 gap-3">
               <p className="font-mono text-base font-semibold tabular-nums">
                 {row.values[0] ?? "—"}

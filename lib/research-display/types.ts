@@ -11,6 +11,8 @@ export interface MetricDisplay {
   label: string;
   valueText: string;
   status: DisplayStatus;
+  /** Optional descriptive comparison to the fund's own history, e.g. "above its own 3-year average". */
+  context?: string;
 }
 
 export interface OutcomeDisplay {

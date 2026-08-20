@@ -13,7 +13,12 @@ export function RiskAndReturnConsistency({
   riskMetrics,
   consistency,
 }: {
-  riskMetrics: readonly { label: string; valueText: string; status: "gain" | "loss" | "neutral" }[];
+  riskMetrics: readonly {
+    label: string;
+    valueText: string;
+    status: "gain" | "loss" | "neutral";
+    context?: string;
+  }[];
   consistency: FundResearchReadyModel["returnConsistency"];
 }) {
   if (!riskMetrics.length && !consistency) return null;
@@ -49,9 +54,11 @@ export function RiskAndReturnConsistency({
                   <p className="mt-1 font-mono text-lg font-semibold tabular-nums">
                     {metric.valueText}
                   </p>
-                  {RISK_CAPTIONS[metric.label] ? (
+                  {RISK_CAPTIONS[metric.label] || metric.context ? (
                     <p className="mt-1 text-xs text-muted-foreground">
                       {RISK_CAPTIONS[metric.label]}
+                      {RISK_CAPTIONS[metric.label] && metric.context ? " — " : null}
+                      {metric.context}
                     </p>
                   ) : null}
                 </div>

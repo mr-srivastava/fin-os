@@ -8,8 +8,10 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { FundCard, FundCardSkeleton, majorityRiskLabel } from "@/components/fund-card";
 import { SelectionBar } from "@/components/selection-bar";
+import { TermHelp } from "@/components/term-help";
 import { WatchlistToggleButton } from "@/components/watchlist-toggle-button";
 import { EQUITY_CATEGORIES } from "@/lib/fund-categories";
+import { TERM_DEFINITIONS, equityCategoryDefinition } from "@/lib/glossary";
 import { categoryFundsQueryOptions } from "@/lib/fund-queries";
 
 export function CategoryExplorer() {
@@ -40,7 +42,10 @@ export function CategoryExplorer() {
             Browse the eligible equity universe.
           </h2>
         </div>
-        <Badge variant="outline">Direct Growth schemes only</Badge>
+        <span className="inline-flex items-center gap-1">
+          <Badge variant="outline">Direct Growth schemes only</Badge>
+          <TermHelp definition={TERM_DEFINITIONS["Direct Growth"]} label="Direct Growth" />
+        </span>
       </div>
       <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
         Select a category to view eligible Direct Growth schemes, or select funds below to compare
@@ -52,17 +57,20 @@ export function CategoryExplorer() {
       >
         {EQUITY_CATEGORIES.map((category) => {
           const isSelected = category === selectedCategory;
+          const definition = equityCategoryDefinition(category);
           return (
-            <Button
-              key={category}
-              variant={isSelected ? "default" : "ghost"}
-              size="sm"
-              className="h-8 px-3"
-              aria-pressed={isSelected}
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </Button>
+            <span key={category} className="inline-flex items-center gap-0.5">
+              <Button
+                variant={isSelected ? "default" : "ghost"}
+                size="sm"
+                className="h-8 px-3"
+                aria-pressed={isSelected}
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </Button>
+              {definition ? <TermHelp definition={definition} label={category} /> : null}
+            </span>
           );
         })}
       </div>
