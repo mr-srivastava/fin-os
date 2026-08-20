@@ -95,8 +95,10 @@ const meta: CatalogueMeta = {
 /** A fake Mongo query condition, restricted to the shapes this test's filters actually use. */
 type FilterValue = string | number | boolean | null | RegExp;
 
-/** A fake Mongo query filter: field-name conditions, plus a `$or` of nested filters. */
-type CatalogueFilter = { [key: string]: FilterValue | CatalogueFilter[] };
+/** A fake Mongo query filter: field-name conditions, a `$or` of nested filters, or a `$text` search. */
+type CatalogueFilter = {
+  [key: string]: FilterValue | CatalogueFilter[] | { $search: string };
+};
 
 function matchesValue(entryValue: FilterValue, condition: FilterValue): boolean {
   if (condition instanceof RegExp) return condition.test(String(entryValue));
@@ -148,10 +150,24 @@ function compareBySpec(a: CatalogueEntry, b: CatalogueEntry, spec: Record<string
   return 0;
 }
 
+/** Approximates a `$text` search over `schemeName`/`amc`: every query word must appear in either field. */
+function matchesText(entry: CatalogueEntry, search: string): boolean {
+  const haystack = `${entry.schemeName} ${entry.amc}`.toLowerCase();
+  return search
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((word) => haystack.includes(word));
+}
+
 function matchesFilter(entry: CatalogueEntry, filter: CatalogueFilter): boolean {
   return Object.entries(filter).every(([key, condition]) => {
     if (key === "$or") {
       return (condition as CatalogueFilter[]).some((clause) => matchesFilter(entry, clause));
+    }
+    if (key === "$text") {
+      // SAFETY: `$text` conditions are only ever built as `{ $search: string }` by this file's own callers.
+      return matchesText(entry, (condition as { $search: string }).$search);
     }
     return matchesValue(fieldValue(entry, key), condition as FilterValue);
   });

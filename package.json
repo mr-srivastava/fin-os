@@ -18,8 +18,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:ci": "pnpm typecheck && pnpm lint && pnpm test:unit && pnpm test:e2e",
-    "preflight:finapi": "node --experimental-strip-types scripts/preflightFinapi.ts",
-    "catalog:refresh": "node --experimental-strip-types --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/catalogRefresh.ts"
+    "preflight:finapi": "tsx scripts/preflightFinapi.ts",
+    "catalog:refresh": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/catalogRefresh.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -55,6 +55,7 @@
     "oxfmt": "^0.63.0",
     "oxlint": "^1.78.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.12",
     "typescript": "^6.0.0",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.10"

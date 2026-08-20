@@ -2,9 +2,14 @@
  * there is no auth, so a request for a watchlist id that belongs to a different device must
  * behave exactly like the id does not exist. */
 import { randomUUID } from "node:crypto";
+import * as v from "valibot";
 import { getDb } from "../providers/mongo";
 import { WATCHLIST_MAX_ITEMS } from "./watchlistInput";
-import { WATCHLISTS_COLLECTION, type WatchlistDocument } from "./watchlist.types";
+import {
+  WATCHLISTS_COLLECTION,
+  WatchlistDocumentSchema,
+  type WatchlistDocument,
+} from "./watchlist.types";
 import type { WatchlistSummary } from "./watchlist.schema";
 
 export const WATCHLIST_ITEM_LIMIT_REACHED = "watchlist_item_limit_reached" as const;
@@ -24,10 +29,15 @@ async function collection() {
   return db.collection<WatchlistDocument>(WATCHLISTS_COLLECTION);
 }
 
+// oxlint-disable-next-line anti-slop/no-unknown-parameters -- this *is* the I/O boundary that parses a raw Mongo document
+function parseDoc(doc: unknown): WatchlistDocument {
+  return v.parse(WatchlistDocumentSchema, doc);
+}
+
 export async function listWatchlists(deviceId: string): Promise<WatchlistSummary[]> {
   const col = await collection();
   const docs = await col.find({ deviceId }).sort({ createdAt: 1 }).toArray();
-  return docs.map(toSummary);
+  return docs.map((doc) => toSummary(parseDoc(doc)));
 }
 
 export async function createWatchlist(deviceId: string, name: string): Promise<WatchlistSummary> {
@@ -51,7 +61,8 @@ export async function getWatchlist(
   id: string,
 ): Promise<WatchlistDocument | null> {
   const col = await collection();
-  return col.findOne({ _id: id, deviceId });
+  const doc = await col.findOne({ _id: id, deviceId });
+  return doc ? parseDoc(doc) : null;
 }
 
 export async function renameWatchlist(
@@ -66,7 +77,7 @@ export async function renameWatchlist(
     { $set: { name, updatedAt } },
     { returnDocument: "after" },
   );
-  return result ? toSummary(result) : null;
+  return result ? toSummary(parseDoc(result)) : null;
 }
 
 export async function deleteWatchlist(deviceId: string, id: string): Promise<boolean> {
@@ -102,7 +113,7 @@ export async function addWatchlistItem(
     { $addToSet: { schemeCodes: schemeCode }, $set: { updatedAt } },
     { returnDocument: "after" },
   );
-  if (updated) return updated;
+  if (updated) return parseDoc(updated);
   const existing = await col.findOne({ _id: id, deviceId });
   return existing ? WATCHLIST_ITEM_LIMIT_REACHED : null;
 }
@@ -114,11 +125,12 @@ export async function removeWatchlistItem(
 ): Promise<WatchlistDocument | null> {
   const col = await collection();
   const updatedAt = new Date().toISOString();
-  return col.findOneAndUpdate(
+  const updated = await col.findOneAndUpdate(
     { _id: id, deviceId },
     { $pull: { schemeCodes: schemeCode }, $set: { updatedAt } },
     { returnDocument: "after" },
   );
+  return updated ? parseDoc(updated) : null;
 }
 
 export const watchlistService = {

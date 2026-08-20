@@ -1,11 +1,14 @@
 /** Builds, persists, and serves the scheme catalogue. TigZig is the catalogue of record; FinAPI is never a gate here. */
+import * as v from "valibot";
 import { EQUITY_CATEGORIES, type EquityCategory } from "../fund/fundCategories";
 import { finapiService, type FundSnapshot } from "../providers/finapi.service";
 import { tigzigService } from "../providers/tigzig.service";
-import { getDb, getMongoClient } from "../providers/mongo";
+import { ensureIndexes, getDb } from "../providers/mongo";
 import type { RelatedFund, Scheme } from "../fund/fund.schema";
 import {
   CATALOGUE_META_COLLECTION,
+  CatalogueEntrySchema,
+  CatalogueMetaSchema,
   SCHEMES_COLLECTION,
   type CatalogueEntry,
   type CatalogueMeta,
@@ -205,40 +208,37 @@ export async function refreshCatalogue(
   const { entries, generatedAt, version, byCategory } = await buildCatalogueEntries(log);
 
   log("Connecting to Mongo...");
-  const client = await getMongoClient();
-  try {
-    const db = await getDb();
-    log(`Writing ${entries.length} catalogue documents under version ${version}...`);
-    await db.collection<CatalogueEntry>(SCHEMES_COLLECTION).insertMany(entries);
+  const db = await getDb();
+  log("Ensuring indexes...");
+  await ensureIndexes();
+  log(`Writing ${entries.length} catalogue documents under version ${version}...`);
+  await db.collection<CatalogueEntry>(SCHEMES_COLLECTION).insertMany(entries);
 
-    const meta: CatalogueMeta = {
-      _id: "current",
-      version,
-      generatedAt,
-      totalSchemes: entries.length,
-      tigzigSnapshot: { generatedAt: null, etag: null },
-    };
-    log("Flipping catalogue_meta pointer to the new version...");
-    await db
-      .collection<CatalogueMeta>(CATALOGUE_META_COLLECTION)
-      .replaceOne({ _id: "current" }, meta, { upsert: true });
+  const meta: CatalogueMeta = {
+    _id: "current",
+    version,
+    generatedAt,
+    totalSchemes: entries.length,
+    tigzigSnapshot: { generatedAt: null, etag: null },
+  };
+  log("Flipping catalogue_meta pointer to the new version...");
+  await db
+    .collection<CatalogueMeta>(CATALOGUE_META_COLLECTION)
+    .replaceOne({ _id: "current" }, meta, { upsert: true });
 
-    log("Removing prior-version documents...");
-    const { deletedCount } = await db
-      .collection<CatalogueEntry>(SCHEMES_COLLECTION)
-      .deleteMany({ catalogueVersion: { $ne: version } });
-    log(`Removed ${deletedCount} prior-version document(s). Done.`);
+  log("Removing prior-version documents...");
+  const { deletedCount } = await db
+    .collection<CatalogueEntry>(SCHEMES_COLLECTION)
+    .deleteMany({ catalogueVersion: { $ne: version } });
+  log(`Removed ${deletedCount} prior-version document(s). Done.`);
 
-    return {
-      version,
-      generatedAt,
-      totalSchemes: entries.length,
-      byCategory: Object.fromEntries(byCategory),
-      removedPriorVersionDocs: deletedCount,
-    };
-  } finally {
-    await client.close();
-  }
+  return {
+    version,
+    generatedAt,
+    totalSchemes: entries.length,
+    byCategory: Object.fromEntries(byCategory),
+    removedPriorVersionDocs: deletedCount,
+  };
 }
 
 function toScheme(entry: CatalogueEntry): Scheme {
@@ -267,46 +267,42 @@ function toCatalogueScheme(entry: CatalogueEntry): RelatedFund {
 /** Reads every scheme in the currently-live catalogue version. Never closes the shared Mongo client. */
 async function getCurrentEntries(): Promise<CatalogueEntry[]> {
   const db = await getDb();
-  const meta = await db.collection<CatalogueMeta>(CATALOGUE_META_COLLECTION).findOne({
+  const metaDoc = await db.collection<CatalogueMeta>(CATALOGUE_META_COLLECTION).findOne({
     _id: "current",
   });
-  if (!meta) {
+  if (!metaDoc) {
     console.error(
       "catalogService: no catalogue has been refreshed yet (catalogue_meta has no 'current' pointer). Run `pnpm catalog:refresh`.",
     );
     return [];
   }
-  return db
+  const meta = v.parse(CatalogueMetaSchema, metaDoc);
+  const docs = await db
     .collection<CatalogueEntry>(SCHEMES_COLLECTION)
     .find({ catalogueVersion: meta.version })
     .toArray();
+  return docs.map((doc) => v.parse(CatalogueEntrySchema, doc));
 }
 
 async function getCurrentVersion(): Promise<string | null> {
   const db = await getDb();
-  const meta = await db.collection<CatalogueMeta>(CATALOGUE_META_COLLECTION).findOne({
+  const metaDoc = await db.collection<CatalogueMeta>(CATALOGUE_META_COLLECTION).findOne({
     _id: "current",
   });
-  return meta?.version ?? null;
+  return metaDoc ? v.parse(CatalogueMetaSchema, metaDoc).version : null;
 }
 
-/** Escapes regex metacharacters so `query` is matched literally. */
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-/** Searches the catalogue by scheme name or AMC for the browse search box. */
+/** Searches the catalogue by scheme name or AMC for the browse search box, via the `schemeName_amc_text` index. */
 export async function searchCatalogue(query: string): Promise<Scheme[]> {
   const version = await getCurrentVersion();
   if (!version) return [];
-  const needle = new RegExp(escapeRegex(query), "i");
   const db = await getDb();
-  const entries = await db
+  const docs = await db
     .collection<CatalogueEntry>(SCHEMES_COLLECTION)
-    .find({ catalogueVersion: version, $or: [{ schemeName: needle }, { amc: needle }] })
+    .find({ catalogueVersion: version, $text: { $search: query } })
     .limit(12)
     .toArray();
-  return entries.map(toScheme);
+  return docs.map((doc) => toScheme(v.parse(CatalogueEntrySchema, doc)));
 }
 
 /** Lists the catalogue's schemes in one supported equity category for the browse experience. */
@@ -314,13 +310,13 @@ export async function listCatalogueByCategory(category: EquityCategory): Promise
   const version = await getCurrentVersion();
   if (!version) return [];
   const db = await getDb();
-  const entries = await db
+  const docs = await db
     .collection<CatalogueEntry>(SCHEMES_COLLECTION)
     .find({ catalogueVersion: version, category })
     .sort({ "financials.oneYearReturn": -1, "financials.threeYearReturn": -1, schemeName: 1 })
     .limit(24)
     .toArray();
-  return entries.map(toCatalogueScheme);
+  return docs.map((doc) => toCatalogueScheme(v.parse(CatalogueEntrySchema, doc)));
 }
 
 export const catalogService = {
