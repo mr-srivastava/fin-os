@@ -27,6 +27,10 @@ Every page tells you when data is missing or stale rather than guessing or
 filling in a gap silently. See [Data and limitations](/data-and-limitations)
 in the app for the current detail on provider coverage and freshness.
 
+## Healthcheck
+
+[![Netlify Status](https://api.netlify.com/api/v1/badges/15ee1367-a1e5-425e-b6a6-642fd4260694/deploy-status)](https://app.netlify.com/projects/mfops/deploys)
+
 ## Contributing
 
 This repository is the Next.js application MF OS runs on. To set it up
