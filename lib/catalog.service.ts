@@ -317,7 +317,7 @@ export async function listCatalogueByCategory(category: EquityCategory): Promise
   const entries = await db
     .collection<CatalogueEntry>(SCHEMES_COLLECTION)
     .find({ catalogueVersion: version, category })
-    .sort({ schemeName: 1 })
+    .sort({ "financials.oneYearReturn": -1, "financials.threeYearReturn": -1, schemeName: 1 })
     .limit(24)
     .toArray();
   return entries.map(toCatalogueScheme);

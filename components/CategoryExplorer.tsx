@@ -51,7 +51,7 @@ export function CategoryExplorer() {
       </div>
       <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
         Select a category to view eligible Direct Growth schemes, or select funds below to compare
-        or add them to a watchlist. Results are alphabetical, not a performance ranking.
+        or add them to a watchlist. Results are sorted by 1-year return.
       </p>
       <div
         className="mt-6 inline-flex flex-wrap gap-1 rounded-lg border bg-muted/20 p-1"
@@ -82,7 +82,7 @@ export function CategoryExplorer() {
         <div>
           {categoryQuery.data ? (
             <p className="text-sm text-muted-foreground">
-              {categoryQuery.data.schemes.length} shown · alphabetical
+              {categoryQuery.data.schemes.length} shown · sorted by 1Y return
             </p>
           ) : categoryQuery.isLoading ? (
             <Skeleton className="h-5 w-32" />

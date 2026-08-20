@@ -20,7 +20,14 @@ const entries: CatalogueEntry[] = [
       lastNavDate: "2026-08-17",
     },
     finapiCrossCheck: null,
-    financials: null,
+    financials: {
+      nav: null,
+      aum: null,
+      riskLabel: null,
+      oneYearReturn: 8.1,
+      threeYearReturn: 15.4,
+      snapshotAt: "2026-08-18T00:00:00.000Z",
+    },
     sourceLastSeenAt: "2026-08-18T00:00:00.000Z",
     catalogueVersion: "v2",
   },
@@ -42,7 +49,14 @@ const entries: CatalogueEntry[] = [
       lastNavDate: "2026-08-17",
     },
     finapiCrossCheck: null,
-    financials: null,
+    financials: {
+      nav: null,
+      aum: null,
+      riskLabel: null,
+      oneYearReturn: 12.6,
+      threeYearReturn: 11.2,
+      snapshotAt: "2026-08-18T00:00:00.000Z",
+    },
     sourceLastSeenAt: "2026-08-18T00:00:00.000Z",
     catalogueVersion: "v2",
   },
@@ -105,6 +119,35 @@ function fieldValue(entry: CatalogueEntry, key: string): FilterValue {
   throw new Error(`fieldValue: "${key}" is not a primitive field this test fixture can filter on.`);
 }
 
+/** Reads a (possibly dotted, e.g. "financials.oneYearReturn") field for the fake cursor's sort. */
+function sortValue(entry: CatalogueEntry, path: string): FilterValue {
+  const value = path
+    .split(".")
+    .reduce<unknown>((obj, part) => (obj as Record<string, unknown> | null)?.[part] ?? null, entry);
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    value === null
+  ) {
+    return value;
+  }
+  throw new Error(`sortValue: "${path}" is not a primitive field this test fixture can sort on.`);
+}
+
+/** Compares two fake-cursor rows across a multi-field sort spec, nulls sorting first. */
+function compareBySpec(a: CatalogueEntry, b: CatalogueEntry, spec: Record<string, 1 | -1>): number {
+  for (const [field, direction] of Object.entries(spec)) {
+    const aValue = sortValue(a, field);
+    const bValue = sortValue(b, field);
+    if (aValue === bValue) continue;
+    if (aValue === null) return -1 * direction;
+    if (bValue === null) return 1 * direction;
+    return String(aValue).localeCompare(String(bValue), undefined, { numeric: true }) * direction;
+  }
+  return 0;
+}
+
 function matchesFilter(entry: CatalogueEntry, filter: CatalogueFilter): boolean {
   return Object.entries(filter).every(([key, condition]) => {
     if (key === "$or") {
@@ -117,11 +160,7 @@ function matchesFilter(entry: CatalogueEntry, filter: CatalogueFilter): boolean 
 function cursor(matched: CatalogueEntry[]) {
   return {
     sort: (spec: Record<string, 1 | -1>) => {
-      const [field, direction] = Object.entries(spec)[0]!;
-      const sorted = [...matched].sort(
-        (a, b) =>
-          String(fieldValue(a, field)).localeCompare(String(fieldValue(b, field))) * direction,
-      );
+      const sorted = [...matched].sort((a, b) => compareBySpec(a, b, spec));
       return cursor(sorted);
     },
     limit: (count: number) => cursor(matched.slice(0, count)),
@@ -177,13 +216,13 @@ test("maps a catalogue entry to the client-facing Scheme shape", async () => {
   });
 });
 
-test("lists the current version's schemes for one category, sorted by name", async () => {
+test("lists the current version's schemes for one category, sorted by 1-year return", async () => {
   const schemes = await listCatalogueByCategory("Flexi Cap");
   assert.deepEqual(
     schemes.map((scheme) => scheme.schemeName),
     [
-      "Aditya Birla Sun Life Flexi Cap Fund - Growth - Direct Plan",
       "Parag Parikh Flexi Cap Fund - Direct Plan - Growth",
+      "Aditya Birla Sun Life Flexi Cap Fund - Growth - Direct Plan",
     ],
   );
 });
