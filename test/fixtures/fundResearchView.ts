@@ -42,6 +42,8 @@ const baseFundResearch: FundResearch = {
     volatility: { value: null, label: "Volatility" },
     maxDrawdown: { value: null, label: "Max drawdown" },
   },
+  benchmarkMetrics: null,
+  rollingBenchmarkComparison: null,
   returnConsistency: null,
   relatedFunds: { peers: [], fromAmc: [] },
 };
@@ -67,6 +69,7 @@ export function fundResearchViewFixture(scheme: Scheme) {
     benchmark: { name: "Nifty 500 TRI", returnBasis: "total_return" },
     performance: { status: "unavailable", message: "Performance data is not available right now." },
     metricGroups: [],
+    rollingBenchmarkComparison: null,
     returnConsistency: null,
     relatedFunds: { peers: [], fromAmc: [] },
     facts: {

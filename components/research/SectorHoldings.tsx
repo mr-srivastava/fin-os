@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { SectorDisplay } from "@/lib/research/research-display/types";
+import type { SectorDisplay } from "@/lib/research/research-display/fundResearch.types";
 
 const VISIBLE_HOLDINGS = 6;
 

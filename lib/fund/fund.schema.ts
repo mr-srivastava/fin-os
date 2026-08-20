@@ -128,10 +128,17 @@ export const FundResearchViewSchema = v.object({
   performance: SectionSchema(PerformanceRangesSchema),
   metricGroups: v.array(
     v.object({
-      id: v.picklist(["returns", "risk"]),
+      id: v.picklist(["returns", "risk", "benchmark"]),
       metrics: v.array(
         v.object({ id: v.string(), value: NullableFiniteNumberSchema, tone: ToneSchema }),
       ),
+    }),
+  ),
+  rollingBenchmarkComparison: v.nullable(
+    v.object({
+      timeframeYears: FiniteNumberSchema,
+      hitRate: FiniteNumberSchema,
+      windowCount: FiniteNumberSchema,
     }),
   ),
   returnConsistency: v.nullable(

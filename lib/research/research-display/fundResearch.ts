@@ -11,15 +11,15 @@ import {
   formatRupees,
   formatSignedPercent,
 } from "@/lib/shared/utils";
+import type { DisplayStatus } from "./display.types";
 import type {
   AllocationDisplay,
-  DisplayStatus,
   FactDisplay,
   CurrentNavDisplay,
   MetricGroupDisplay,
   PortfolioDisplay,
   SectorDisplay,
-} from "./types";
+} from "./fundResearch.types";
 
 export function financialStatus(value: number | null): DisplayStatus {
   if (value === null || value === 0) return "neutral";

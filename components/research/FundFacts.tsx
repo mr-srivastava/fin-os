@@ -1,4 +1,4 @@
-import type { FactDisplay } from "@/lib/research/research-display/types";
+import type { FactDisplay } from "@/lib/research/research-display/fundResearch.types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TermHelp } from "@/components/TermHelp";
 import { TERM_DEFINITIONS, riskLabelDefinition } from "@/lib/shared/glossary";

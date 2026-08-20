@@ -37,11 +37,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { type PerformanceRange } from "@/lib/shared/analytics";
-import type { FundResearchReadyModel } from "@/lib/research/research-display/types";
-import {
-  useComparisonScreenModel,
-  useFundResearchScreenModel,
-} from "@/lib/research/research-display/useScreenModels";
+import type { FundResearchReadyModel } from "@/lib/research/research-display/fundResearch.types";
+import { useComparisonScreenModel } from "@/lib/research/research-display/useComparisonScreenModel";
+import { useFundResearchScreenModel } from "@/lib/research/research-display/useFundResearchScreenModel";
 import { type FundResearchRouteState, toFundResearchHref } from "@/lib/research/researchRouteState";
 
 interface FundResearchViewProps {
@@ -294,6 +292,10 @@ function FundResearchScreen({
           </Card>
           <RiskAndReturnConsistency
             riskMetrics={model.metricGroups.find((group) => group.title === "Risk")?.metrics ?? []}
+            benchmarkMetrics={
+              model.metricGroups.find((group) => group.title === "Vs benchmark")?.metrics ?? []
+            }
+            rollingBenchmarkComparison={model.rollingBenchmarkComparison}
             consistency={model.returnConsistency}
           />
           <FundFactsGrid facts={model.facts} />

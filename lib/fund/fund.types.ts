@@ -88,6 +88,33 @@ export interface FundAvailability {
 
 export type FundMetrics = Record<MetricKey, Metric>;
 
+export type BenchmarkMetricKey =
+  | "excessReturnOneYear"
+  | "excessReturnThreeYear"
+  | "excessReturnFiveYear"
+  | "trackingError"
+  | "informationRatio"
+  | "upsideCapture"
+  | "downsideCapture";
+
+export const BENCHMARK_METRIC_KEYS = [
+  "excessReturnOneYear",
+  "excessReturnThreeYear",
+  "excessReturnFiveYear",
+  "trackingError",
+  "informationRatio",
+  "upsideCapture",
+  "downsideCapture",
+] as const satisfies readonly BenchmarkMetricKey[];
+
+export type BenchmarkMetrics = Record<BenchmarkMetricKey, Metric>;
+
+export interface RollingBenchmarkComparison {
+  timeframeYears: number;
+  hitRate: number;
+  windowCount: number;
+}
+
 export interface FundResearch {
   scheme: Scheme;
   nav: NavPoint[];
@@ -97,6 +124,8 @@ export interface FundResearch {
   portfolio: PortfolioSnapshot | null;
   availability: FundAvailability;
   metrics: FundMetrics;
+  benchmarkMetrics: BenchmarkMetrics | null;
+  rollingBenchmarkComparison: RollingBenchmarkComparison | null;
   returnConsistency: ReturnConsistency | null;
   relatedFunds: {
     peers: RelatedFund[];

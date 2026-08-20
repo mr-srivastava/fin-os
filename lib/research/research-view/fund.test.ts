@@ -46,6 +46,8 @@ test("precomputes every range and synthesizes sectors from holdings", () => {
       volatility: { label: "", value: null },
       maxDrawdown: { label: "", value: null },
     },
+    benchmarkMetrics: null,
+    rollingBenchmarkComparison: null,
     returnConsistency: null,
     relatedFunds: { peers: [], fromAmc: [] },
   } satisfies FundResearch;
@@ -97,6 +99,8 @@ test("exposes only the verified total-return benchmark metadata", () => {
       volatility: { label: "", value: null },
       maxDrawdown: { label: "", value: null },
     },
+    benchmarkMetrics: null,
+    rollingBenchmarkComparison: null,
     returnConsistency: null,
     relatedFunds: { peers: [], fromAmc: [] },
   } satisfies FundResearch;

@@ -1,7 +1,7 @@
 import type { FundPair, FundResearch } from "@/lib/fund/fund.types";
 import { formatPercent } from "@/lib/shared/utils";
 import { toFundFactsDisplay, toMetricDisplay } from "./fundResearch";
-import type { MetricDisplay } from "./types";
+import type { MetricDisplay } from "./display.types";
 
 export function toComparisonMetricDisplay(
   funds: FundPair<FundResearch>,

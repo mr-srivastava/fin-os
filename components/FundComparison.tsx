@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { PerformanceRange } from "@/lib/shared/analytics";
-import type { ComparisonReadyDisplay } from "@/lib/research/research-display/types";
+import type { ComparisonReadyDisplay } from "@/lib/research/research-display/comparison.types";
 
 function AllocationTable({
   title,

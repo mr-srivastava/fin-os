@@ -1,3 +1,4 @@
+import { Temporal } from "@js-temporal/polyfill";
 import type { NavPoint } from "../fund/fund.types";
 import { parseIsoDate } from "./date";
 
@@ -155,6 +156,148 @@ export function historicalContextText(comparison: HistoricalComparison | null): 
     case "near":
       return "in line with this fund's own history";
   }
+}
+
+export interface AlignedReturn {
+  date: string;
+  fundReturn: number;
+  benchmarkReturn: number;
+}
+
+/**
+ * Pairs fund and benchmark NAV on shared dates, then returns the day-over-day
+ * return at each shared date relative to the previous shared date. Dates where
+ * either series is missing a point are dropped rather than interpolated, so
+ * downstream calculations only see returns both series actually recorded.
+ */
+export function alignedReturns(fundNav: NavPoint[], benchmarkNav: NavPoint[]): AlignedReturn[] {
+  const benchmarkByDate = new Map(sorted(benchmarkNav).map((point) => [point.date, point.nav]));
+  const shared = sorted(fundNav)
+    .filter((point) => benchmarkByDate.has(point.date))
+    .map((point) => ({
+      date: point.date,
+      fundNav: point.nav,
+      benchmarkNav: benchmarkByDate.get(point.date)!,
+    }));
+
+  return shared.slice(1).flatMap((point, index) => {
+    const previous = shared[index];
+    if (!previous || previous.fundNav <= 0 || previous.benchmarkNav <= 0) return [];
+    return [
+      {
+        date: point.date,
+        fundReturn: point.fundNav / previous.fundNav - 1,
+        benchmarkReturn: point.benchmarkNav / previous.benchmarkNav - 1,
+      },
+    ];
+  });
+}
+
+/** Fund's annualized return minus the benchmark's, over the same trailing window. Null if either leg is unavailable. */
+export function excessReturn(fundNav: NavPoint[], benchmarkNav: NavPoint[], years: number) {
+  const fund = annualizedReturn(fundNav, years);
+  const benchmark = annualizedReturn(benchmarkNav, years);
+  if (fund === null || benchmark === null) return null;
+  return fund - benchmark;
+}
+
+const MIN_ALIGNED_OBSERVATIONS = 60;
+
+/** Annualized standard deviation of trailing-1-year daily return differences (fund minus benchmark). */
+export function trackingError(fundNav: NavPoint[], benchmarkNav: NavPoint[]) {
+  const end = sorted(fundNav).at(-1);
+  if (!end) return null;
+  const endDate = parseIsoDate(end.date);
+  if (!endDate) return null;
+  const startDate = endDate.subtract({ years: 1 }).toString();
+  const diffs = alignedReturns(fundNav, benchmarkNav)
+    .filter((point) => point.date >= startDate)
+    .map((point) => point.fundReturn - point.benchmarkReturn);
+  if (diffs.length < MIN_ALIGNED_OBSERVATIONS) return null;
+  const mean = diffs.reduce((total, value) => total + value, 0) / diffs.length;
+  const variance =
+    diffs.reduce((total, value) => total + (value - mean) ** 2, 0) / (diffs.length - 1);
+  return Math.sqrt(variance) * Math.sqrt(252);
+}
+
+/** Trailing-1-year excess return divided by trailing-1-year tracking error. Null if either input is unavailable. */
+export function informationRatio(fundNav: NavPoint[], benchmarkNav: NavPoint[]) {
+  const excess = excessReturn(fundNav, benchmarkNav, 1);
+  const error = trackingError(fundNav, benchmarkNav);
+  if (excess === null || error === null || error === 0) return null;
+  return excess / error;
+}
+
+export interface CaptureRatios {
+  upside: number | null;
+  downside: number | null;
+}
+
+function compound(returns: number[]) {
+  return returns.reduce((total, value) => total * (1 + value), 1) - 1;
+}
+
+/**
+ * Compounded fund return divided by compounded benchmark return, restricted to days the
+ * benchmark rose (upside) or fell (downside), expressed as a percentage. 100 means the fund
+ * matched the benchmark's move on those days; above/below 100 says nothing about which is
+ * preferable on its own — that depends on whether the leg is upside or downside.
+ */
+export function captureRatios(fundNav: NavPoint[], benchmarkNav: NavPoint[]): CaptureRatios {
+  const aligned = alignedReturns(fundNav, benchmarkNav);
+  if (aligned.length < MIN_ALIGNED_OBSERVATIONS) return { upside: null, downside: null };
+  const upside = aligned.filter((point) => point.benchmarkReturn > 0);
+  const downside = aligned.filter((point) => point.benchmarkReturn < 0);
+  const ratio = (points: AlignedReturn[]) => {
+    if (points.length === 0) return null;
+    const benchmarkCompound = compound(points.map((point) => point.benchmarkReturn));
+    if (benchmarkCompound === 0) return null;
+    return (compound(points.map((point) => point.fundReturn)) / benchmarkCompound) * 100;
+  };
+  return { upside: ratio(upside), downside: ratio(downside) };
+}
+
+export interface RollingHitRate {
+  /** Fraction of rolling windows where the fund's annualized return exceeded the benchmark's. */
+  hitRate: number;
+  windowCount: number;
+}
+
+/**
+ * Steps a trailing `windowYears` annualized-return comparison across the fund's history every
+ * six months and reports how often the fund beat the benchmark. Requires at least 4 complete
+ * windows so a single lucky/unlucky period can't dominate the figure.
+ */
+export function rollingHitRate(
+  fundNav: NavPoint[],
+  benchmarkNav: NavPoint[],
+  windowYears = 3,
+): RollingHitRate | null {
+  const fundSeries = sorted(fundNav);
+  const end = fundSeries.at(-1);
+  const start = fundSeries[0];
+  if (!end || !start) return null;
+  const endDate = parseIsoDate(end.date);
+  const startDate = parseIsoDate(start.date);
+  if (!endDate || !startDate) return null;
+
+  let cursor = startDate.add({ years: windowYears });
+  let hits = 0;
+  let windows = 0;
+  while (Temporal.PlainDate.compare(cursor, endDate) <= 0) {
+    const cursorText = cursor.toString();
+    const fundWindow = fundSeries.filter((point) => point.date <= cursorText);
+    const benchmarkWindow = sorted(benchmarkNav).filter((point) => point.date <= cursorText);
+    const fundValue = annualizedReturn(fundWindow, windowYears);
+    const benchmarkValue = annualizedReturn(benchmarkWindow, windowYears);
+    if (fundValue !== null && benchmarkValue !== null) {
+      windows += 1;
+      if (fundValue > benchmarkValue) hits += 1;
+    }
+    cursor = cursor.add({ months: 6 });
+  }
+  if (windows < 4) return null;
+  return { hitRate: hits / windows, windowCount: windows };
 }
 
 export function normalizeSeries(points: NavPoint[]) {

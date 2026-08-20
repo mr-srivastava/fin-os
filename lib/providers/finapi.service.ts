@@ -15,7 +15,12 @@ import type {
 } from "../fund/fund.types";
 import type { RelatedFund, Scheme } from "../fund/fund.schema";
 import { ProviderError, toNav } from "./provider";
-import { metricsFor, unavailableMetrics } from "../fund/fundMetrics";
+import {
+  benchmarkMetricsFor,
+  metricsFor,
+  rollingBenchmarkComparisonFor,
+  unavailableMetrics,
+} from "../fund/fundMetrics";
 import { isSchemeCode } from "../fund/fundInput";
 import {
   providerIsoDate,
@@ -277,6 +282,8 @@ export function normalizeFundPayload(payload: JsonValue): FundResearch | null {
             },
     },
     metrics: metricsFor(nav),
+    benchmarkMetrics: null,
+    rollingBenchmarkComparison: null,
     returnConsistency: normalizeReturnConsistency(data.rollingReturns),
     relatedFunds: toRelatedFundStubs(normalizeRelatedFunds(data, scheme)),
   };
@@ -431,6 +438,11 @@ async function loadFundResearch(
       returnBasis: definition.returnBasis,
       nav: sampleSeries(benchmarkResult.value),
     };
+    normalized.benchmarkMetrics = benchmarkMetricsFor(navResult.value, benchmarkResult.value);
+    normalized.rollingBenchmarkComparison = rollingBenchmarkComparisonFor(
+      navResult.value,
+      benchmarkResult.value,
+    );
   }
   return normalized;
 }
@@ -574,6 +586,8 @@ function clearNavResearch(fund: FundResearch) {
   fund.benchmark = null;
   fund.currentNav = null;
   fund.metrics = unavailableMetrics();
+  fund.benchmarkMetrics = null;
+  fund.rollingBenchmarkComparison = null;
   fund.availability.navHistory = {
     available: false,
     source: null,

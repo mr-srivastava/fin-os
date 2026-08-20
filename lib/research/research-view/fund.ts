@@ -54,7 +54,20 @@ export function toFundResearchView(fund: FundResearch): FundResearchView {
           tone: "neutral" as const,
         })),
       },
+      ...(fund.benchmarkMetrics
+        ? [
+            {
+              id: "benchmark" as const,
+              metrics: Object.entries(fund.benchmarkMetrics).map(([id, metric]) => ({
+                id,
+                value: metric.value,
+                tone: "neutral" as const,
+              })),
+            },
+          ]
+        : []),
     ],
+    rollingBenchmarkComparison: fund.rollingBenchmarkComparison,
     returnConsistency: fund.returnConsistency,
     relatedFunds: fund.relatedFunds,
     facts: fund.facts,

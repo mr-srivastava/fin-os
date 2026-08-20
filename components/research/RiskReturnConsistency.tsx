@@ -2,7 +2,7 @@ import { CircleHelpIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatNumber, lookup } from "@/lib/shared/utils";
-import type { FundResearchReadyModel } from "@/lib/research/research-display/types";
+import type { FundResearchReadyModel } from "@/lib/research/research-display/fundResearch.types";
 
 const RISK_CAPTIONS = {
   Volatility: "How much returns fluctuate",
@@ -11,6 +11,8 @@ const RISK_CAPTIONS = {
 
 export function RiskAndReturnConsistency({
   riskMetrics,
+  benchmarkMetrics,
+  rollingBenchmarkComparison,
   consistency,
 }: {
   riskMetrics: readonly {
@@ -19,9 +21,26 @@ export function RiskAndReturnConsistency({
     status: "gain" | "loss" | "neutral";
     context?: string;
   }[];
+  benchmarkMetrics: readonly {
+    label: string;
+    valueText: string;
+    status: "gain" | "loss" | "neutral";
+    context?: string;
+  }[];
+  rollingBenchmarkComparison: FundResearchReadyModel["rollingBenchmarkComparison"];
   consistency: FundResearchReadyModel["returnConsistency"];
 }) {
-  if (!riskMetrics.length && !consistency) return null;
+  if (!riskMetrics.length && !benchmarkMetrics.length && !consistency) return null;
+
+  const excessReturnMetrics = benchmarkMetrics.filter((metric) =>
+    metric.label.endsWith("vs benchmark"),
+  );
+  const upsideCapture = benchmarkMetrics.find((metric) => metric.label === "Upside capture");
+  const downsideCapture = benchmarkMetrics.find((metric) => metric.label === "Downside capture");
+  const trackingError = benchmarkMetrics.find((metric) => metric.label === "Tracking error");
+  const informationRatio = benchmarkMetrics.find((metric) => metric.label === "Information ratio");
+  const hasSecondaryBenchmarkDetail =
+    upsideCapture || downsideCapture || trackingError || informationRatio;
 
   const positiveRatio = consistency?.positiveRatio ?? null;
   const min = consistency?.minReturn ?? null;
@@ -67,6 +86,71 @@ export function RiskAndReturnConsistency({
                 </div>
               ))}
             </div>
+          </section>
+        ) : null}
+
+        {benchmarkMetrics.length ? (
+          <section aria-labelledby="benchmark-relative-title">
+            <h3
+              id="benchmark-relative-title"
+              className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+            >
+              Vs benchmark
+            </h3>
+            {excessReturnMetrics.length ? (
+              <div className="mt-3 grid grid-cols-3 gap-x-4 gap-y-4">
+                {excessReturnMetrics.map((metric) => (
+                  <div key={metric.label}>
+                    <p className="text-xs text-muted-foreground">
+                      {metric.label.replace(" vs benchmark", "")}
+                    </p>
+                    <p className="mt-1 font-mono text-lg font-semibold tabular-nums">
+                      {metric.valueText}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            {rollingBenchmarkComparison ? (
+              <p className="mt-3 text-xs text-muted-foreground">
+                {rollingBenchmarkComparison.hitRateText}
+              </p>
+            ) : null}
+            {hasSecondaryBenchmarkDetail ? (
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                {upsideCapture && downsideCapture ? (
+                  <span>
+                    Capture{" "}
+                    <span className="font-mono font-medium text-foreground tabular-nums">
+                      {upsideCapture.valueText}
+                    </span>{" "}
+                    up ·{" "}
+                    <span className="font-mono font-medium text-foreground tabular-nums">
+                      {downsideCapture.valueText}
+                    </span>{" "}
+                    down
+                  </span>
+                ) : null}
+                {trackingError || informationRatio ? (
+                  <Tooltip>
+                    <TooltipTrigger
+                      className="ml-auto text-muted-foreground"
+                      aria-label="Tracking error and information ratio"
+                    >
+                      <CircleHelpIcon className="size-3.5" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {trackingError ? <>Tracking error: {trackingError.valueText}. </> : null}
+                      {informationRatio ? (
+                        <>Information ratio: {informationRatio.valueText}. </>
+                      ) : null}
+                      How much the fund&apos;s daily returns diverge from the benchmark, and the
+                      excess return earned per unit of that divergence.
+                    </TooltipContent>
+                  </Tooltip>
+                ) : null}
+              </div>
+            ) : null}
           </section>
         ) : null}
 
