@@ -23,6 +23,9 @@ Browser
   -> /api/compare?fund=...&against=...
        -> concurrent two-fund research without benchmark requests
        -> semantic comparison view, including partial availability
+  -> /api/funds/related-snapshots?codes=...
+       -> batched FinAPI lookup for up to 12 scheme codes
+       -> lightweight snapshots for related-fund rails (peers, from the same AMC)
   -> /api/funds/isin/:isin      -> scheme-code lookup (Mongo)  -> redirect target
   -> /api/watchlists[...]       -> device-scoped CRUD (Mongo)  -> watchlist data
 ```
@@ -90,6 +93,13 @@ exists only so route handlers never import `finapi-service.ts` directly.
 `/api/funds/:schemeCode`, `/api/compare`, `/api/funds/isin/:isin`, and the
 `/fund/isin/:isin` redirect page all call `fundService` rather than
 `finapiService`.
+
+`GET /api/funds/related-snapshots?codes=<schemeCode,...>` batches up to 12
+scheme codes into one FinAPI lookup and returns a snapshot per code, keyed by
+scheme code. It backs the related-fund rails (peer funds, other funds from the
+same AMC) that `loadFundResearch` enriches server-side on the single-fund
+research view, so the client can hydrate those rails without a request per
+fund.
 
 `GET /api/funds/isin/:isin` resolves an ISIN to a scheme code via the
 catalogue (Mongo), not FinAPI. The `/fund/isin/:isin` page is a thin

@@ -59,7 +59,7 @@ Thematic funds select stocks of companies in industries that belong to a particu
 Equity funds may be categorized based on the valuation parameters adopted in stock selection:
 
 - **Growth funds** identify momentum stocks that are expected to perform better than the market.
-- **Value funds** identify stocks that are currently undervalued but are expected to perform well over time as the value is unlocked.
+- **Value funds** identify stocks that are currently undervalued but are expected to perform well over time as the market recognizes that value.
 
 Equity funds may hold a concentrated portfolio to benefit from stock selection — these funds carry higher risk, since the effect of a wrong selection can be substantial on the portfolio's return.
 
