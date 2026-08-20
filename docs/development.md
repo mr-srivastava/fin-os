@@ -1,6 +1,6 @@
 # Development guide
 
-This guide covers the local workflow for navnote. It complements the README
+This guide covers the local workflow for MF OS. It complements the README
 with contributor-specific checks and data-provider expectations.
 
 ## Prerequisites
@@ -66,7 +66,7 @@ Set these in `.env.local` (ignored by git; don't commit `.env` files):
 
 ```bash
 MONGODB_URI=mongodb://localhost:27017
-MONGODB_DB=navnote
+MONGODB_DB=mf-os
 FINAPI_PORTFOLIO_ENABLED=false
 ```
 
@@ -78,7 +78,7 @@ or watchlists fail; fund research routes (`/api/funds/:schemeCode`,
 local MongoDB with Docker if you don't already have one:
 
 ```bash
-docker run -d -p 27017:27017 --name navnote-mongo mongo:latest
+docker run -d -p 27017:27017 --name mf-os-mongo mongo:latest
 ```
 
 Populate the catalogue once MongoDB is up:

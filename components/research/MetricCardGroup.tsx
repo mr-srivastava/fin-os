@@ -31,7 +31,7 @@ export function MetricCardGroup({
             >
               <p className="text-xs text-muted-foreground">{metric.label}</p>
               <p
-                className={`mt-1 flex items-center gap-1.5 font-heading text-2xl font-medium tabular-nums ${statusColorClass(metric.status)}`}
+                className={`mt-1 flex items-center gap-1.5 font-mono text-2xl font-medium tabular-nums ${statusColorClass(metric.status)}`}
               >
                 {metric.status === "gain" ? (
                   <TrendingUpIcon className="size-4" aria-hidden="true" />

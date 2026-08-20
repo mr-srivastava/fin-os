@@ -1,6 +1,6 @@
 # Architecture
 
-navnote uses Next.js App Router to keep third-party market-data requests on the
+MF OS uses Next.js App Router to keep third-party market-data requests on the
 server while providing a responsive, client-rendered research experience. This
 document describes the current V0 boundaries so you can change the app without
 blending provider, API, and presentation concerns.

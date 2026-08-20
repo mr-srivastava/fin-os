@@ -40,7 +40,7 @@ export function SiteHeader() {
           href="/"
           className="font-heading text-xl font-medium tracking-tight text-foreground italic"
         >
-          navnote<span className="text-brand not-italic">.</span>
+          MF OS<span className="text-brand not-italic">.</span>
         </Link>
         <div className="flex items-center gap-5">
           <Link

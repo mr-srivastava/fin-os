@@ -15,7 +15,7 @@ export function ResearchStart() {
           Understand a fund’s <em className="text-gradient-brand not-italic">return path.</em>
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-          Look up a known fund or browse the eligible equity universe. navnote helps you research
+          Look up a known fund or browse the eligible equity universe. MF OS helps you research
           data; it does not rate, rank, or recommend funds.
         </p>
 

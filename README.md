@@ -1,6 +1,6 @@
-# navnote
+# MF OS
 
-navnote is a research interface for active, Direct Growth Indian equity mutual
+MF OS is a research interface for active, Direct Growth Indian equity mutual
 funds. You can search or browse eligible schemes, examine their NAV history and
 calculated performance characteristics, review available fund facts and
 portfolio data, compare two funds side by side, and save funds to a
@@ -63,7 +63,7 @@ with `pnpm exec playwright install chromium`.
 
 ## Data and scope
 
-navnote deliberately limits its V0 search results to schemes that are active,
+MF OS deliberately limits its V0 search results to schemes that are active,
 Direct, Growth, and within the supported equity categories. The app combines:
 
 - A MongoDB-backed catalogue (refreshed from TigZig) for scheme search and

@@ -1,4 +1,4 @@
-# DESIGN.md — navnote
+# DESIGN.md — MF OS
 
 This file follows the DESIGN.md convention (9 standard sections) so AI coding
 agents and human contributors can generate on-brand UI without re-deriving
@@ -9,7 +9,7 @@ truth; if this file and the code disagree, fix this file.**
 
 ## 1. Visual theme and atmosphere
 
-navnote is a research instrument, not a sales funnel. The feel is "quiet
+MF OS is a research instrument, not a sales funnel. The feel is "quiet
 credibility": editorial and unhurried where it presents information, precise
 and instrumented where it presents numbers. A serif wordmark and headings
 (Fraunces) give it the trust of a research publication; monospaced, tabular

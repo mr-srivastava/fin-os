@@ -17,7 +17,7 @@ export function RelatedFundLinks({
   const commonRisk = majorityRiskLabel(funds);
   return (
     <section aria-label={title}>
-      <h2 className="text-sm font-semibold">{title}</h2>
+      <h2 className="font-heading text-sm font-semibold">{title}</h2>
       <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {funds.map((fund) => (
           <li key={fund.schemeCode} className="relative">

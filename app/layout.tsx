@@ -17,7 +17,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "navnote — Indian mutual fund research",
+  title: "MF OS — Indian mutual fund research",
   description: "Live NAV research for active Indian equity mutual funds.",
 };
 

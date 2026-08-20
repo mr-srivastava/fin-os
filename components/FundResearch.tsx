@@ -175,7 +175,7 @@ function FundResearchScreen({
             </Button>
           </WatchlistPicker>
         </div>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl">
+        <h1 className="mt-4 font-heading text-3xl font-semibold tracking-tight sm:text-5xl">
           {model.header.title}
         </h1>
         <p className="mt-4 text-sm text-muted-foreground">{model.header.subtitle}</p>
@@ -346,7 +346,9 @@ function FundResearchScreen({
           <section className="mt-6" aria-live="polite">
             <div className="mb-4 flex items-center gap-2">
               <PieChartIcon />
-              <h2 className="text-xl font-semibold tracking-tight">Latest reported portfolio</h2>
+              <h2 className="font-heading text-xl font-semibold tracking-tight">
+                Latest reported portfolio
+              </h2>
             </div>
             {model.portfolio.status === "ready" ? (
               <>
@@ -392,7 +394,9 @@ function FundResearchScreen({
               <Separator />
               <div className="pt-6">
                 <div>
-                  <h2 className="text-lg font-semibold tracking-tight">Explore related funds</h2>
+                  <h2 className="font-heading text-lg font-semibold tracking-tight">
+                    Explore related funds
+                  </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Eligible Direct Growth equity schemes supplied by FinAPI. These links are for
                     research, not recommendations.

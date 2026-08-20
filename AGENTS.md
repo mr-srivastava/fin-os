@@ -1,11 +1,11 @@
 # Agent guide
 
 This document gives coding agents the project context and working rules needed
-to make safe, focused changes to navnote.
+to make safe, focused changes to MF OS.
 
 ## Product boundaries
 
-navnote is a research tool for active Direct Growth Indian equity mutual funds,
+MF OS is a research tool for active Direct Growth Indian equity mutual funds,
 used by distributors doing due diligence rather than by individual investors
 self-directing trades. Do not present content or calculations as investment
 advice, and do not rank or recommend funds. The product can show partial

@@ -147,7 +147,7 @@ export function FundComparison({
       {comparison.portfolio.status === "ready" ? (
         <section className="mt-6">
           <div className="mb-4">
-            <h2 className="text-xl font-semibold tracking-tight">
+            <h2 className="font-heading text-xl font-semibold tracking-tight">
               Latest reported portfolio comparison
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
