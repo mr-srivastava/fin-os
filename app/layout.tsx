@@ -19,6 +19,13 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "MF OS — Indian mutual fund research",
   description: "Live NAV research for active Indian equity mutual funds.",
+  icons: {
+    icon: [
+      { url: "/icon-light.png", media: "(prefers-color-scheme: light)" },
+      { url: "/icon-dark.png", media: "(prefers-color-scheme: dark)" },
+    ],
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

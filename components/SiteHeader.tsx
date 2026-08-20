@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { Logomark } from "@/components/Logomark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { watchlistsQueryOptions } from "@/lib/watchlist.queries";
@@ -36,11 +37,11 @@ export function SiteHeader() {
         aria-label="Primary navigation"
         className="mx-auto flex max-w-6xl items-center justify-between"
       >
-        <Link
-          href="/"
-          className="font-heading text-xl font-medium tracking-tight text-foreground italic"
-        >
-          MF OS<span className="text-brand not-italic">.</span>
+        <Link href="/" aria-label="MF OS" className="flex items-center gap-2">
+          <Logomark className="h-6 w-auto shrink-0" />
+          <span className="font-heading text-lg font-medium tracking-tight text-foreground italic">
+            MF OS<span className="text-brand not-italic">.</span>
+          </span>
         </Link>
         <div className="flex items-center gap-5">
           <Link
