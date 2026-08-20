@@ -97,8 +97,9 @@ The project uses the Next.js App Router and TypeScript.
 - `scripts/catalogRefresh.ts` rebuilds the scheme catalogue in MongoDB.
 
 For implementation details, see [the architecture guide](docs/architecture.md)
-and [the development guide](docs/development.md). Contributors and coding agents
-should also read [AGENTS.md](AGENTS.md).
+and [the development guide](docs/development.md). For visual and content
+conventions, see [DESIGN.md](DESIGN.md). Contributors and coding
+agents should also read [AGENTS.md](AGENTS.md).
 
 ## Next steps
 
