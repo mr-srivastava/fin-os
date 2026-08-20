@@ -1,6 +1,6 @@
 import type { FundResearch, WeightedItem } from "@/lib/fund.types";
 import { performanceRanges } from "./performance";
-import type { FundResearchView } from "./types";
+import type { FundResearchView } from "@/lib/fund.schema";
 
 function allocation(items: readonly WeightedItem[]) {
   return [...items]

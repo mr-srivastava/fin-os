@@ -4,8 +4,6 @@
 import type { FundResearch } from "./fund.types.ts";
 import type { WatchlistItemSummary } from "./watchlist.schema.ts";
 
-export type { WatchlistItemSummary };
-
 export function toWatchlistItemSummary(fund: FundResearch): WatchlistItemSummary {
   return {
     schemeCode: fund.scheme.schemeCode,

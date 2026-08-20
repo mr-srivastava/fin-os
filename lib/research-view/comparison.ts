@@ -1,7 +1,7 @@
 import type { FundResearch, WeightedItem } from "@/lib/fund.types";
 import { toFundResearchView } from "./fund";
 import { performanceRanges } from "./performance";
-import type { ComparisonView } from "./types";
+import type { ComparisonView } from "@/lib/fund.schema";
 
 function joined(left: readonly WeightedItem[], right: readonly WeightedItem[]) {
   const leftByName = new Map(left.map((item) => [item.name, item.weight]));

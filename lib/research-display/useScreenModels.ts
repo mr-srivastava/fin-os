@@ -8,9 +8,8 @@ import {
   fundQueryOptions,
   relatedSnapshotsQueryOptions,
 } from "@/lib/fund.queries";
-import type { RelatedSnapshot } from "@/lib/fund.schema";
+import type { FundResearchView, RelatedSnapshot } from "@/lib/fund.schema";
 import { allocationColors } from "./fundResearch";
-import type { FundResearchView } from "@/lib/research-view/types";
 import {
   formatFullDate,
   formatNumber,

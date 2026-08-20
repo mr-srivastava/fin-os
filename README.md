@@ -1,3 +1,11 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/logo-light.png">
+    <source media="(prefers-color-scheme: light)" srcset="public/logo-dark.png">
+    <img src="public/logo-light.png" alt="MF OS" width="200">
+  </picture>
+</p>
+
 # MF OS
 
 MF OS is a research tool for active, Direct Growth Indian equity mutual funds.
@@ -10,7 +18,9 @@ It is a research tool, not investment advice. Data can be incomplete,
 delayed, or temporarily unavailable. Verify anything here with the fund house
 before making an investment decision.
 
-## What you can do
+**Open the app:** [mfops.netlify.app](https://mfops.netlify.app/)
+
+## Using MF OS
 
 - **Search or browse** the catalogue of eligible schemes by name or by
   category.
@@ -27,7 +37,7 @@ Every page tells you when data is missing or stale rather than guessing or
 filling in a gap silently. See [Data and limitations](/data-and-limitations)
 in the app for the current detail on provider coverage and freshness.
 
-## Healthcheck
+## Status
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/15ee1367-a1e5-425e-b6a6-642fd4260694/deploy-status)](https://app.netlify.com/projects/mfops/deploys)
 

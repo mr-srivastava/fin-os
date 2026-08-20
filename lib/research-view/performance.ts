@@ -1,7 +1,7 @@
 import { filterSeriesByRange, investmentOutcome, relativeReturnSeries } from "@/lib/analytics";
 import type { NavPoint } from "@/lib/fund.types";
 import { PERFORMANCE_RANGES } from "@/lib/researchRouteState";
-import type { PerformanceRangeView, Tone } from "./types";
+import type { PerformanceRangeView, Tone } from "@/lib/fund.schema";
 
 export function financialTone(value: number | null): Tone {
   if (value === null || value === 0) return "neutral";
