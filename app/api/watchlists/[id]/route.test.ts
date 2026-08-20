@@ -5,13 +5,13 @@ const rename = vi.fn();
 const remove = vi.fn();
 const getFundResearchBatch = vi.fn();
 
-vi.mock("@/lib/watchlist-service", () => ({
+vi.mock("@/lib/watchlist.service", () => ({
   watchlistService: { get, rename, remove },
 }));
-vi.mock("@/lib/fund-service", () => ({
+vi.mock("@/lib/fund.service", () => ({
   fundService: { getFundResearchBatch },
 }));
-vi.mock("@/lib/device-id", () => ({ getOrCreateDeviceId: async () => "device-a" }));
+vi.mock("@/lib/deviceId", () => ({ getOrCreateDeviceId: async () => "device-a" }));
 
 const { GET, PATCH, DELETE } = await import("./route");
 

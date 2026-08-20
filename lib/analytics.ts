@@ -1,4 +1,4 @@
-import type { NavPoint } from "./fund-types.ts";
+import type { NavPoint } from "./fund.types.ts";
 import { parseIsoDate } from "./date.ts";
 
 const DAYS_IN_YEAR = 365.25;
@@ -142,6 +142,19 @@ export function drawdownVsHistory(points: NavPoint[]): HistoricalComparison | nu
 
   const severityComparison = compareToHistorical(Math.abs(current), Math.abs(historicalAverage));
   return { current, historicalAverage, direction: severityComparison.direction };
+}
+
+/** Renders a `HistoricalComparison` as a short, descriptive sentence fragment. */
+export function historicalContextText(comparison: HistoricalComparison | null): string | undefined {
+  if (!comparison) return undefined;
+  switch (comparison.direction) {
+    case "above":
+      return "above this fund's own history";
+    case "below":
+      return "below this fund's own history";
+    case "near":
+      return "in line with this fund's own history";
+  }
 }
 
 export function normalizeSeries(points: NavPoint[]) {

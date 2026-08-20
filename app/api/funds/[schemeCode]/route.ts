@@ -1,6 +1,6 @@
-import { fundService } from "@/lib/fund-service";
+import { fundService } from "@/lib/fund.service";
 import { ProviderError } from "@/lib/provider";
-import { isSchemeCode } from "@/lib/fund-input";
+import { isSchemeCode } from "@/lib/fundInput";
 import { toFundResearchView } from "@/lib/research-view/fund";
 
 export async function GET(_request: Request, context: RouteContext<"/api/funds/[schemeCode]">) {

@@ -30,18 +30,36 @@ language ("good," "bad," "risky choice").
 - `components/` contains client components and the local UI primitives.
 - `lib/` contains provider adapters, the Mongo-backed catalogue and watchlist
   services, schemas, types, date helpers, and analytics.
-- `scripts/preflight-finapi.ts` validates representative live provider responses.
-- `scripts/catalog-refresh.ts` rebuilds the scheme catalogue in MongoDB.
+- `scripts/preflightFinapi.ts` validates representative live provider responses.
+- `scripts/catalogRefresh.ts` rebuilds the scheme catalogue in MongoDB.
 - `docs/` contains architecture and contributor guidance.
 
 Keep provider-specific parsing in `lib/`. Route handlers validate untrusted
 parameters and turn `ProviderError` instances into the documented API response
-shape. Client components must use `lib/fund-api.ts` and its Valibot schemas
+shape. Client components must use `lib/fund.client.ts` and its Valibot schemas
 instead of assuming API responses are valid.
+
+## File naming
+
+- React components: `PascalCase.tsx` (e.g. `FundCard.tsx`). shadcn primitives
+  under `components/ui/` keep their upstream kebab-case instead.
+- Hooks: `useCamelCase.ts` — `.ts`, not `.tsx`, unless the hook itself returns
+  JSX.
+- Next.js special files (`page.tsx`, `route.ts`, `layout.tsx`, etc.) and route
+  folders follow Next.js conventions and stay lowercase/kebab-case.
+- `lib/` modules: `camelCase.ts`, with a role suffix when the file plays that
+  role — `.service.ts` (server-side data access), `.client.ts` (client fetch
+  wrappers, kept distinct from `.service.ts` so the two layers can't collide),
+  `.queries.ts` (TanStack Query definitions), `.schema.ts` (Valibot schemas),
+  `.types.ts` (domain types). Plain utility modules take no suffix.
+- Tests match their source file's new name plus `.test.ts[x]`.
+
+Rename a file's imports along with the file itself — don't leave stale
+kebab-case import specifiers pointing at a renamed module.
 
 ## Data behavior
 
-A MongoDB-backed catalogue (`lib/catalog-service.ts`, refreshed from TigZig via
+A MongoDB-backed catalogue (`lib/catalog.service.ts`, refreshed from TigZig via
 `pnpm catalog:refresh`) drives scheme search and category browsing. FinAPI
 supplies fund facts and reported portfolio data for a single scheme. TigZig
 supplies NAV history and the Nifty 500 benchmark. Requests are cached for five
@@ -54,8 +72,8 @@ operational use without disabling facts or NAV research. `MONGODB_URI` and
 `MONGODB_DB` must be set for the catalogue and watchlist routes to work; see
 [docs/development.md](docs/development.md#environment-configuration).
 
-Watchlists (`lib/watchlist-service.ts`) are Mongo-backed, device-scoped lists
-of scheme codes, identified by an anonymous cookie from `lib/device-id.ts`.
+Watchlists (`lib/watchlist.service.ts`) are Mongo-backed, device-scoped lists
+of scheme codes, identified by an anonymous cookie from `lib/deviceId.ts`.
 There is no auth: every watchlist read and write must be scoped by
 `deviceId`, and a request for another device's watchlist must behave as if it
 does not exist.
@@ -69,7 +87,8 @@ does not exist.
    fetching code. Never expose a provider base URL or future credentials to the
    browser without an explicit design decision.
 3. Use the `@/` import alias for project modules and follow the existing
-   TypeScript, Tailwind, and component conventions.
+   TypeScript, Tailwind, and component conventions, including the file naming
+   convention above.
 4. Keep API inputs constrained: search queries are 2–80 characters and scheme
    codes are 4–7 digits. Update schemas, route behavior, and tests together when
    changing a public API contract.

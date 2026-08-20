@@ -41,19 +41,19 @@ selected fund cannot be loaded.
 
 ## Provider boundaries
 
-`lib/finapi-service.ts` and `lib/tigzig-service.ts` wrap every endpoint the app
+`lib/finapi.service.ts` and `lib/tigzig.service.ts` wrap every endpoint the app
 uses on each provider - FinAPI's scheme search/browse, fund research, and
 index TRI series; TigZig's NAV history, market/TRI series, and scheme
 catalogue - and normalize each provider's variable payload into internal
 types. Fund research starts the concurrent TigZig NAV request and, when the
 fund's declared benchmark has a verified total-return mapping, a FinAPI TRI
-request. `lib/benchmark-catalog.ts` is server-only and contains only verified
+request. `lib/benchmarkCatalog.ts` is server-only and contains only verified
 total-return mappings. Both provider services use a 10-second timeout and
 Next.js revalidation of 300 seconds.
 
 **Neither provider service, nor `lib/mongo.ts`, is imported from `app/`.**
 Route handlers and pages only ever import one of two UI-facing facades:
-`lib/catalog-service.ts` (discovery) or `lib/fund-service.ts` (live per-scheme
+`lib/catalog.service.ts` (discovery) or `lib/fund.service.ts` (live per-scheme
 lookup) - see the next two sections. This keeps the provider/DB layer free to
 change without touching UI code, and keeps each facade's responsibility
 legible from its name.
@@ -65,7 +65,7 @@ that degraded behavior.
 
 ## Scheme catalogue
 
-`lib/catalog-service.ts` builds, persists, and serves the eligible-scheme
+`lib/catalog.service.ts` builds, persists, and serves the eligible-scheme
 catalogue in MongoDB (`lib/mongo.ts`). It is TigZig-primary:
 `tigzigService.fetchCatalogue()` supplies structural fields and liveness
 (`isActive`/`isStale`) for every Direct+Growth scheme in a supported equity
@@ -78,12 +78,12 @@ documents under a fresh `catalogueVersion`, atomically flips the
 a reader querying by the current version never observes a half-written
 catalogue. `/api/schemes` and `/api/explore` read the catalogue directly via
 `catalogService.search()`/`catalogService.listByCategory()`; neither calls
-FinAPI. See [lib/fund-catalog-types.ts](../lib/fund-catalog-types.ts) for the
+FinAPI. See [lib/fundCatalog.types.ts](../lib/fundCatalog.types.ts) for the
 full record shape.
 
 ## Fund service
 
-`lib/fund-service.ts` is the UI-facing facade for live, per-scheme lookups -
+`lib/fund.service.ts` is the UI-facing facade for live, per-scheme lookups -
 fund research, batched fund research for comparisons, and ISIN resolution. It
 is a thin pass-through to `finapiService`; it holds no logic of its own and
 exists only so route handlers never import `finapi-service.ts` directly.
@@ -100,12 +100,12 @@ on scheme code.
 ## Watchlists
 
 Watchlists let a visitor save funds to a device-scoped list without an account.
-`lib/device-id.ts` issues an anonymous `nn_device_id` cookie (httpOnly,
+`lib/deviceId.ts` issues an anonymous `nn_device_id` cookie (httpOnly,
 two-year expiry) on first use; every watchlist read and write is scoped to that
 id, and there is no authentication in front of it - a request for another
 device's watchlist id must behave exactly as if it does not exist.
-`lib/watchlist-service.ts` is Mongo-backed CRUD (collection `watchlists`,
-see `lib/watchlist-types.ts` for the document shape) exposed to routes under
+`lib/watchlist.service.ts` is Mongo-backed CRUD (collection `watchlists`,
+see `lib/watchlist.types.ts` for the document shape) exposed to routes under
 `app/api/watchlists/`:
 
 ```text
@@ -114,17 +114,17 @@ GET/PATCH/DELETE /api/watchlists/:id             -> read / rename / delete
 POST/DELETE  /api/watchlists/:id/items/:schemeCode -> add / remove a scheme
 ```
 
-`lib/watchlist-schemas.ts` and `lib/watchlist-api.ts` mirror the
+`lib/watchlist.schema.ts` and `lib/watchlist.client.ts` mirror the
 research-facing validation pattern: routes return validated shapes, and the
 client validates responses before TanStack Query exposes them to
-`components/watchlist-*.tsx` and `components/watchlists-index.tsx`.
+`components/watchlist-*.tsx` and `components/WatchlistsIndex.tsx`.
 Watchlists never call FinAPI or TigZig; they only store scheme codes, not fund
 data, so a watchlisted fund still goes through the normal research path when
 opened.
 
 ## Data contracts
 
-`lib/fund-types.ts` defines the internal `FundResearch` contract. Its
+`lib/fund.types.ts` defines the internal `FundResearch` contract. Its
 `availability` field independently represents NAV history, fund facts, and
 portfolio data, allowing the interface to distinguish unavailable data from a
 zero or empty value.
@@ -132,16 +132,16 @@ zero or empty value.
 `lib/research-view/` converts that internal contract into semantic browser
 read models. It owns cross-provider availability policy, range-specific
 performance calculations, portfolio normalization, and comparison joining.
-`lib/fund-schemas.ts` defines Valibot schemas for browser-facing API responses.
-`lib/fund-api.ts` validates every client response against those schemas before
+`lib/fund.schema.ts` defines Valibot schemas for browser-facing API responses.
+`lib/fund.client.ts` validates every client response against those schemas before
 TanStack Query exposes it to UI components. The client retains locale formatting
 and visual tokens. When changing a response, update the type, schema, route,
 consumer, and tests as one change.
 
 ## Presentation layers
 
-Pages in `app/` are thin route entry points. `components/fund-research.tsx`
-renders an individual fund, and `components/compare-view.tsx` renders a
+Pages in `app/` are thin route entry points. `components/FundResearch.tsx`
+renders an individual fund, and `components/FundComparison.tsx` renders a
 two-fund comparison. Shared calculations live in `lib/analytics.ts`; use those
 helpers rather than duplicating return, drawdown, volatility, normalization, or
 range-selection logic in components.

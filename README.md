@@ -93,8 +93,8 @@ The project uses the Next.js App Router and TypeScript.
   components.
 - `lib/` contains provider adapters, the Mongo-backed catalogue and watchlist
   services, runtime schemas, data types, and analytics.
-- `scripts/preflight-finapi.ts` probes the live provider integration.
-- `scripts/catalog-refresh.ts` rebuilds the scheme catalogue in MongoDB.
+- `scripts/preflightFinapi.ts` probes the live provider integration.
+- `scripts/catalogRefresh.ts` rebuilds the scheme catalogue in MongoDB.
 
 For implementation details, see [the architecture guide](docs/architecture.md)
 and [the development guide](docs/development.md). Contributors and coding agents

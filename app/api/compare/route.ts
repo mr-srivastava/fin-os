@@ -1,6 +1,6 @@
-import { fundService } from "@/lib/fund-service";
+import { fundService } from "@/lib/fund.service";
 import { ProviderError } from "@/lib/provider";
-import { isSchemeCode } from "@/lib/fund-input";
+import { isSchemeCode } from "@/lib/fundInput";
 import { toComparisonView } from "@/lib/research-view/comparison";
 
 export async function GET(request: Request) {

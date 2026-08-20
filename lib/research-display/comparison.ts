@@ -4,9 +4,9 @@ import {
   relativeReturnSeries,
   type PerformanceRange,
 } from "@/lib/analytics";
-import type { FundPair, FundResearch } from "@/lib/fund-types";
+import type { FundPair, FundResearch } from "@/lib/fund.types";
 import { formatFullDate, formatPercent, formatRupees, formatSignedPercent } from "@/lib/utils";
-import { financialStatus, toFundFactsDisplay, toMetricDisplay } from "./fund-research";
+import { financialStatus, toFundFactsDisplay, toMetricDisplay } from "./fundResearch";
 import type { ChartSeriesDisplay, MetricDisplay, OutcomeDisplay } from "./types";
 
 export function toComparisonPerformanceDisplay(

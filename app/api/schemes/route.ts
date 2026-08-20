@@ -1,6 +1,6 @@
-import { catalogService } from "@/lib/catalog-service";
+import { catalogService } from "@/lib/catalog.service";
 import { ProviderError } from "@/lib/provider";
-import { isSearchQuery } from "@/lib/fund-input";
+import { isSearchQuery } from "@/lib/fundInput";
 
 export async function GET(request: Request) {
   const query = new URL(request.url).searchParams.get("q")?.trim() ?? "";

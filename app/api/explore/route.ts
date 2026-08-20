@@ -1,6 +1,6 @@
-import { catalogService } from "@/lib/catalog-service";
+import { catalogService } from "@/lib/catalog.service";
 import { ProviderError } from "@/lib/provider";
-import { isEquityCategory } from "@/lib/fund-categories";
+import { isEquityCategory } from "@/lib/fundCategories";
 
 export async function GET(request: Request) {
   const category = new URL(request.url).searchParams.get("category")?.trim() ?? "";

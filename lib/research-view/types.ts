@@ -1,5 +1,5 @@
 import type { PerformanceRange } from "@/lib/analytics";
-import type { RelatedFund, Scheme } from "@/lib/fund-types";
+import type { RelatedFund, Scheme } from "@/lib/fund.types";
 
 export type Section<T> = { status: "ready"; data: T } | { status: "unavailable"; message: string };
 export type Tone = "gain" | "loss" | "neutral";
@@ -22,7 +22,13 @@ export interface FundResearchView {
   performance: Section<Record<PerformanceRange, PerformanceRangeView>>;
   metricGroups: readonly {
     id: "returns" | "risk";
-    metrics: readonly { id: string; value: number | null; tone: Tone }[];
+    metrics: readonly {
+      id: string;
+      value: number | null;
+      tone: Tone;
+      /** Descriptive comparison to the fund's own history, e.g. "above its own history". */
+      context?: string;
+    }[];
   }[];
   returnConsistency: {
     timeframe: string;

@@ -4,7 +4,7 @@ import {
   toComparisonFactsDisplay,
   toComparisonMetricDisplay,
 } from "@/lib/research-display/comparison";
-import type { FundPair, FundResearch } from "@/lib/fund-types";
+import type { FundPair, FundResearch } from "@/lib/fund.types";
 
 describe("comparison display mapping", () => {
   it("represents missing allocation values as display text", () => {

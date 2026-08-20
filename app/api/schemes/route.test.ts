@@ -3,7 +3,7 @@ import { ProviderError } from "@/lib/provider";
 
 const search = vi.fn();
 
-vi.mock("@/lib/catalog-service", () => ({ catalogService: { search } }));
+vi.mock("@/lib/catalog.service", () => ({ catalogService: { search } }));
 
 const { GET } = await import("./route");
 

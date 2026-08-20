@@ -1,8 +1,8 @@
-import { getOrCreateDeviceId } from "@/lib/device-id";
-import { isWatchlistId, isWatchlistName } from "@/lib/watchlist-input";
-import { watchlistService } from "@/lib/watchlist-service";
-import { fundService } from "@/lib/fund-service";
-import { toWatchlistItemSummary } from "@/lib/watchlist-view";
+import { getOrCreateDeviceId } from "@/lib/deviceId";
+import { isWatchlistId, isWatchlistName } from "@/lib/watchlistInput";
+import { watchlistService } from "@/lib/watchlist.service";
+import { fundService } from "@/lib/fund.service";
+import { toWatchlistItemSummary } from "@/lib/watchlistView";
 
 export async function GET(_request: Request, context: RouteContext<"/api/watchlists/[id]">) {
   const { id } = await context.params;

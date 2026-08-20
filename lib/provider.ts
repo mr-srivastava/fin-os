@@ -1,5 +1,5 @@
-import type { NavPoint } from "./fund-types.ts";
-import { providerIsoDate, providerList, providerNumber, providerRecord } from "./provider-input.ts";
+import type { NavPoint } from "./fund.types.ts";
+import { providerIsoDate, providerList, providerNumber, providerRecord } from "./providerInput.ts";
 
 export class ProviderError extends Error {
   public status: number;

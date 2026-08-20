@@ -1,4 +1,4 @@
-import type { FundResearch, WeightedItem } from "@/lib/fund-types";
+import type { FundResearch, WeightedItem } from "@/lib/fund.types";
 import { toFundResearchView } from "./fund";
 import { performanceRanges } from "./performance";
 import type { ComparisonView } from "./types";

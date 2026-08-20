@@ -2,8 +2,8 @@ import { describe, expect, test, vi } from "vitest";
 
 const addItem = vi.fn();
 
-vi.mock("@/lib/watchlist-service", () => ({ watchlistService: { addItem } }));
-vi.mock("@/lib/device-id", () => ({ getOrCreateDeviceId: async () => "device-a" }));
+vi.mock("@/lib/watchlist.service", () => ({ watchlistService: { addItem } }));
+vi.mock("@/lib/deviceId", () => ({ getOrCreateDeviceId: async () => "device-a" }));
 
 const { POST } = await import("./route");
 

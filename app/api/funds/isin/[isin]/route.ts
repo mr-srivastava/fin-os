@@ -1,6 +1,6 @@
-import { fundService } from "@/lib/fund-service";
+import { fundService } from "@/lib/fund.service";
 import { ProviderError } from "@/lib/provider";
-import { isIsin } from "@/lib/fund-input";
+import { isIsin } from "@/lib/fundInput";
 
 export async function GET(_request: Request, context: RouteContext<"/api/funds/isin/[isin]">) {
   const { isin } = await context.params;

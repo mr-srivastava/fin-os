@@ -1,6 +1,6 @@
-import { getOrCreateDeviceId } from "@/lib/device-id";
-import { isWatchlistName } from "@/lib/watchlist-input";
-import { watchlistService } from "@/lib/watchlist-service";
+import { getOrCreateDeviceId } from "@/lib/deviceId";
+import { isWatchlistName } from "@/lib/watchlistInput";
+import { watchlistService } from "@/lib/watchlist.service";
 
 export async function GET() {
   const deviceId = await getOrCreateDeviceId();

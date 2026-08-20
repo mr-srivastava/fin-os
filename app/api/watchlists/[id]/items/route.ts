@@ -1,7 +1,7 @@
-import { getOrCreateDeviceId } from "@/lib/device-id";
-import { isSchemeCode } from "@/lib/fund-input";
-import { isWatchlistId } from "@/lib/watchlist-input";
-import { watchlistService } from "@/lib/watchlist-service";
+import { getOrCreateDeviceId } from "@/lib/deviceId";
+import { isSchemeCode } from "@/lib/fundInput";
+import { isWatchlistId } from "@/lib/watchlistInput";
+import { watchlistService } from "@/lib/watchlist.service";
 
 export async function POST(request: Request, context: RouteContext<"/api/watchlists/[id]/items">) {
   const { id } = await context.params;

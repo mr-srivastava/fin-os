@@ -3,8 +3,8 @@ import { describe, expect, test, vi } from "vitest";
 const list = vi.fn();
 const create = vi.fn();
 
-vi.mock("@/lib/watchlist-service", () => ({ watchlistService: { list, create } }));
-vi.mock("@/lib/device-id", () => ({ getOrCreateDeviceId: async () => "device-a" }));
+vi.mock("@/lib/watchlist.service", () => ({ watchlistService: { list, create } }));
+vi.mock("@/lib/deviceId", () => ({ getOrCreateDeviceId: async () => "device-a" }));
 
 const { GET, POST } = await import("./route");
 

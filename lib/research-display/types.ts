@@ -1,5 +1,5 @@
 import type { PerformanceRange } from "@/lib/analytics";
-import type { NavPoint } from "@/lib/fund-types";
+import type { NavPoint } from "@/lib/fund.types";
 
 export type DisplayStatus = "gain" | "loss" | "neutral";
 export type AsyncView<T> =

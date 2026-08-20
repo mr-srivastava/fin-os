@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { toFundResearchView } from "./fund";
-import type { FundResearch } from "@/lib/fund-types";
+import type { FundResearch } from "@/lib/fund.types";
 
 test("precomputes every range and synthesizes sectors from holdings", () => {
   const fund = {

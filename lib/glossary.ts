@@ -1,4 +1,4 @@
-import { EQUITY_CATEGORIES, type EquityCategory } from "./fund-categories.ts";
+import { EQUITY_CATEGORIES, type EquityCategory } from "./fundCategories.ts";
 
 /** One-line, plain-language definitions for terms shown bare in the UI. Descriptive only — never evaluative. */
 export const TERM_DEFINITIONS = {

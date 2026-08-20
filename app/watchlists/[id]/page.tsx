@@ -1,4 +1,4 @@
-import { WatchlistDetail } from "@/components/watchlist-detail";
+import { WatchlistDetail } from "@/components/WatchlistDetail";
 
 export default async function WatchlistDetailPage({ params }: PageProps<"/watchlists/[id]">) {
   const { id } = await params;

@@ -1,6 +1,6 @@
 import { filterSeriesByRange, investmentOutcome, relativeReturnSeries } from "@/lib/analytics";
-import type { NavPoint } from "@/lib/fund-types";
-import { PERFORMANCE_RANGES } from "@/lib/research-route-state";
+import type { NavPoint } from "@/lib/fund.types";
+import { PERFORMANCE_RANGES } from "@/lib/researchRouteState";
 import type { PerformanceRangeView, Tone } from "./types";
 
 export function financialTone(value: number | null): Tone {

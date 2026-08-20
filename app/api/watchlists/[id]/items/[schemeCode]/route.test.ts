@@ -2,8 +2,8 @@ import { describe, expect, test, vi } from "vitest";
 
 const removeItem = vi.fn();
 
-vi.mock("@/lib/watchlist-service", () => ({ watchlistService: { removeItem } }));
-vi.mock("@/lib/device-id", () => ({ getOrCreateDeviceId: async () => "device-a" }));
+vi.mock("@/lib/watchlist.service", () => ({ watchlistService: { removeItem } }));
+vi.mock("@/lib/deviceId", () => ({ getOrCreateDeviceId: async () => "device-a" }));
 
 const { DELETE } = await import("./route");
 

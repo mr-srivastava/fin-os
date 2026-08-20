@@ -1,5 +1,5 @@
-import { FundResearchView } from "@/components/fund-research";
-import { parseFundResearchSearchParams } from "@/lib/research-route-state";
+import { FundResearchView } from "@/components/FundResearch";
+import { parseFundResearchSearchParams } from "@/lib/researchRouteState";
 
 export default async function FundPage({ params, searchParams }: PageProps<"/fund/[schemeCode]">) {
   const { schemeCode } = await params;

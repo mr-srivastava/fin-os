@@ -1,7 +1,7 @@
 import { expect, test, vi } from "vitest";
 
 const getFundResearchBatch = vi.fn();
-vi.mock("@/lib/fund-service", () => ({ fundService: { getFundResearchBatch } }));
+vi.mock("@/lib/fund.service", () => ({ fundService: { getFundResearchBatch } }));
 const { GET } = await import("./route");
 
 test("rejects duplicate comparison codes without provider work", async () => {
